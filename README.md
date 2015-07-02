@@ -1,21 +1,27 @@
+Objectif :
+----------
+Indexer dans geOrchestra les données déposées par les utilisateurs dans OwnCloud.
+
 Vue d'ensemble de l'architecture globale de geosync
 ---------------------------------------------------
-Sur owncloud, geosync_src/**master**/src est partagé à **georchestra-ouvert**; attention, le partage porte sur "src" et non sur "master"; ce dossier est déplacé au setup par l'utilisateur georchestra-ouvert dans owncloud dans son dossier _geosync;
-(geosync_src/**dev**/src est partagé à georchestra-**dev**-ouvert)
+Sur owncloud, geosync_src/**master**/src est partagé à **georchestra-ouvert** ; attention, le partage porte sur "src" et non sur "master" ; ce dossier est déplacé au setup par l'utilisateur georchestra-ouvert dans owncloud/_geosync.
 
-Fichiers de l'utilisateur georchestra-ouvert sur la machine georchestra :
-* ~/**cron_error.log** : erreurs du cron (le cron est responsable de monter owncloud si besoin, donc les logs d'erreurs ne sont pas avec les autres dans owncloud)
-* ~/**owncloud** : montage webdav des fichiers de georchestra-ouvert sur ownncloud; recopié par **rsync** dans ~/**owncloudsync** (les couches seules, sans _geosync)
-* ~/owncloud/**_geosync** : contient les sources de l'outil de synchronisation des couches (src)  et ses entrées/sorties (data)
-* ~/owncloud/_geosync/**data** : entrées/sorties de l'outil de synchronisation; contient les logs (sauf pour le cron) et y enregistre la dernière date des couches synchronisées (lastdate.txt)
-* ~/owncloud/_geosync/data/**lastdate.txt** : stocke la dernière date des couches synchronisées; pour resynchroniser toutes les couches, alors supprimer ce fichier
-* ~/owncloud/**_geosync**/**src** : sources de l'outil de synchronisation des couches provenant du partage de geosync_src/master/src (voir précédement); elles sont recopiées par **rsync** dans ~/**geosync**/**src**
-* ~/owncloud/_geosync/src/**cron.sh** : source du cron qui lance la publication automatique des couches; recopié par **rsync** dans ~/bin/geosync/**cron** et rendu exécutable
+NB : geosync_src/**dev**/src est partagé à georchestra-**dev**-ouvert)
+
+Description des fichiers de l'utilisateur georchestra-ouvert sur la machine georchestra :
+* ~/**cron_error.log** : erreurs du cron (le cron est responsable du montage du répertoire owncloud si besoin, donc les logs d'erreurs ne sont pas avec les autres dans owncloud)
+* ~/**owncloud** : montage webdav des fichiers de georchestra-ouvert sur ownncloud ; recopié par **rsync** dans ~/**owncloudsync** (les couches seules, sans _geosync)
+* ~/owncloud/**_geosync** : contient les sources de l'outil de synchronisation des couches (src) et ses entrées/sorties (data)
+* ~/owncloud/_geosync/**data** : entrées/sorties de l'outil de synchronisation ; contient les logs (sauf pour le cron) et y enregistre la dernière date des couches synchronisées (lastdate.txt)
+* ~/owncloud/_geosync/data/**lastdate.txt** : stocke la dernière date des couches synchronisées ; pour resynchroniser toutes les couches, alors supprimer ce fichier
+* ~/owncloud/**_geosync**/**src** : sources de l'outil de synchronisation des couches provenant du partage de geosync_src/master/src (voir précédement) ; elles sont recopiées par **rsync** dans ~/**geosync**/**src**
+* ~/owncloud/_geosync/src/**cron.sh** : source du cron qui lance la publication automatique des couches ; recopié par **rsync** dans ~/bin/geosync/**cron** et rendu exécutable
 * ~/owncloud/* : toutes les couches qui ont été partagées à georchestra-ouvert
 
 
 
 Chaîne d'appel :
+----------------
 
 * **crontab**
   * **cron** (cron.sh) 
@@ -45,5 +51,3 @@ Pistes d'évolution
         curl -u georchestraouvert:############ -XPOST -H "Content-Type: application/x-www-form-urlencoded" -d "dir=%2Ftmp%2Ftestimport%2F&file_type=single&uuidAction=overwrite&styleSheet=ArcCatalog8_to_ISO19115.xsl&assign=on&group=2&category=_none_&failOnError=off"  http://georchestra.umrthema.univ-fcomte.fr/geonetwork/srv/fre/util.import
         # reste à savoir comment faire le lien entre la fiche de métadonnées et les données même
 
-# geosync
-# geosync
