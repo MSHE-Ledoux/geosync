@@ -1,0 +1,126 @@
+#!/bin/bash
+
+#takes a filepath and returns a pretty name
+#examples
+# $(util::cleanName "./tic/tac toe.shp") -> tac_toe.shp
+# $(util::cleanName "./tic/tac toe.shp" -p) -> tic_tac_toe.shp
+util::cleanName() { 
+  local path="$1"
+  local option="$2"
+  local result
+  
+  local match repl
+
+  # par défaut, ne prend que le nom du fichier
+  # avec l'option -p, prend tout le chemin
+  if [[ "$option" == "-p" ]]; then
+    result="$path"
+
+    #remplace ./tic/tac en tic_tac
+    match="../"
+    repl=""
+    result=${result//$match/$repl}  # deletes all matches of "../" 
+    match="./"
+    repl=""
+    result=${result//$match/$repl}  # deletes all matches of "./"  
+    match="/"
+    repl="_"
+    result=${result//$match/$repl} # Replaces all matches of "/" by "_" 
+  else # par défaut
+    result=$(basename "$path") # ne retient pas les parents (ascendants) dans le chemin
+    
+    #rajoute un suffix unique par chemin pour éviter d'avoir des fichiers de même noms (mais de chemin différents) qui s'écrasent
+    #ex : tac toe.shp.xml -> tac toe_3435690277.shp.xml
+    #suffix store just the checksum of the file's path
+    local suffix resultsansext ext
+    suffix=$(echo -n "$path" | cksum | cut -d ' ' -f 1)
+    resultsansext=${result%%.*} # layer.shp.xml -> layer
+    ext=${result#*.} # layer.shp.xml -> shp.xml
+    result="${resultsansext}_${suffix}.${ext}"
+  fi
+
+  #remplace tac toe.shp en tac_toe.shp
+  match=" "
+  repl="_"
+  result=${result//$match/$repl} # Replaces all matches of " " by "_"   
+
+  echo "$result"
+}
+
+# récupére la date de changement la plus récente des fichiers (de même nom) de la couche, exemple .shp.xml
+# $(util::getlastchangedate "./tic/tac.shp") -> 2015-05-04 16:14:10.063284127 +0200
+# attention cela différe de la date de modification
+# le rsync la modifie à l'heure locale lorsque le fichier est a été modifié
+# tandis que la date de modification dépend de l'heure de l'OS (machine) sur lequel le fichier a été modifié
+util::getlastchangedate() { 
+  local filepath="$1"
+  local datemodif
+
+  # récupère la date de changement du fichier
+  # attention cela différe de la date de modification
+  # le rsync la modifie à l'heure locale lorsque le fichier est a été modifié
+  datemodif=$(stat --printf=%z "$filepath")
+  #%z   date du dernier changement au format lisible
+  # $ stat --printf=%z ./owncloudsync/clementData/clement/GPS/Point_ge.shp
+  # 2015-05-04 16:14:10.063284127 +0200
+  #%Z   date  du  dernier changement en secondes depuis le temps zéro de l'ordinateur
+  # $ stat --printf=%Z ./owncloudsync/clementData/clement/GPS/Point_ge.shp
+  # 1430748850
+  
+  #récupére la date la plus récente des changements des fichiers de la couche (de même nom que le shape) exemple .shp.xml
+  #pour resynchroniser la couche si par exemple les métadata ont été modifiées
+  # ou encore que des dépendances de la couche (ex:.shx) ont été partagées au synchroniseur seulement après la synchronisation de la couche (qui a due échouer)
+  local p filenamesansext datefile
+  p=$(dirname "$filepath")
+  filename=$(basename "$filepath")
+  filenamesansext=${filename%%.*} # layer.shp.xml -> layer
+  #pour chaque fichier portant le même nom que la couche dans le même dossier...
+  for file in "${p}/${filenamesansext}."*; do
+  # NB: éviter find dans une boucle car non fiable, voir https://github.com/koalaman/shellcheck/wiki/SC2044
+    datefile=$(stat --printf=%z "$file")
+    if [ "$datefile" \> "$datemodif" ]; then
+      datemodif=$datefile
+    fi
+  done
+
+  echo "$datemodif"
+}
+
+# renvoie la première chaine non nulle (sinon "")
+# utile pour définir une valeur par défaut parmi plusieurs
+# $(util::takefirstdefinedvalue $mynotemptyvar "default1" "default2") -> $mynotemptyvar
+# $(util::takefirstdefinedvalue $myemptyvar "default1" "default2") -> default1
+# $(util::takefirstdefinedvalue $myemptyvar $empty "default2") -> default2
+util::takefirstdefinedvalue() {
+  local result=""
+  # parcours les arguments donnés...
+  for val in "$@"; do
+      # si une chaine est non vide (not empty) alors la renvoie
+      # donc renvoie la première valeur non vide
+      if [[ ! -z val ]]; then
+        result=$val
+        break
+      fi
+  done
+  echo "$result"
+}
+
+# renvoie le type de layer dont il s'agit : raster (tif,png,adf,jpg,ecw) ou vector (shp)
+# $(typeoflayer "./tic/tac.shp") -> vector
+# $(typeoflayer "./tic/tac.tif") -> raster
+util::typeoflayer() {
+  local filepath="$1"
+ 
+  local result="unknown"
+  local filename extension
+  filename=$(basename "$filepath")
+  extension="${filename##*.}" # layer.shp.xml -> shp.xml  || layer.tif -> tif  # ! sans "."
+  readonly extension
+
+  case $extension in
+    shp) result="vector" ;;
+    tif|png|adf|jpg|ecw) result="raster" ;;
+  esac
+
+  echo "$result"
+}
