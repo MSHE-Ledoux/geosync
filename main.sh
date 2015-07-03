@@ -13,8 +13,8 @@ APP_DIR="_geosync"
 # ls -ld /var/log/geosync
 # drwxrwxr-x 2 georchestra       georchestra     4096 juil.  3 15:05 geosync
 LOG_PATH="/var/log/geosync"
-PUBLI_LOG="$DATA_PATH/publish.log"
-ERROR_LOG="$DATA_PATH/error.log"
+PUBLI_LOG="$LOG_PATH/publish.log"
+ERROR_LOG="$LOG_PATH/error.log"
 
 
 #synchronise les fichiers du montage webdav pour être plus performant
@@ -23,8 +23,8 @@ cmd="rsync -avr --delete --exclude '$APP_DIR' --exclude 'lost+found' '$INPUT_OUT
 echo $cmd
 eval $cmd
 
-mkdir -p "$DATA_PATH"
-date >> "$LOG"
+mkdir -p "$LOG_PATH"
+date >> "$PUBLI_LOG"
 
 cmd="bash '$BASEDIR/publish.sh' -i '$INPUT_COPY_PATH' -w geosync -d shpowncloud -g '$DATA_PATH' -p '$PASSFILE' 1>>'$PUBLI_LOG' 2>>'$ERROR_LOG'"
 echo $cmd
