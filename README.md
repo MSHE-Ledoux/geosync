@@ -1,9 +1,11 @@
-Objectif :
-----------
+Objectif de geosync :
+---------------------
 Indexer dans geOrchestra les données déposées par les utilisateurs dans OwnCloud.
 
-Vue d'ensemble de l'architecture globale de geosync
----------------------------------------------------
+Le code a été géré initialement avec OwnCloud. L'objectif était de permettre aux différentes instances de geOrchestra (dev, pre-prod et prod) de disposer du même code. Il est aujourd'hui porté sur GitHub.
+
+Vue d'ensemble de l'architecture :
+----------------------------------
 Sur owncloud, geosync_src/**master**/src est partagé à **georchestra-ouvert** ; attention, le partage porte sur "src" et non sur "master" ; ce dossier est déplacé au setup par l'utilisateur georchestra-ouvert dans owncloud/_geosync.
 
 NB : geosync_src/**dev**/src est partagé à georchestra-**dev**-ouvert)
