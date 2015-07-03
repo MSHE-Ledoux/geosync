@@ -4,7 +4,7 @@
 #dump de l'annuaire
 #slapcat > ~/slapcat.ldif
 #modifier le ldap à la main
-#ldapvi --host localhost -D "cn=admin,dc=georchestra,dc=univ-fcomte,dc=fr" -w "ThemaLdap" -b "dc=georchestra,dc=univ-fcomte,dc=fr"
+#ldapvi --host localhost -D "cn=admin,dc=georchestra,dc=univ-fcomte,dc=fr" -w "********" -b "dc=georchestra,dc=univ-fcomte,dc=fr"
 
 import ldap  # apt-get install python-ldap
 import ldap.modlist
