@@ -1,16 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-#dump de l'annuaire
-#slapcat > ~/slapcat.ldif
-#modifier le ldap à la main
-#ldapvi --host localhost -D "cn=admin,dc=georchestra,dc=univ-fcomte,dc=fr" -w "********" -b "dc=georchestra,dc=univ-fcomte,dc=fr"
+# objectif : importer les utilisateurs Active Directory dans LDAP
+# source : Pierre Mauduit, pierre.mauduit@camptocamp.com
 
-import ldap  # apt-get install python-ldap
+# dump de l'annuaire ldap :
+# slapcat > ~/slapcat.ldif
+# modification de l'annuaire avec ldapvi :
+# ldapvi --host localhost -D "cn=admin,dc=georchestra,dc=univ-fcomte,dc=fr" -w "********" -b "dc=georchestra,dc=univ-fcomte,dc=fr"
+
+# pré-requis
+# apt-get install python-ldap
+
+import ldap
 import ldap.modlist
 import string
 import sys
 import base64
+import ConfigParser
 
 STR_RED   = "\033[01;31m{0}\033[00m"
 STR_GREEN = "\033[1;36m{0}\033[00m"
@@ -22,15 +29,31 @@ STR_GREEN = "\033[1;36m{0}\033[00m"
 #DRY_RUN = True
 DRY_RUN = False
 
-# Active Directory
-IN_LDAP_URI    = 'ldap://thema-serv3.umrthema.univ-fcomte.fr:389'
-IN_LDAP_BINDDN = 'CN=administrateur,CN=users,DC=umrthema,DC=univ-fcomte,DC=fr'
-IN_LDAP_PASSWD = '********'
+# Lecture des paramètres AD et LDAP
+config = ConfigParser.RawConfigParser()
+config.read('.ldap.conf')
 
-# OpenLDAP
-OUT_LDAP_URI    = 'ldap://localhost:389'
-OUT_LDAP_BINDDN = 'cn=admin,dc=georchestra,dc=univ-fcomte,dc=fr'
-OUT_LDAP_PASSWD = '********'
+try:
+    # Active Directory
+    IN_LDAP_URI    = config.get('IN_LDAP', 'IN_LDAP_URI')
+    IN_LDAP_BINDDN = config.get('IN_LDAP', 'IN_LDAP_BINDDN')
+    IN_LDAP_PASSWD = config.get('IN_LDAP', 'IN_LDAP_PASSWD')
+
+    # OpenLDAP
+    OUT_LDAP_URI    = config.get('OUT_LDAP', 'OUT_LDAP_URI')
+    OUT_LDAP_BINDDN = config.get('OUT_LDAP', 'OUT_LDAP_BINDDN')
+    OUT_LDAP_PASSWD = config.get('OUT_LDAP', 'OUT_LDAP_PASSWD')
+
+except ConfigParser.Error, err:
+    print 'Oops, une erreur dans votre fichier de conf (%s)' % err
+    sys.exit(1)
+
+print 'IN_LDAP_URI:%s' % (IN_LDAP_URI)
+print 'IN_LDAP_BINDDN:%s' % (IN_LDAP_BINDDN)
+print 'IN_LDAP_PASSWD:%s' % (IN_LDAP_PASSWD)
+print 'OUT_LDAP_URI:%s' % (OUT_LDAP_URI)
+print 'OUT_LDAP_BINDDN:%s' % (OUT_LDAP_BINDDN)
+print 'OUT_LDAP_PASSWD:%s' % (OUT_LDAP_PASSWD)
 
 # branches of the AD to be browsed. the LDAP scope that will be used is a 'one',
 # i.e. the immediate children of the node.
