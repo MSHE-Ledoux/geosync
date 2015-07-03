@@ -3,14 +3,14 @@
 usage() { 
   program=$(basename "$0") 
   echo "==> usage :"
-  echo "$program [-i inputpath=.] [-o output] [-g configpath=.] [-p passfilepath=./.pass] -w workspace -d datastore [-c coveragestore] [-e epsg] [-v]"
-  echo "$program -i 'directory of vectors/rasters' [-g configpath=.] [-p passfilepath=./.pass] -w workspace -d datastore [-e epsg] [-v]"
-  echo "$program -i vector.shp [-p passfilepath=./.pass] -w workspace -d datastore [-e epsg] [-v]"
-  echo "$program -i raster.tif|png|adf|jpg|ecw [-p passfilepath=./.pass] -w workspace -c coveragestore [-e epsg] [-v]"
+  echo "$program [-i inputpath=.] [-o output] [-g datapath=.] [-p passfile=./.geosync.conf] -w workspace -d datastore [-c coveragestore] [-e epsg] [-v]"
+  echo "$program -i 'directory of vectors/rasters' [-g datapath=.] [-p passfile=./.geosync.conf] -w workspace -d datastore [-e epsg] [-v]"
+  echo "$program -i vector.shp [-p passfile=./.geosync.conf] -w workspace -d datastore [-e epsg] [-v]"
+  echo "$program -i raster.tif|png|adf|jpg|ecw [-p passfile=./.geosync.conf] -w workspace -c coveragestore [-e epsg] [-v]"
   echo ""
   echo "Publie les couches (rasteurs, vecteurs) dans le geoserver depuis le dossier donné ([input]) ou sinon courant et ses sous-dossiers"
   echo ""
-  echo "le login, mot de passe et l'url du geoserver doivent être dans un fichier (par défaut, .pass dans le même dossier que ce script)"
+  echo "le login, mot de passe et l'url du geoserver doivent être dans un fichier (par défaut, .geosync.conf dans le même dossier que ce script)"
 } 
 
 echoerror() {
@@ -23,23 +23,23 @@ error() {
 }
 
 # importe les vecteurs et rasteurs du dossier (path) et sous-dossiers
-# écrit dans un fichier dans le configpath la date de changement la plus récente des fichiers indexés
+# écrit dans un fichier dans le datapath la date de changement la plus récente des fichiers indexés
 importallfiles() {
   local path="$1"
   shift #consomme l'argument du tableau des arguments, pour pouvoir récupérer le reste dans "$@"
-  local configpath="$1"
+  local datapath="$1"
   shift #consomme l'argument du tableau des arguments, pour pouvoir récupérer le reste dans "$@"
 
   local lastdatemodif=0
   local newlastdatemodif
 
-  #si configpath n'est pas un dossier existant alors erreur (pour pouvoir sauvegarder le fichier avec la dernière date de changement des fichiers traités)
-  if  [[ ! -d "$configpath" ]]; then
-    error "dossier inexistant : configpath : $configpath"
+  #si datapath n'est pas un dossier existant alors erreur (pour pouvoir sauvegarder le fichier avec la dernière date de changement des fichiers traités)
+  if  [[ ! -d "$datapath" ]]; then
+    error "dossier inexistant : datapath : $datapath"
   fi
 
   #fichier dédié à stocker la valeur lastdatemodif, date de changement la plus récente des fichiers indexés
-  configfile="$configpath/lastdate.txt"
+  configfile="$datapath/lastdate.txt"
 
   #test si le fichier  temporaire stockant la date de modif la plus récente existe
   #si tel est le cas, alors la récupère
@@ -151,7 +151,7 @@ main() {
   #chemin du script pour pouvoir appeler d'autres scripts dans le même dossier
   BASEDIR=$(dirname "$0")
 
-  #local input output epsg configpath passfilepath workspace datastore coveragestore verbose help
+  #local input output epsg datapath passfile workspace datastore coveragestore verbose help
   local OPTIND opt
   while getopts "i:o:e:g:p:w:d:c:vh" opt; do
     # le : signifie que l'option attend un argument
@@ -159,8 +159,8 @@ main() {
       i) input=$OPTARG ;;
       o) output=$OPTARG ;;
       e) epsg=$OPTARG ;;
-      g) configpath=$OPTARG ;;
-      p) passfilepath=$OPTARG ;;
+      g) datapath=$OPTARG ;;
+      p) passfile=$OPTARG ;;
       w) workspace=$OPTARG ;;
       d) datastore=$OPTARG ;;
       c) coveragestore=$OPTARG ;;
@@ -180,27 +180,27 @@ main() {
     exit
   fi
 
-  # "passfilepath" nom/chemin du fichier du host/login/mot de passe
-  # par défaut, prend le fichier .pass dans le dossier de ce script
-  if [ ! "$passfilepath" ]; then
-    passfilepath="$BASEDIR/.pass"
+  # "passfile" nom/chemin du fichier du host/login/mot de passe
+  # par défaut, prend le fichier .geosync.conf dans le dossier de ce script
+  if [ ! "$passfile" ]; then
+    passfile="$BASEDIR/.geosync.conf"
   fi
 
   #test l'existance du fichier contenant le host/login/mot de passe
-  if [ ! -f "$passfilepath" ]; then 
-    error "le fichier contenant le host/login/mot de passe n'existe pas; le spécifier avec l'option -p [passfilepath]"
+  if [ ! -f "$passfile" ]; then 
+    error "le fichier contenant le host/login/mot de passe n'existe pas; le spécifier avec l'option -p [passfile]"
   fi
 
-  #récupère login ($login), mot de passe ($pass), url du geoserver ($host) dans le fichier .pass situé dans le même dossier que ce script
+  #récupère login ($login), mot de passe ($pass), url du geoserver ($host) dans le fichier .geosync.conf situé dans le même dossier que ce script
   local login pass host
-  source "$passfilepath"
+  source "$passfile"
 
-  #attention le fichier .pass est interprété et fait donc confiance au code
-  # pour une solution plus sûr envisager quelque chose comme : #while read -r line; do declare $line; done < "$BASEDIR/.pass"
+  #attention le fichier .geosync.conf est interprété et fait donc confiance au code
+  # pour une solution plus sûr envisager quelque chose comme : #while read -r line; do declare $line; done < "$BASEDIR/.geosync.conf"
 
   # vérification du host/login/mot de passe
   if [ ! "$login" ] || [ ! "$pass" ] || [ ! "$host" ]; then
-    error "url du georserver, login ou mot de passe non définit; le fichier spécifié avec l'option -p [passfilepath] doit contenir la définition des variables suivantes sur 3 lignes : login=[login] pass=[password] host=[geoserver's url]"
+    error "url du georserver, login ou mot de passe non définit; le fichier spécifié avec l'option -p [passfile] doit contenir la définition des variables suivantes sur 3 lignes : login=[login] pass=[password] host=[geoserver's url]"
   fi
 
   #valeurs des paramètres par défaut
@@ -212,9 +212,9 @@ main() {
   fi
 
   # par défaut cherche le fichier contenant la dernière date de changement du fichier traité dans le répertoire courant
-  if [[ ! "$configpath" ]]; then
+  if [[ ! "$datapath" ]]; then
     # par défaut
-    configpath="."
+    datapath="."
   fi
 
   if  [[ ! -e "$input" ]]; then
@@ -242,7 +242,7 @@ main() {
 
   #si c'est le chemin d'un répertoire alors indexe le répertoire
   if [[ -d "$input" ]]; then
-    importallfiles "$input" "$configpath"
+    importallfiles "$input" "$datapath"
 
   #si c'est le chemin d'un fichier (couche) alors indexe le fichier
   elif [[ -f "$input" ]]; then

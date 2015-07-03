@@ -4,11 +4,17 @@ BASEDIR=$(dirname "$0")
 
 INPUT_OUTPUT_PATH="$HOME/owncloud"
 INPUT_COPY_PATH="$HOME/owncloudsync"
-PASSFILE_PATH="$HOME/owncloud/_geosync/src/.pass"
+
+PASSFILE="$HOME/bin/.geosync.conf"
+DATA_PATH="$HOME/data" #contient le fichier lastdate.txt avec la dernière date de changement de fichier traité
+
 APP_DIR="_geosync"
-DATA_PATH="${INPUT_OUTPUT_PATH}/${APP_DIR}/data" #contient le fichier lastdate.txt avec la dernière date de changement de fichier traité
-LOG_PATH="$DATA_PATH/publish.log"
-ERROR_LOG_PATH="$DATA_PATH/error.log"
+
+# ls -ld /var/log/geosync
+# drwxrwxr-x 2 georchestra       georchestra     4096 juil.  3 15:05 geosync
+LOG_PATH="/var/log/geosync"
+PUBLI_LOG="$DATA_PATH/publish.log"
+ERROR_LOG="$DATA_PATH/error.log"
 
 
 #synchronise les fichiers du montage webdav pour être plus performant
@@ -18,8 +24,8 @@ echo $cmd
 eval $cmd
 
 mkdir -p "$DATA_PATH"
-date >> "$LOG_PATH"
+date >> "$LOG"
 
-cmd="bash '$BASEDIR/publish.sh' -i '$INPUT_COPY_PATH' -w geosync -d shpowncloud -g '$DATA_PATH' -p '$PASSFILE_PATH' 1>>'$LOG_PATH' 2>>'$ERROR_LOG_PATH'"
+cmd="bash '$BASEDIR/publish.sh' -i '$INPUT_COPY_PATH' -w geosync -d shpowncloud -g '$DATA_PATH' -p '$PASSFILE' 1>>'$PUBLI_LOG' 2>>'$ERROR_LOG'"
 echo $cmd
 eval $cmd
