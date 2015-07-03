@@ -29,3 +29,4 @@ date >> "$PUBLI_LOG"
 cmd="bash '$BASEDIR/publish.sh' -i '$INPUT_COPY_PATH' -w geosync -d shpowncloud -g '$DATA_PATH' -p '$PASSFILE' 1>>'$PUBLI_LOG' 2>>'$ERROR_LOG'"
 echo $cmd
 eval $cmd
+
