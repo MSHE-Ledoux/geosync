@@ -1,0 +1,10 @@
+[IN_LDAP]
+IN_LDAP_URI    = ldap://thema-serv3.umrthema.univ-fcomte.fr:389
+IN_LDAP_BINDDN = CN=administrateur,CN=users,DC=umrthema,DC=univ-fcomte,DC=fr
+IN_LDAP_PASSWD = motdepasseAD
+
+[OUT_LDAP]
+OUT_LDAP_URI    = ldap://localhost:389
+OUT_LDAP_BINDDN = cn=admin,dc=georchestra,dc=univ-fcomte,dc=fr
+OUT_LDAP_PASSWD = motdepasseLDAP
+
