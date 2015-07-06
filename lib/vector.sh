@@ -26,7 +26,8 @@ vector::publish() {
   local DIR
   #chemin du script (sourcé ou non) pour pouvoir appeler d'autres scripts dans le même dossier
   DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-  echo -e "DIR:$DIR"
+  echo "BASH_SOURCE[0]:${BASH_SOURCE[0]}"
+  echo "DIR:$DIR"
   # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
   #readonly DIR
 
