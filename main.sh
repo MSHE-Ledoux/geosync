@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# usage : "bash /chemin/complet/main.sh"  et non "bash main.sh"
+# sinon ${BASH_SOURCE[0]} utilisé par certaines librairies renverra "." au lieu du répertoire attendu 
+
 BASEDIR=$(dirname "$0")
 
 INPUT_OUTPUT_PATH="$HOME/owncloud"
