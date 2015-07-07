@@ -21,6 +21,6 @@ fi
 ) 200>/var/lock/.geosync.exclusivelock
 
 
-#crontab -e
-#toutes les minutes de 8h à 20h, du lundi au vendredi, importe les couches partagées via owncloud dans le geoserver
-#*/1 08-20 * * 1-5  cd /home/georchestra-ouvert && ./bin/geosync/cron 2>>./owncloud/_geosync/data/cron_error.log
+# à inclure dans un crontab
+# toutes les minutes de 8h à 20h, du lundi au vendredi, importe les couches partagées via owncloud dans le geoserver
+# */1 08-20 * * 1-5 /home/georchestra-ouvert/bin/sync_data.sh 
