@@ -33,9 +33,10 @@ importallfiles() {
   local lastdatemodif=0
   local newlastdatemodif
 
-  #si datapath n'est pas un dossier existant alors erreur (pour pouvoir sauvegarder le fichier avec la dernière date de changement des fichiers traités)
+  # si datapath n'est pas un dossier existant alors on le créée
   if  [[ ! -d "$datapath" ]]; then
     error "dossier inexistant : datapath : $datapath"
+    mkdir $datapath
   fi
 
   #fichier dédié à stocker la valeur lastdatemodif, date de changement la plus récente des fichiers indexés
