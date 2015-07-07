@@ -10,6 +10,10 @@ fi
 (
   # Wait for lock on /var/lock/.myscript.exclusivelock (fd 200) for 10 seconds
   flock -x -w 10 200 || exit 1
+
+  # date dans les logs
+  date >> /var/log/geosync/main.log
+  date >> /var/log/geosync/main_error.log
   
   # appel de main.sh
   bash /home/georchestra-ouvert/bin/main.sh 1>>/var/log/geosync/main.log 2>>/var/log/geosync/main_error.log
