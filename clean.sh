@@ -65,13 +65,13 @@ main() {
   #se base sur le répertoire synchronisé obtenu par :
   #rsync -avr --delete --exclude '_geosync' --exclude 'lost+found' '/home/georchestra-ouvert/owncloud/' '/home/georchestra-ouvert/owncloudsync/'
 
-  passfilepath="$BASEDIR/.pass"
+  passfilepath="$BASEDIR/.geosync.conf"
 
-  #récupère login ($login), mot de passe ($pass), url du geoserver ($host) dans le fichier .pass situé dans le même dossier que ce script
+  #récupère login ($login), mot de passe ($pass), url du geoserver ($host) dans le fichier .geosync situé dans le même dossier que ce script
   local login pass host
   source "$passfilepath"
 
-  #attention le fichier .pass est interprété et fait donc confiance au code
+  #attention le fichier .geosync est interprété et fait donc confiance au code
   # pour une solution plus sûr envisager quelque chose comme : #while read -r line; do declare $line; done < "$BASEDIR/.pass"
 
   # vérification du host/login/mot de passe
