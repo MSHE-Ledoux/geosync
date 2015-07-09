@@ -22,7 +22,7 @@ APP_DIR="_geosync"
 # drwxrwxr-x 2 georchestra       georchestra     4096 juil.  3 15:05 geosync
 LOG_PATH="/var/log/geosync"
 PUBLI_LOG="$LOG_PATH/publish.log"
-ERROR_LOG="$LOG_PATH/error.log"
+ERROR_LOG="$LOG_PATH/publish_error.log"
 
 #synchronise les fichiers du montage webdav pour être plus performant
 #rsync -avr --delete --exclude '_geosync' --exclude 'lost+found' '/home/georchestra-ouvert/owncloud/' '/home/georchestra-ouvert/owncloudsync/'
