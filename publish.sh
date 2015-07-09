@@ -35,7 +35,7 @@ importallfiles() {
 
   # si datapath n'est pas un dossier existant alors on le créée
   if  [[ ! -d "$datapath" ]]; then
-    error "dossier inexistant : datapath : $datapath"
+    echo "creation de datapath : $datapath"
     mkdir $datapath
   fi
 
