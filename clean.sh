@@ -83,7 +83,7 @@ main() {
   password=$pass
 
   #créer un dossier temporaire et stocke son chemin dans une variable
-  local tmpdir=/tmp/geosync_clean
+  local tmpdir=~/tmp/geosync_clean
 
   #suprime le dossier temporaire et le recrée
   rm -R "$tmpdir"
