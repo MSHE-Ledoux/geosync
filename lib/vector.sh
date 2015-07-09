@@ -117,15 +117,15 @@ vector::publish() {
 
   local statuscode=0
 
-  #créer un dossier temporaire et stocke son chemin dans une variable
+  # crée un dossier temporaire et stocke son chemin dans une variable
   local tmpdir=~/tmp/geosync_vector
 
-  #suprime le dossier temporaire et le recrée
+  # supprime le dossier temporaire et le recrée
   rm -R "$tmpdir"
   mkdir "$tmpdir"
   #tmpdir=$(mktemp --directory /tmp/geoscript_vector_XXXXXXX) # !!! does NOT work as file://$tmpdir becomes file:/tmp instead of file:///tmp
 
-  # converti le système de coordonnées du shapefile (+ encodage en UTF-8)
+  # convertit le système de coordonnées du shapefile (+ encodage en UTF-8)
   # attention : ne pas mettre le résultat directement dans le répertoire du datastore (data_dir) du Geoserver (l'appel à l'API rest s'en charge)
   if  [ $verbose ]; then
     echo "ogr2ogr -t_srs EPSG:$epsg -lco ENCODING=UTF-8 -overwrite $tmpdir/$output $input"
