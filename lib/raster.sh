@@ -118,8 +118,8 @@ raster::publish() {
   local statuscode=0
 
   #créer un dossier temporaire et stocke son chemin dans une variable
-  local tmpdir1=/tmp/geosync_raster_step1
-  local tmpdir=/tmp/geosync_raster_step2
+  local tmpdir1=~/tmp/geosync_raster_step1
+  local tmpdir=~/tmp/geosync_raster_step2
 
   #suprime le dossier temporaire et le recrée
   rm -R "$tmpdir1"
