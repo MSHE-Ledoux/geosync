@@ -118,7 +118,7 @@ vector::publish() {
   local statuscode=0
 
   #créer un dossier temporaire et stocke son chemin dans une variable
-  local tmpdir=/tmp/geosync_vector
+  local tmpdir=~/tmp/geosync_vector
 
   #suprime le dossier temporaire et le recrée
   rm -R "$tmpdir"
