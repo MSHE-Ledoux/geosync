@@ -6,6 +6,10 @@ Le code a été géré initialement avec OwnCloud. L'objectif était de permettr
 
 Vue d'ensemble de l'architecture :
 ----------------------------------
+
+**ce document est aujourd'hui obsolète.
+le code est géré dorénavant avec Github et non plus avec OwnCloud.**
+
 Sur owncloud, geosync_src/**master**/src est partagé à **georchestra-ouvert** ; attention, le partage porte sur "src" et non sur "master" ; ce dossier est déplacé au setup par l'utilisateur georchestra-ouvert dans owncloud/_geosync.
 
 NB : geosync_src/**dev**/src est partagé à georchestra-**dev**-ouvert)
