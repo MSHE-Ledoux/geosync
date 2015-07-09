@@ -24,7 +24,7 @@ echo $(xmllint --xpath "$xp" "$input" 2>/dev/null )
 main() {
   # chemin du script pour pouvoir appeler d'autres scripts dans le même dossier
   BASEDIR=$(dirname "$0")
-  echo "BASEDIR:$BASEDIR"
+  #echo "BASEDIR:$BASEDIR"
   
   local OPTIND opt
   while getopts "adsvh" opt; do
