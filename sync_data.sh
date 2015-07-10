@@ -2,7 +2,7 @@
 
 # si semble non monté alors on monte le webdav
 # attention : ne pas faire précéder ce code par le flock (ci-dessous) car sinon semble ne pas supprimer le verrou
-if [[ ! -d ~/owncloud/_geosync ]]; then
+if [[ ! -d ~/owncloud ]]; then
   mount ~/owncloud
 fi    
 
