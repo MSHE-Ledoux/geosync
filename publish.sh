@@ -116,10 +116,14 @@ importfile() {
     fi
 
     # convertit et publie la couche
-    vector::publish -i "$filepath" -o "$outputlayername" -l "$login" -p "$pass" -u "$host"  -w "$workspace" -d "$datastore" -e "$epsg" $verbosestr
+    cmd="vector::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$pass' -u '$host'  -w '$workspace' -d '$datastore' -e '$epsg' $verbosestr"
+    echo $cmd
+    eval $cmd
 
     #publie les metadata même si le .xml n'existe pas (dans ce cas publie les données par défaut)
-    metadata::publish -i "$filepath.xml" -o "$outputlayername" -l "$login" -p "$pass" -u "$host" -w "$workspace" -d "$datastore" $verbosestr
+    cmd="metadata::publish -i '$filepath.xml' -o '$outputlayername' -l '$login' -p '$pass' -u '$host' -w '$workspace' -d '$datastore' $verbosestr"
+    echo $cmd
+    eval $cmd
 
   }
 
@@ -133,7 +137,9 @@ importfile() {
       outputlayername=$(util::cleanName "$filepath" -p)
     fi
 
-    raster::publish -i "$filepath" -o "$outputlayername" -l "$login" -p "$pass" -u "$host" -w "$workspace" -c "$coveragestore" -e "$epsg" $verbosestr
+    cmd="raster::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$pass' -u '$host' -w '$workspace' -c '$coveragestore' -e '$epsg' $verbosestr"
+    echo $cmd
+    eval $cmd
 
   }
 
@@ -143,7 +149,7 @@ importfile() {
   *) echoerror "file not supported : $filepath" ;;
   esac
 
-  # TODO: retourner si succés ou non
+  # TODO: retourner si succès ou non
   
 }
 
