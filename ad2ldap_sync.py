@@ -22,7 +22,6 @@ import ConfigParser
 STR_RED   = "\033[01;31m{0}\033[00m"
 STR_GREEN = "\033[1;36m{0}\033[00m"
 
-
 # Script configuration
 
 # dry-run: set it to False to actually write into the OpenLDAP
@@ -57,15 +56,14 @@ print 'OUT_LDAP_PASSWD:%s' % (OUT_LDAP_PASSWD)
 
 # branches of the AD to be browsed. the LDAP scope that will be used is a 'one',
 # i.e. the immediate children of the node.
-IN_USER_BASEDN  = [
+IN_USERS_BASEDN  = [
           'CN=users,DC=umrthema,DC=univ-fcomte,DC=fr',                    
 ]
 
 # Filters to be applied on each corresponding branches the number of elements
 # should match the number of the previous array
-IN_USER_FILTERS = [
+IN_USERS_FILTERS = [
           '(objectClass=user)',
-          # '(CN=LdapSIG)',
 ]
 
 # some fields can be shared in common between AD and OpenLDAP, but some others
@@ -189,9 +187,9 @@ def openldap_add_user_to_group(user_uid, group_uid, dry_run):
   return True
 
 # Looks up user attrs, given a uid and an optional attribute field name
-def lookup_user_attributes(uid, usr_list, uid_attr_name = 'sAMAccountName'):
-  for usr in usr_list:
-    _, attrs_list = usr[0]
+def lookup_user_attributes(uid, user_list, uid_attr_name = 'sAMAccountName'):
+  for user in user_list:
+    _, attrs_list = user[0]
     # TODO: iterate on each uid ? can be multivalued ?
     if attrs_list[uid_attr_name][0] == uid:
       return attrs_list
@@ -204,10 +202,11 @@ if __name__ == "__main__":
   out_users = []
   in_uid = []
   out_uid = []
+
   # getting users from the AD
-  for idx, currentUserBaseDn in enumerate(IN_USER_BASEDN):
+  for idx, currentUserBaseDn in enumerate(IN_USERS_BASEDN):
     try:
-      ldap_result_id = inLdapCnx.search(currentUserBaseDn, ldap.SCOPE_SUBTREE, IN_USER_FILTERS[idx], ATTRIBUTES_MAPPING.keys())
+      ldap_result_id = inLdapCnx.search(currentUserBaseDn, ldap.SCOPE_SUBTREE, IN_USERS_FILTERS[idx], ATTRIBUTES_MAPPING.keys())
       while 1:
         result_type, result_data = inLdapCnx.result(ldap_result_id, 0)
         if (result_data == []):
@@ -221,6 +220,10 @@ if __name__ == "__main__":
             in_uid.append(result_data[0][1]['sAMAccountName'][0])
     except ldap.LDAPError, e:
       print STR_RED.format(e)
+    # print AD users to stdout
+    print "AD users"
+    dump_users(in_users)
+
   # getting users from the OpenLDAP
   try:
     returned_attrs = [ attr for att in ATTRIBUTES_MAPPING.values() for attr in att ]
@@ -238,24 +241,31 @@ if __name__ == "__main__":
   except ldap.LDAPError, e:
     print STR_RED.format(e)
 
+  # print LDAP users to stdout
+  print "LDAP users"
+  dump_users(out_users)
+
   # Step 1: Removing non protected users from the OpenLDAP that are not listed in
   # the Active Directory
-  for usr in out_uid:
-    if usr not in OUT_PROTECTED_USERS and usr not in in_uid:
-      openldap_remove_user(usr, DRY_RUN)
+  for user in out_uid:
+    if user not in OUT_PROTECTED_USERS and user not in in_uid:
+      openldap_remove_user(user, DRY_RUN)
 
   # Step 2: Insert users from the AD that are not in the OpenLDAP yet AND has a mail
   # (using default group)
-  for usr in in_uid:
-    if usr not in out_uid:
-      user_attributes = lookup_user_attributes(usr, in_users)
+  for user in in_uid:
+    if user not in out_uid:
+      user_attributes = lookup_user_attributes(user, in_users)
+      print 'user:%s => %s' % (user,user_attributes)
       # only add users with email address
-      if "mail" in user_attributes: # and user_attributes['mail'][0] == 'martin.tovmassian@mshe.univ-fcomte.fr': # : # modify by Alexandre
-        if openldap_create_user(usr, user_attributes, DRY_RUN):
+      if "mail" in user_attributes:
+        if openldap_create_user(user, user_attributes, DRY_RUN):
           # adding the created user to the default groups
           for group in OUT_DEFAULT_GROUPS:
-            openldap_add_user_to_group(usr, group, DRY_RUN)
+            openldap_add_user_to_group(user, group, DRY_RUN)
+
   # end: disconnect
   inLdapCnx.unbind_s()
   outLdapCnx.unbind_s()
+
 
