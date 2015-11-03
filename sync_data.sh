@@ -2,9 +2,16 @@
 
 # si semble non monté alors on monte le webdav
 # attention : ne pas faire précéder ce code par le flock (ci-dessous) car sinon semble ne pas supprimer le verrou
-if [[ ! -d ~/owncloud ]]; then
-  mount ~/owncloud
-fi    
+
+# sans autofs
+#if [[ ! -d ~/owncloud ]]; then
+#  mount ~/owncloud
+#fi    
+
+# avec autofs
+if [[ ! -d ~/owncloud/owncloud ]]; then
+   cd ~/owncloud/owncloud
+fi
 
 # utilisation d'un verrou pour éviter que le script main.sh ne se lance plusieurs fois en même temps
 (

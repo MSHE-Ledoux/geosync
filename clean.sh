@@ -64,11 +64,11 @@ main() {
 
   workspace="geosync"
   datastore="shpowncloud"
-  path="$HOME/owncloud" # "$HOME/owncloudsync" 
+  path="$HOME/owncloudsync" 
   #se base sur le répertoire synchronisé obtenu par :
   #rsync -avr --delete --exclude '_geosync' --exclude 'lost+found' '/home/georchestra-ouvert/owncloud/' '/home/georchestra-ouvert/owncloudsync/'
 
-  passfilepath="$BASEDIR/.geosync.conf"
+  passfilepath="$HOME/.geosync.conf"
 
   #récupère login ($login), mot de passe ($pass), url du geoserver ($host) dans le fichier .geosync situé dans le même dossier que ce script
   local login pass host

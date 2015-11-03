@@ -3,14 +3,14 @@
 usage() { 
   program=$(basename "$0") 
   echo "==> usage :"
-  echo "$program [-i inputpath=.] [-o output] [-g datapath=.] [-p passfile=./.geosync.conf] -w workspace -d datastore [-c coveragestore] [-e epsg] [-v]"
-  echo "$program -i 'directory of vectors/rasters' [-g datapath=.] [-p passfile=./.geosync.conf] -w workspace -d datastore [-e epsg] [-v]"
-  echo "$program -i vector.shp [-p passfile=./.geosync.conf] -w workspace -d datastore [-e epsg] [-v]"
-  echo "$program -i raster.tif|png|adf|jpg|ecw [-p passfile=./.geosync.conf] -w workspace -c coveragestore [-e epsg] [-v]"
+  echo "$program [-i inputpath=.] [-o output] [-g datapath=.] [-p passfile=~/.geosync.conf] -w workspace -d datastore [-c coveragestore] [-e epsg] [-v]"
+  echo "$program -i 'directory of vectors/rasters' [-g datapath=.] [-p passfile=~/.geosync.conf] -w workspace -d datastore [-e epsg] [-v]"
+  echo "$program -i vector.shp [-p passfile=~/.geosync.conf] -w workspace -d datastore [-e epsg] [-v]"
+  echo "$program -i raster.tif|png|adf|jpg|ecw [-p passfile=~/.geosync.conf] -w workspace -c coveragestore [-e epsg] [-v]"
   echo ""
   echo "Publie les couches (rasteurs, vecteurs) dans le geoserver depuis le dossier donné ([input]) ou sinon courant et ses sous-dossiers"
   echo ""
-  echo "le login, mot de passe et l'url du geoserver doivent être dans un fichier (par défaut, .geosync.conf dans le même dossier que ce script)"
+  echo "le login, mot de passe et l'url du geoserver doivent être dans un fichier (par défaut, .geosync.conf le home de georchestra-ouvert)"
 } 
 
 echoerror() {
@@ -188,9 +188,9 @@ main() {
   fi
 
   # "passfile" nom/chemin du fichier du host/login/mot de passe
-  # par défaut, prend le fichier .geosync.conf dans le dossier de ce script
+  # par défaut, prend le fichier .geosync.conf dans le home de georchestra-ouvert
   if [ ! "$passfile" ]; then
-    passfile="$BASEDIR/.geosync.conf"
+    passfile="$HOME/.geosync.conf"
   fi
 
   #test l'existance du fichier contenant le host/login/mot de passe
@@ -198,12 +198,12 @@ main() {
     error "le fichier contenant le host/login/mot de passe n'existe pas; le spécifier avec l'option -p [passfile]"
   fi
 
-  #récupère login ($login), mot de passe ($pass), url du geoserver ($host) dans le fichier .geosync.conf situé dans le même dossier que ce script
+  #récupère login ($login), mot de passe ($pass), url du geoserver ($host) dans le fichier .geosync.conf situé dans le home de georchestra-ouvert
   local login pass host
   source "$passfile"
 
   #attention le fichier .geosync.conf est interprété et fait donc confiance au code
-  # pour une solution plus sûr envisager quelque chose comme : #while read -r line; do declare $line; done < "$BASEDIR/.geosync.conf"
+  # pour une solution plus sûr envisager quelque chose comme : #while read -r line; do declare $line; done < "$HOME/.geosync.conf"
 
   # vérification du host/login/mot de passe
   if [ ! "$login" ] || [ ! "$pass" ] || [ ! "$host" ]; then

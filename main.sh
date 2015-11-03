@@ -5,7 +5,11 @@
 
 BASEDIR=$(dirname "$0")
 
-INPUT_OUTPUT_PATH="$HOME/owncloud"
+# sans autofs
+#INPUT_OUTPUT_PATH="$HOME/owncloud"
+# avec autofs
+INPUT_OUTPUT_PATH="$HOME/owncloud/owncloud"
+
 INPUT_COPY_PATH="$HOME/owncloudsync"
 
 # login + passwd + URL du serveur georchestra
@@ -25,7 +29,7 @@ PUBLI_LOG="$LOG_PATH/publish.log"
 ERROR_LOG="$LOG_PATH/publish_error.log"
 
 #synchronise les fichiers du montage webdav pour être plus performant
-#rsync -avr --delete --exclude '_geosync' --exclude 'lost+found' '/home/georchestra-ouvert/owncloud/' '/home/georchestra-ouvert/owncloudsync/'
+#rsync -avr --delete --exclude '_geosync' --exclude 'lost+found' '/home/georchestra-ouvert/owncloud/owncloud' '/home/georchestra-ouvert/owncloudsync/'
 cmd="rsync -avr --delete --exclude '$APP_DIR' --exclude 'lost+found' '$INPUT_OUTPUT_PATH/' '$INPUT_COPY_PATH/'"
 echo $cmd
 eval $cmd
@@ -36,7 +40,6 @@ fi
 date >> "$PUBLI_LOG"
 date >> "$ERROR_LOG"
 
-cmd="bash '$BASEDIR/publish.sh' -i '$INPUT_COPY_PATH' -w geosync -d shpowncloud -g '$DATA_PATH' -p '$PASSFILE' 1>>'$PUBLI_LOG' 2>>'$ERROR_LOG'"
+cmd="bash '$BASEDIR/publish.sh' -i '$INPUT_COPY_PATH' -w geosync -d shpowncloud -g '$DATA_PATH' -p '$PASSFILE' -v 1>>'$PUBLI_LOG' 2>>'$ERROR_LOG'"
 echo $cmd
 eval $cmd
-
