@@ -64,7 +64,7 @@ main() {
 
   workspace="geosync"
   datastore="shpowncloud"
-  path="$HOME/owncloud" # "$HOME/owncloudsync" 
+  path="$HOME/owncloudsync" 
   #se base sur le répertoire synchronisé obtenu par :
   #rsync -avr --delete --exclude '_geosync' --exclude 'lost+found' '/home/georchestra-ouvert/owncloud/' '/home/georchestra-ouvert/owncloudsync/'
 
