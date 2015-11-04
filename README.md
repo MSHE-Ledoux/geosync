@@ -22,8 +22,8 @@ Chaîne d'appel :
 ----------------
 
 * **crontab**
-  * **cron** (cron.sh) 
-  * erreurs --> cron_error.log
+  * **sync_data.shcron**
+    * erreurs --> cron_error.log
 * **main.sh**
   * erreurs --> main_error.log
   * log --> main.log
