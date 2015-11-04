@@ -22,21 +22,23 @@ Chaîne d'appel :
 ----------------
 
 * **crontab**
-  * **sync_data.shcron**
+  * **sync_data.sh**
     * erreurs --> cron_error.log
-* **main.sh**
-  * erreurs --> main_error.log
-  * log --> main.log
-* **publish.sh**
-  * erreurs --> error.log
-  * log --> publish.log
-  * lit/écrit dans lastdate.txt
-  * utilise des scripts dans lib
-    * **lib/vector.sh**
-    * **lib/metadata.sh**
-    * **lib/raster.sh**
-* **clean.sh**
-  * erreurs --> clean_error.log
+    * **main.sh**
+      * erreurs --> main_error.log
+      * log --> main.log
+        * **publish.sh**
+          * erreurs --> error.log
+          * log --> publish.log
+          * lit/écrit dans lastdate.txt
+          * utilise des scripts dans lib
+            * **lib/vector.sh**
+            * **lib/metadata.sh**
+            * **lib/raster.sh**
+  * **clean_data.sh**
+    * **clean.sh**
+      * erreurs --> clean_error.log
+      * log --> clean.log
 
 Pistes d'évolution
 ------------------
