@@ -2,27 +2,14 @@ Objectif de geosync :
 ---------------------
 Indexer dans geOrchestra les données déposées par les utilisateurs dans OwnCloud.
 
-Le code a été géré initialement avec OwnCloud. L'objectif était de permettre aux différentes instances de geOrchestra (dev, pre-prod et prod) de disposer du même code. Il est aujourd'hui porté sur GitHub.
-
 Vue d'ensemble de l'architecture :
 ----------------------------------
 
-**ce document est aujourd'hui obsolète.
-le code est géré dorénavant avec Github et non plus avec OwnCloud.**
-
-Sur owncloud, geosync_src/**master**/src est partagé à **georchestra-ouvert** ; attention, le partage porte sur "src" et non sur "master" ; ce dossier est déplacé au setup par l'utilisateur georchestra-ouvert dans owncloud/_geosync.
-
-NB : geosync_src/**dev**/src est partagé à georchestra-**dev**-ouvert)
-
 Description des fichiers de l'utilisateur georchestra-ouvert sur la machine georchestra :
-* ~/**cron_error.log** : erreurs du cron (le cron est responsable du montage du répertoire owncloud si besoin, donc les logs d'erreurs ne sont pas avec les autres dans owncloud)
-* ~/**owncloud** : montage webdav des fichiers de georchestra-ouvert sur ownncloud ; recopié par **rsync** dans ~/**owncloudsync** (les couches seules, sans _geosync)
-* ~/owncloud/**_geosync** : contient les sources de l'outil de synchronisation des couches (src) et ses entrées/sorties (data)
-* ~/owncloud/_geosync/**data** : entrées/sorties de l'outil de synchronisation ; contient les logs (sauf pour le cron) et y enregistre la dernière date des couches synchronisées (lastdate.txt)
+* ~/**owncloud/owncloud** : montage webdav des fichiers de georchestra-ouvert sur ownncloud ; recopié par **rsync** dans ~/**owncloudsync**
+* ~/owncloud/_geosync/**data** : entrées/sorties de l'outil de synchronisation. contient la dernière date des couches synchronisées (lastdate.txt)
 * ~/owncloud/_geosync/data/**lastdate.txt** : stocke la dernière date des couches synchronisées ; pour resynchroniser toutes les couches, alors supprimer ce fichier
-* ~/owncloud/**_geosync**/**src** : sources de l'outil de synchronisation des couches provenant du partage de geosync_src/master/src (voir précédement) ; elles sont recopiées par **rsync** dans ~/**geosync**/**src**
-* ~/owncloud/_geosync/src/**cron.sh** : source du cron qui lance la publication automatique des couches ; recopié par **rsync** dans ~/bin/geosync/**cron** et rendu exécutable
-* ~/owncloud/* : toutes les couches qui ont été partagées à georchestra-ouvert
+* ~/owncloud/owncloud/* : toutes les couches qui ont été partagées à georchestra-ouvert
 
 
 
