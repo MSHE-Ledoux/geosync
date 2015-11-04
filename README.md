@@ -26,15 +26,17 @@ Chaîne d'appel :
   * erreurs --> cron_error.log
 * **main.sh**
   * erreurs --> main_error.log
+  * log --> main.log
 * **publish.sh**
   * erreurs --> error.log
-    * log --> publish.log
-    * lit/écrit dans lastdate.txt
-      * lib/**vector.sh**
-      * lib/**metadata.sh**
-      * lib/**raster.sh**
+  * log --> publish.log
+  * lit/écrit dans lastdate.txt
+  * utilise des scripts dans lib
+    * **lib/vector.sh**
+    * **lib/metadata.sh**
+    * **lib/raster.sh**
 * **clean.sh**
-* erreurs --> clean_error.log
+  * erreurs --> clean_error.log
 
 Pistes d'évolution
 ------------------
