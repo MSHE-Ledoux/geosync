@@ -24,17 +24,17 @@ Chaîne d'appel :
 * **crontab**
   * **cron** (cron.sh) 
   * erreurs --> cron_error.log
-    * **main.sh**
-    * erreurs --> main_error.log
-      * **publish.sh**
-      * erreurs --> error.log
-      * log --> publish.log
-      * lit/écrit dans lastdate.txt
-        * lib/**vector.sh**
-        * lib/**metadata.sh**
-        * lib/**raster.sh**
-  * **clean.sh**
-  * erreurs --> clean_error.log
+* **main.sh**
+  * erreurs --> main_error.log
+* **publish.sh**
+  * erreurs --> error.log
+    * log --> publish.log
+    * lit/écrit dans lastdate.txt
+      * lib/**vector.sh**
+      * lib/**metadata.sh**
+      * lib/**raster.sh**
+* **clean.sh**
+* erreurs --> clean_error.log
 
 Pistes d'évolution
 ------------------
