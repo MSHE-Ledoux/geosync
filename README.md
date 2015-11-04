@@ -6,9 +6,10 @@ Vue d'ensemble de l'architecture :
 ----------------------------------
 
 Description des fichiers de l'utilisateur georchestra-ouvert sur la machine georchestra :
-* ~/**owncloud/owncloud** : montage webdav des fichiers de georchestra-ouvert sur ownncloud ; recopié par **rsync** dans ~/**owncloudsync**
-* ~/owncloud/_geosync/**data** : entrées/sorties de l'outil de synchronisation. contient la dernière date des couches synchronisées (lastdate.txt)
-* ~/owncloud/_geosync/data/**lastdate.txt** : stocke la dernière date des couches synchronisées ; pour resynchroniser toutes les couches, alors supprimer ce fichier
+* **~/owncloud/owncloud** : montage webdav des fichiers de georchestra-ouvert sur OwnCloud ; recopié par **rsync** dans ~/**owncloudsync**
+* **~/owncloud/owncloud/*** : toutes les couches qui ont été partagées à georchestra-ouvert
+* **~/data** : entrées/sorties de l'outil de synchronisation. contient la dernière date des couches synchronisées (lastdate.txt)
+* **~/data/lastdate.txt** : stocke la dernière date des couches synchronisées ; pour resynchroniser toutes les couches, alors supprimer ce fichier
 * ~/owncloud/owncloud/* : toutes les couches qui ont été partagées à georchestra-ouvert
 
 
