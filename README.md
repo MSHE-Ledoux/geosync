@@ -1,7 +1,6 @@
 Objectif de geosync :
 ---------------------
 Indexer dans geOrchestra les données déposées par les utilisateurs dans OwnCloud.
-ça avance...
 
 
 Vue d'ensemble de l'architecture :
