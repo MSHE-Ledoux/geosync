@@ -198,7 +198,7 @@ main() {
     echo "suppression de : $vector"
     # supprime une couche
     
-    cmd="curl --silent -u '$login:$pass' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/$datastore/featuretypes/$vector?recurse=true'"
+    cmd="curl --silent -u '$login:$pass' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/$datastore/featuretypes/$vector?recurse=true&purge=all'"
     # http://docs.geoserver.org/stable/en/user/rest/api/featuretypes.html#workspaces-ws-datastores-ds-featuretypes-ft-format
     # dans le cas d'un filesystem "recurse=true" dans le cas d'une bd postgis "recurse=false"
     if  [[ $verbose ]]; then
