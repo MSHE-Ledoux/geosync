@@ -128,9 +128,9 @@ vector::publish() {
   # convertit le système de coordonnées du shapefile (+ encodage en UTF-8)
   # attention : ne pas mettre le résultat directement dans le répertoire du datastore (data_dir) du Geoserver (l'appel à l'API rest s'en charge)
   if  [ $verbose ]; then
-    echo "ogr2ogr -t_srs EPSG:$epsg -lco ENCODING=UTF-8 -overwrite $tmpdir/$output $input"
+    echo "ogr2ogr -t_srs EPSG:$epsg -lco ENCODING=UTF-8 -overwrite -skipfailures $tmpdir/$output $input"
   fi
-  ogr2ogr -t_srs "EPSG:$epsg" -lco ENCODING=UTF-8 -overwrite "$tmpdir/$output" "$input"
+  ogr2ogr -t_srs "EPSG:$epsg" -lco ENCODING=UTF-8 -overwrite -skipfailures "$tmpdir/$output" "$input"
   #-lco ENCODING=ISO-8859-1  # correspond à LATIN1
   # attention : le datastore doit être en UTF-8
 
