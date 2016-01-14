@@ -112,7 +112,7 @@ importfile() {
     # $(util::cleanName "./tic/tac toe.shp") -> tac_toe.shp
     # $(util::cleanName "./tic/tac toe.shp" -p) -> tic_tac_toe.shp
     if [[ ! "$outputlayername" ]]; then
-      outputlayername=$(util::cleanName "$filepath")
+      outputlayername=$(util::cleanName "$filepath" -p)
     fi
 
     # convertit et publie la couche
