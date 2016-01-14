@@ -91,7 +91,7 @@ vector::publish() {
   if [ ! "$output" ]; then
     # filename correspondant à l'$input par défaut "prettyfied"
     # $(util::cleanName "./tic/tac toe.shp") -> tac_toe.shp
-    output=$(util::cleanName "$input")
+    output=$(util::cleanName "$input" -p)
   fi
 
   if [ ! "$epsg" ]; then
@@ -128,11 +128,55 @@ vector::publish() {
   # convertit le système de coordonnées du shapefile (+ encodage en UTF-8)
   # attention : ne pas mettre le résultat directement dans le répertoire du datastore (data_dir) du Geoserver (l'appel à l'API rest s'en charge)
   if  [ $verbose ]; then
-    echo "ogr2ogr -t_srs EPSG:$epsg -lco ENCODING=UTF-8 -overwrite $tmpdir/$output $input"
+    echo "ogr2ogr -t_srs EPSG:$epsg -lco ENCODING=UTF-8 -overwrite -skipfailures $tmpdir/$output $input"
   fi
-  ogr2ogr -t_srs "EPSG:$epsg" -lco ENCODING=UTF-8 -overwrite "$tmpdir/$output" "$input"
+  ogr2ogr -t_srs "EPSG:$epsg" -lco ENCODING=UTF-8 -overwrite -skipfailures "$tmpdir/$output" "$input"
   #-lco ENCODING=ISO-8859-1  # correspond à LATIN1
   # attention : le datastore doit être en UTF-8
+
+
+  # ----------------------------- NOUVEAU TEST POSTGIS -------------
+
+  # necessaire car le nom d'une table postgres ne peut avoir de .
+  output_pgsql=$(echo $output | cut -d. -f1) 
+
+  # envoi du shapefile vers postgis
+  echo "shp2pgsql -I -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h localhost -d geoserver_data -U geosync -w"
+  shp2pgsql -I -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h localhost -d geoserver_data -U geosync -w
+
+  # si la table est déjà publiée sur geoserver, la dépublie
+  if [ -d /var/www/geoserver/data/workspaces/test_ernest/geoserver_data/$output_pgsql]; then
+    depublication
+  fi 
+
+  # publication des données sur geoserver
+
+  if [ $verbose ]; then
+    echo "curl -v -u \"${login}:#########\" -XPUT -H \"Content-type: text/xml\"  -d \"<featureType><name>$output_pgsql</name></featureType>\"  $url/geoserver/rest/workspaces/test_ernest/datastores/geoserver_data/featuretypes"
+  
+    curl -v -u "${login}:${password}" -XPUT -H "Content-type: text/xml"  -d "<featureType><name>$output_pgsql</name></featureType>"  $url/geoserver/rest/workspaces/test_ernest/datastores/geoserver_data/featuretypes  
+  fi
+   
+  statuscode=$(curl --silent --output /dev/null -u "${login}:${password}" -XPUT -H "Content-type: text/xml"  -d "<featureType><name>$output_pgsql</name></featureType>"  $url/geoserver/rest/workspaces/test_ernest/datastores/geoserver_data/featuretypes 2>&1)
+
+  if  [ $verbose ]; then
+    echo "" #saut de ligne
+  fi
+
+  # si le code de la réponse http est compris entre [200,300[
+  if [[ "$statuscode" -ge "200" ]] && [[ "$statuscode" -lt "300" ]]; then
+    if  [ $verbose ]; then
+      echo "ok vecteur publié depuis postgres $statuscode"
+    fi
+    echo "vecteur publié depuis postgres: $output ($input)"
+  else
+    echoerror "error vecteur publié depuis postgres http code : $statuscode for $output"
+  fi
+
+
+
+  # -----------------------------------------------------------------
+
 
   # publication du shapefile dans le Geoserver
   # doc : http://docs.geoserver.org/2.6.x/en/user/rest/api/datastores.html#workspaces-ws-datastores-ds-file-url-external-extension
