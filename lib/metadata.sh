@@ -10,6 +10,8 @@ usage() {
   
 metadata::publish() {
 
+  echo "dans metadata::publish"
+
   echoerror() {
     echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2  #Redirection vers la sortie d'erreurs standard  (stderr)
   } 
@@ -85,7 +87,7 @@ metadata::publish() {
     #filenameext=$(basename "$input")
     #filename=${filenameext%%.*}
     #output=$filename
-    output=$(util::cleanName "$input")
+    output=$(util::cleanName "$input" -p)
   fi
 
   #test si le fichier (xml) existe
@@ -105,50 +107,103 @@ metadata::publish() {
     # TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
   } 
 
-  #récupére (avec xpath) les métadonnées au format INSPIRE depuis le .shp.xml
+  #récupére (avec xpath) les métadonnées au format INSPIRE d'ArcGIS depuis le .shp.xml
   metadata=$(xpath "//text()")
+  echo $metadata
   title=$(xpath "/metadata/dataIdInfo/idCitation/resTitle/text()") 
   abstract=$(xpath "/metadata/dataIdInfo/idAbs/text()")
   origin=$(xpath "/metadata/dataIdInfo/rpIndname/text()")
   pubdate=$(xpath "/metadata/dataIdInfo/idCitation/date/pubDate/text()")
 
+
+  get_xml_value() {
+    filexml=$1
+    pathx='xpath string('$2')'
+    setns1='setns gmd=http://www.isotc211.org/2005/gmd'
+    setns2='setns gco=http://www.isotc211.org/2005/gco'
+    xmllint --xinclude --shell $filexml <<CMD
+$setns1
+$setns2
+$pathx
+CMD
+  }
+
   #si le titre, le résumé, l'auteur ou la date de publication n'est pas trouvé avec leurs balises au format INSPIRE 
   #ils sont recherchés avec leurs balises au format ISO 19139
+  #ils sont alors recherchés avec leurs balises ISO19139 de QSphere
   #s'ils ne sont pas du tout renseignés dans le xml alors ils sont remplacés par une variante
   if [ ! "$title" ]; then
     title=$(xpath "/metadata/idinfo/citation/citeinfo/title/text()")
-    if [ ! "$title" ]; then
-      title=$(basename "$output" .shp)
+    if [ ! "$title"]; then
+      path_filexml=$input
+      path_title='/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString'
+      title=$(get_xml_value $path_filexml $path_title)
+      title=`echo $title | grep -o -P '(?<=: ).*(?= / )'`
+      echo '  '
+      echo $LANG
+      echo '  '
+      echo $title
+      if [ ! "$title" ]; then          
+        title=$(basename "$output" .shp)
+      fi
     fi
   fi
 
   if [ ! "$abstract" ]; then
     abstract=$(xpath "/metadata/idinfo/descript/abstract/text()")
     if [ ! "$abstract" ]; then
-      abstract="A compléter!"
+      path_filexml=$input
+      path_abstract='/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:abstract/gco:CharacterString'
+      abstract=$(get_xml_value $path_filexml $path_abstract)       
+      abstract=`echo $abstract | grep -o -P '(?<=: ).*(?= / )'`
+      echo $abstract
+      if [ ! "$abstract" ]; then
+        abstract="A compléter!"
+      fi
     fi
   fi
 
   if [ ! "$origin" ]; then
     origin=$(xpath "/metadata/idinfo/citation/citeinfo/origin/text()")
     if [ ! "$origin" ]; then
-      origin="A compléter!"
+      path_filexml=$input
+      path_origin='/gmd:MD_Metadata/gmd:contact/gmd:CI_ResponsibleParty/gmd:organisationName/gco:CharacterString'
+      origin=$(get_xml_value $path_filexml $path_origin)
+      origin=`echo $origin | grep -o -P '(?<=: ).*(?= / )'`
+      echo $origin
+      if [ ! "$origin" ]; then
+        origin="A compléter!"
+      fi
     fi
   fi
 
   if [ ! "$pubdate" ]; then
-     pubdate=$(xpath "/metadata/idinfo/citation/citeinfo/pubdate/text()")
-     if [ ! "$pubdate" ]; then
-      pubdate="A compléter!"
-     fi
+    pubdate=$(xpath "/metadata/idinfo/citation/citeinfo/pubdate/text()")
+    if [ ! "$pubdate" ]; then
+      path_filexml=$input
+      path_pubdate='/gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date/gco:Date'
+      pubdate=$(get_xml_value $path_filexml $path_pubdate)
+      pubdate=`echo $pubdate | grep -o -P '(?<=: ).*(?= / )'`
+      echo $pubdate
+      if [ ! "$pubdate" ]; then
+        pubdate="A compléter!"
+      fi
+    fi
   fi
+
+
+  echo $url
+  echo $workspace
+  echo $datastore
+  echo $output
+
 
   local shppath=${input%.*}  # /GPS/Point_ge.shp.xml -> /GPS/Point_ge.shp
 
   #attention : spécifier le shp concerné en fin d'url
   #http://docs.geoserver.org/2.6.x/en/user/rest/api/datastores.html#workspaces-ws-datastores-ds-file-url-external-extension
   local statuscode
-  statuscode=$(curl --silent --output /dev/null -w %{http_code} -u "$login:$password" -XPUT -H "Content-type: text/xml" \
+  statuscode=$(curl --verbose --output /dev/null -w %{http_code} -u "$login:$password" -XPUT -H "Content-type: text/xml" \
     -d "<featureType><title>$title</title>
 <abstract>$abstract
 Auteur : $origin
