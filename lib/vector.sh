@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash/
 #
 # Importe une couche .shp dans un geoserver
 
@@ -142,29 +142,38 @@ vector::publish() {
 
   # envoi du shapefile vers postgis
   echo "shp2pgsql -I -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h localhost -d geoserver_data -U geosync -w"
-  shp2pgsql -I -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h localhost -d geoserver_data -U geosync -w
+  shp2pgsql -I -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h localhost -d geoserver_data -U geosync -w 2>/dev/null 1>/dev/null
 
   # si la table est déjà publiée sur geoserver, la dépublie
-  if [ -d /var/www/geoserver/data/workspaces/test_ernest/geoserver_data/$output_pgsql]; then
-    depublication
+  if [ -d "/var/www/geoserver/data/workspaces/$workspace/geoserver_data/$output_pgsql" ]; then
+    echo "la couche est déjà publiée sur geoserver : elle va être dépubliée"
+    cmd="curl --silent -u '${login}:${password}' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/geoserver_data/featuretypes/$output_pgsql?recurse=true&purge=all'"
+    echo $cmd
+    eval $cmd
   fi 
 
   # publication des données sur geoserver
 
   if [ $verbose ]; then
-    echo "curl -v -u \"${login}:#########\" -XPUT -H \"Content-type: text/xml\"  -d \"<featureType><name>$output_pgsql</name></featureType>\"  $url/geoserver/rest/workspaces/test_ernest/datastores/geoserver_data/featuretypes"
-  
-    curl -v -u "${login}:${password}" -XPUT -H "Content-type: text/xml"  -d "<featureType><name>$output_pgsql</name></featureType>"  $url/geoserver/rest/workspaces/test_ernest/datastores/geoserver_data/featuretypes  
+    var_v=$"-v"
+    echo "curl $var_v -w %{http_code} -u \"${login}:#########\" -XPOST -H \"Content-type: text/xml\"  -d \"<featureType><name>$output_pgsql</name></featureType>\"  $url/geoserver/rest/workspaces/$workspace/datastores/geoserver_data/featuretypes" 
+  else
+    var_=$"--silent --output /dev/null"
   fi
    
-  statuscode=$(curl --silent --output /dev/null -u "${login}:${password}" -XPUT -H "Content-type: text/xml"  -d "<featureType><name>$output_pgsql</name></featureType>"  $url/geoserver/rest/workspaces/test_ernest/datastores/geoserver_data/featuretypes 2>&1)
+  statuscode=$(curl $var_v -w %{http_code} -u "${login}:${password}" -XPOST -H "Content-type: text/xml"  -d "<featureType><name>$output_pgsql</name></featureType>"  $url/geoserver/rest/workspaces/$workspace/datastores/geoserver_data/featuretypes 2>&1)
 
   if  [ $verbose ]; then
     echo "" #saut de ligne
+    echo "valeur du statuscode $statuscode"
   fi
+
+  statuscode=$(echo $statuscode | tail -c 4)
+  echo "valeur du statuscode $statuscode"
 
   # si le code de la réponse http est compris entre [200,300[
   if [[ "$statuscode" -ge "200" ]] && [[ "$statuscode" -lt "300" ]]; then
+    echo "dans statuscode 200-300"
     if  [ $verbose ]; then
       echo "ok vecteur publié depuis postgres $statuscode"
     fi
@@ -173,10 +182,7 @@ vector::publish() {
     echoerror "error vecteur publié depuis postgres http code : $statuscode for $output"
   fi
 
-
-
   # -----------------------------------------------------------------
-
 
   # publication du shapefile dans le Geoserver
   # doc : http://docs.geoserver.org/2.6.x/en/user/rest/api/datastores.html#workspaces-ws-datastores-ds-file-url-external-extension
@@ -195,7 +201,9 @@ vector::publish() {
     "$url/geoserver/rest/workspaces/$workspace/datastores/$datastore/external.shp?update=overwrite" 2>&1)
   #--silent Silent or quiet mode. Don't show progress meter or error messages
   #-w %{http_code} pour récupérer le status code de la requête
-
+  
+  echo "valeur du statuscode $statuscode" 
+ 
   if  [ $verbose ]; then
     echo "" #saut de ligne
   fi

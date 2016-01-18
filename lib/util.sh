@@ -25,10 +25,10 @@ util::cleanName() {
     result=${result//$match/$repl}  # deletes all matches of "./"  
     match="/"
     repl="_"
-    result=${result//$match/$repl} # Replaces all matches of "/" by "_" 
+    result=${result//$match/$repl}  # Replaces all matches of "/" by "_" 
+    result=${result,,}              # Replaces all uppercases by lowercases
   else # par défaut
     result=$(basename "$path") # ne retient pas les parents (ascendants) dans le chemin
-    
     #rajoute un suffix unique par chemin pour éviter d'avoir des fichiers de même noms (mais de chemin différents) qui s'écrasent
     #ex : tac toe.shp.xml -> tac toe_3435690277.shp.xml
     #suffix store just the checksum of the file's path
@@ -37,6 +37,7 @@ util::cleanName() {
     resultsansext=${result%%.*} # layer.shp.xml -> layer
     ext=${result#*.} # layer.shp.xml -> shp.xml
     result="${resultsansext}_${suffix}.${ext}"
+    result=${result,,}              # Replaces all uppercases by lowercases
   fi
 
   #remplace tac toe.shp en tac_toe.shp
