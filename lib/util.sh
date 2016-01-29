@@ -8,26 +8,27 @@ util::cleanName() {
   local path="$1"
   local option="$2"
   local result
-  
+  local length_result 
   local match repl
 
   # par défaut, ne prend que le nom du fichier
   # avec l'option -p, prend tout le chemin
-  if [[ "$option" == "-p" ]]; then
-    result="$path"
-
-    #remplace ./tic/tac en tic_tac
-    match="../"
-    repl=""
-    result=${result//$match/$repl}  # deletes all matches of "../" 
-    match="./"
-    repl=""
-    result=${result//$match/$repl}  # deletes all matches of "./"  
-    match="/"
-    repl="_"
-    result=${result//$match/$repl}  # Replaces all matches of "/" by "_" 
-    result=${result,,}              # Replaces all uppercases by lowercases
-  else # par défaut
+  if [[ "$option" == "-p" ]]; then  # par défaut
+    match=" "
+    repl="-"
+    path=${path//$match/$repl}
+    match="_"
+    repl="-"
+    path=${path//$match/$repl}
+    result=$(dirname $path)
+    result=${result##*/}            # supprime les caractères devant le dernier / 
+    local name_result
+    name_result=$(basename "$path")
+    local space 
+    space="_"
+    result="$result$space$name_result"
+    echo "result clean name : $result" >&2
+  else 
     result=$(basename "$path") # ne retient pas les parents (ascendants) dans le chemin
     #rajoute un suffix unique par chemin pour éviter d'avoir des fichiers de même noms (mais de chemin différents) qui s'écrasent
     #ex : tac toe.shp.xml -> tac toe_3435690277.shp.xml
@@ -37,13 +38,20 @@ util::cleanName() {
     resultsansext=${result%%.*} # layer.shp.xml -> layer
     ext=${result#*.} # layer.shp.xml -> shp.xml
     result="${resultsansext}_${suffix}.${ext}"
-    result=${result,,}              # Replaces all uppercases by lowercases
   fi
 
-  #remplace tac toe.shp en tac_toe.shp
+ 
+  #remplace tac toe.shp en tac-toe.shp
   match=" "
-  repl="_"
-  result=${result//$match/$repl} # Replaces all matches of " " by "_"   
+  repl="-"
+  result=${result//$match/$repl} # Replaces all matches of " " by "-"
+  result=${result,,}              # Replaces all uppercases by lowercases
+  ## Si le nom est trop long, le tronque et avertit dans les logs
+  length_result=${#result}
+  if [[ "$length_result" -ge "61" ]]; then
+    result=${result: -61}
+    echo "nom de table tronqué car trop supérieur à 62 caractères" >&2
+  fi 
 
   echo "$result"
 }
@@ -121,6 +129,7 @@ util::typeoflayer() {
   case $extension in
     shp) result="vector" ;;
     tif|png|adf|jpg|ecw) result="raster" ;;
+    sld) result="style" ;;
   esac
 
   echo "$result"
