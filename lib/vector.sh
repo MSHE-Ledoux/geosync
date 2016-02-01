@@ -139,15 +139,15 @@ vector::publish() {
 
   # necessaire car le nom d'une table postgres ne peut avoir de .
   output_pgsql=$(echo $output | cut -d. -f1) 
-
+  
   # envoi du shapefile vers postgis
   echo "shp2pgsql -I -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h localhost -d geoserver_data -U geosync -w"
   shp2pgsql -I -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h localhost -d geoserver_data -U geosync -w 2>/dev/null 1>/dev/null
 
   # si la table est déjà publiée sur geoserver, la dépublie
-  if [ -d "/var/www/geoserver/data/workspaces/$workspace/geoserver_data/$output_pgsql" ]; then
+  if [ -d "/var/www/geoserver/data/workspaces/$workspace/postgis_data/$output_pgsql" ]; then
     echo "la couche est déjà publiée sur geoserver : elle va être dépubliée"
-    cmd="curl --silent -u '${login}:${password}' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/geoserver_data/featuretypes/$output_pgsql?recurse=true&purge=all'"
+    cmd="curl --silent -u '${login}:${password}' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/postgis_data/featuretypes/$output_pgsql?recurse=true&purge=all'"
     echo $cmd
     eval $cmd
   fi 
@@ -156,12 +156,16 @@ vector::publish() {
 
   if [ $verbose ]; then
     var_v=$"-v"
-    echo "curl $var_v -w %{http_code} -u \"${login}:#########\" -XPOST -H \"Content-type: text/xml\"  -d \"<featureType><name>$output_pgsql</name></featureType>\"  $url/geoserver/rest/workspaces/$workspace/datastores/geoserver_data/featuretypes" 
+    echo "curl $var_v -w %{http_code} -u \"${login}:#########\" -XPOST -H \"Content-type: text/xml\"  -d \"<featureType><name>$output_pgsql</name></featureType>\" \
+    $url/geoserver/rest/workspaces/$workspace/datastores/postgis_data/featuretypes"
   else
     var_=$"--silent --output /dev/null"
   fi
-   
-  statuscode=$(curl $var_v -w %{http_code} -u "${login}:${password}" -XPOST -H "Content-type: text/xml"  -d "<featureType><name>$output_pgsql</name></featureType>"  $url/geoserver/rest/workspaces/$workspace/datastores/geoserver_data/featuretypes 2>&1)
+
+  cmd="curl $var_v -w %{http_code} -u '${login}:${password}' -XPOST -H 'Content-type: text/xml'  -d '<featureType><name>$output_pgsql</name></featureType>' \
+  $url/geoserver/rest/workspaces/$workspace/datastores/postgis_data/featuretypes 2>&1"
+
+  statuscode=$(eval $cmd)
 
   if  [ $verbose ]; then
     echo "" #saut de ligne
@@ -175,33 +179,36 @@ vector::publish() {
   if [[ "$statuscode" -ge "200" ]] && [[ "$statuscode" -lt "300" ]]; then
     echo "dans statuscode 200-300"
     if  [ $verbose ]; then
-      echo "ok vecteur publié depuis postgres $statuscode"
+      echo "ok vecteur publié depuis postgis $statuscode"
     fi
-    echo "vecteur publié depuis postgres: $output ($input)"
+    echo "vecteur publié depuis postgis: $output ($input)"
   else
-    echoerror "error vecteur publié depuis postgres http code : $statuscode for $output"
+    echoerror "error vecteur publié depuis postgis http code : $statuscode for $output"
   fi
 
   # -----------------------------------------------------------------
 
   # publication du shapefile dans le Geoserver
   # doc : http://docs.geoserver.org/2.6.x/en/user/rest/api/datastores.html#workspaces-ws-datastores-ds-file-url-external-extension
-  if  [ $verbose ]; then
-    echo "curl --silent --output /dev/null -w %{http_code} -u ${login}:######## -XPUT -H 'Content-type: text/plain' \
+
+  if [ $verbose ]; then
+    var_v=$"-v"
+    echo "curl $var_v -w %{http_code} -u ${login}:######## -XPUT -H 'Content-type: text/plain' \
     -d \"file://$tmpdir/$output\" \
     $url/geoserver/rest/workspaces/$workspace/datastores/$datastore/external.shp?update=overwrite"
-    
-    curl -v -u "${login}:${password}" -XPUT -H 'Content-type: text/plain' \
-    -d "file://$tmpdir/$output" \
-    "$url/geoserver/rest/workspaces/$workspace/datastores/$datastore/external.shp?update=overwrite"
+  else
+    var_v=$"--silent --output /dev/null"
   fi
+  
+  cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${password}' -XPUT -H 'Content-type: text/plain' \
+    -d 'file://$tmpdir/$output' \
+    $url/geoserver/rest/workspaces/$workspace/datastores/$datastore/external.shp?update=overwrite 2>&1"
 
-  statuscode=$(curl --silent --output /dev/null -w %{http_code} -u "${login}:${password}" -XPUT -H 'Content-type: text/plain' \
-    -d "file://$tmpdir/$output" \
-    "$url/geoserver/rest/workspaces/$workspace/datastores/$datastore/external.shp?update=overwrite" 2>&1)
+  statuscode=$(eval $cmd)
   #--silent Silent or quiet mode. Don't show progress meter or error messages
   #-w %{http_code} pour récupérer le status code de la requête
   
+  statuscode=$(echo $statuscode | tail -c 4)
   echo "valeur du statuscode $statuscode" 
  
   if  [ $verbose ]; then
