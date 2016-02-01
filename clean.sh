@@ -115,6 +115,32 @@ main() {
     name=$(xpath '/featureTypes/featureType['$i']/name/text()') # '
     echo $name >> "$tmpdir/vectors_published"
   done
+
+
+  # ------------------------ Pour vecteurs issus de postgis
+
+  output="vectors_featuretypes_pgsql.xml"
+  touch "$tmpdir/$output"
+  #liste les vecteurs du datastore
+
+  cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace/datastores/postgis_data/featuretypes.xml"
+  if  [[ $verbose ]]; then
+    echo "récupére la liste des vecteurs"
+    echo $cmd
+  fi
+  xml=$(eval $cmd)
+  echo $xml > "$tmpdir/$output"
+
+  input="$tmpdir/$output"
+  itemsCount=$(xpath 'count(/featureTypes/featureType)')
+
+  touch "$tmpdir/vectors_published_pgsql"
+  for (( i=1; i < $itemsCount + 1; i++ )); do
+    name=$(xpath '/featureTypes/featureType['$i']/name/text()') # '
+    echo $name >> "$tmpdir/vectors_published_pgsql"
+  done
+
+  # --------------------------- Fin vecteurs postgis
   
   ###################
   # pour les rasteurs
@@ -138,6 +164,8 @@ main() {
     name=$(xpath '/coverageStores/coverageStore['$i']/name/text()') # '
     echo $name >> "$tmpdir/rasters_published"
   done
+
+  ######################
   
   # si on souhaite supprimer la différence entre les couches publiées et celles partagées
   # alors calcule la différence des listes et la stocke dans la liste des couches à supprimer
@@ -158,8 +186,9 @@ main() {
       # pour les vecteurs
       ###################
       for filepath in **/*.shp; do
-        outputlayername=$(util::cleanName "$filepath")
+        outputlayername=$(util::cleanName "$filepath" -p)
         outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
+        outputlayernamesansext=$outputlayernamesansext"0"
         #echo "{$outputlayernamesansext}"
         echo "$outputlayernamesansext" >> "$tmpdir/vectors_shared"
       done
@@ -170,6 +199,21 @@ main() {
       # -3 suppress lines that appear in both files
       
       
+      # ------------------ pour les vecteurs postgis
+
+      for filepath in **/*.shp; do
+        outputlayername=$(util::cleanName "$filepath" -p)
+        outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
+        #echo "{$outputlayernamesansext}"
+        echo "$outputlayernamesansext" >> "$tmpdir/vectors_shared_pgsql"
+      done
+
+      # prend uniquement les noms présents dans la première liste (arraydiff <- liste1 - liste2)
+      comm -23 <(sort "$tmpdir/vectors_published_pgsql") <(sort "$tmpdir/vectors_shared_pgsql") > "$tmpdir/vectors_tobedeleted_pgsql"
+      # -2 suppress lines unique to FILE2
+      # -3 suppress lines that appear in both files
+
+
       ###################
       # pour les rasters
       ###################
@@ -189,6 +233,7 @@ main() {
   # alors stocke la liste des couches publiées dans la liste des couches à supprimer
   elif [[ "$deleteall" ]]; then
       cat "$tmpdir/vectors_published" > "$tmpdir/vectors_tobedeleted"
+      cat "$tmpdir/vectors_published_pgsql" > "$tmpdir/vectors_tobedeleted_pgsql"
       cat "$tmpdir/rasters_published" > "$tmpdir/rasters_tobedeleted"
   fi
   
@@ -210,6 +255,28 @@ main() {
 
   done <"$tmpdir/vectors_tobedeleted"
   
+  # parcours la liste des vecteurs de postgis à supprimer
+  # et supprime chacun d'eux
+  while read vector; do
+    echo "suppression de : $vector"
+    # supprime une couche
+
+    cmd="curl --silent -u '$login:$pass' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/postgis_data/featuretypes/$vector?recurse=true&purge=all'"
+    cmd_pgsql="psql -h localhost -d geoserver_data -U geosync -w -c 'DROP TABLE \"$vector\";'"
+    # http://docs.geoserver.org/stable/en/user/rest/api/featuretypes.html#workspaces-ws-datastores-ds-featuretypes-ft-format
+    # dans le cas d'un filesystem "recurse=true" dans le cas d'une bd postgis "recurse=false"
+    if  [[ $verbose ]]; then
+      echo $cmd
+      echo $cmd_pgsql
+    fi
+    if  [[ ! $simulation ]]; then
+      eval $cmd
+      eval $cmd_pgsql
+    fi
+  
+  done <"$tmpdir/vectors_tobedeleted_pgsql"
+
+
   # parcours la liste des rasteurs à supprimer
   # et supprime chacun d'eux
   while read raster; do
