@@ -59,7 +59,7 @@ importallfiles() {
 
   # TODO: format des rasters supportés: tif, png, adf, jpg, ecw
   # si des extension sont rajouter, alors penser à mettre à jour lib/util.sh util::typeoflayer()
-  for filepath in **/*.{shp,tif,png,jpg,ecw} **/w001001.adf; do
+  for filepath in **/*.{shp,tif,png,jpg,ecw,sld} **/w001001.adf; do
       # alternative dangeureuse :
       # for filepath in $(find "$path" -iname "*.shp"); do
       # option -iname à find pour un filte (-name) mais insensible à la casse (.SHP,.shp...)
@@ -112,6 +112,7 @@ importfile() {
     # $(util::cleanName "./tic/tac toe.shp") -> tac_toe.shp
     # $(util::cleanName "./tic/tac toe.shp" -p) -> tic_tac_toe.shp
     if [[ ! "$outputlayername" ]]; then
+      echo "filepath : $filepath"
       outputlayername=$(util::cleanName "$filepath" -p)
     fi
 
@@ -120,6 +121,11 @@ importfile() {
     echo $cmd
     eval $cmd
 
+    #publie les metadata même si le .xml n'existe pas pour les couches de de l'entrepot postgis_data (dans ce cas publie les données par défaut)
+    cmd="metadata::publish -i '$filepath.xml' -o '$outputlayername' -l '$login' -p '$pass' -u '$host' -w '$workspace' -d 'postgis_data' $verbosestr"
+    echo $cmd
+    eval $cmd
+  
     #publie les metadata même si le .xml n'existe pas (dans ce cas publie les données par défaut)
     cmd="metadata::publish -i '$filepath.xml' -o '$outputlayername' -l '$login' -p '$pass' -u '$host' -w '$workspace' -d '$datastore' $verbosestr"
     echo $cmd
@@ -143,9 +149,21 @@ importfile() {
 
   }
 
+  style() {
+  if [[ ! "$outputlayername" ]]; then
+    outputlayername=$(util::cleanName "$filepath" -p)
+  fi 
+
+  cmd="style::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$pass' -u '$host' $verbosestr"
+  echo $cmd
+  eval $cmd
+  }
+
+
   case $layertype in
   'vector') vector ;;
   'raster') raster ;;
+  'style') style ;;
   *) echoerror "file not supported : $filepath" ;;
   esac
 
@@ -181,6 +199,7 @@ main() {
   done
   shift $((OPTIND-1))
 
+  echo "dans publish"
 
   if [[ "$help" ]]; then
     usage
@@ -193,7 +212,7 @@ main() {
     passfile="$BASEDIR/.geosync.conf"
   fi
 
-  #test l'existance du fichier contenant le host/login/mot de passe
+  #test l'existence du fichier contenant le host/login/mot de passe
   if [ ! -f "$passfile" ]; then 
     error "le fichier contenant le host/login/mot de passe n'existe pas; le spécifier avec l'option -p [passfile]"
   fi
@@ -244,6 +263,8 @@ main() {
   source "$BASEDIR/lib/raster.sh"
   # pour importer les metadonnées des vecteurs
   source "$BASEDIR/lib/metadata.sh"
+  # pour importer des fichiers de styles (fichiers .sld)
+  source "$BASEDIR/lib/style.sh"
 
   newlastdatemodif=0
 
