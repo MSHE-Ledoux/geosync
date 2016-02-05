@@ -1,4 +1,4 @@
-#!/bin/bash/
+#!/bin/bash
 #
 # Importe une couche .shp dans un geoserver
 
@@ -13,7 +13,6 @@ usage() {
 } 
 
 style::publish() {
-
   echoerror() {
     echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2  #Redirection vers la sortie d'erreurs standard  (stderr)
   } 
@@ -77,9 +76,8 @@ style::publish() {
   if [ ! "$output" ]; then
     # filename correspondant à l'$input par défaut "prettyfied"
     # $(util::cleanName "./tic/tac toe.shp") -> tac_toe.shp
-    output=$(util::cleanName "$input" -p)
+    output=$(util::cleanName "$input")
   fi
-
 
   #test si le fichier shapefile en $input existe
   #si le fichier n'existe pas, alors quitter
@@ -99,19 +97,28 @@ style::publish() {
 
   local statuscode=0
 
-  # publication du style dans le Geoserver 1- création du style vide 2- chargement du style
+  ###  publication du style dans le Geoserver 1- création du style vide 2- chargement du style
+
+  ## Création du style vide - création du xml dans /var/www/geoserver/data/styles
 
   if [ $verbose ]; then
     var_v=$"-v"
-    echo "curl $var_v -w %{http_code} -u ${login}:############# -XPOST -H 'Content-type: text/xml' -d '<style><name>$output</name><filename>$output.sld</filename></style>' $url/geoserver/rest/styles 4>&1"
+    echo "curl $var_v -w %{http_code} \
+                      -u ${login}:############# \
+                      -XPOST -H 'Content-type: text/xml' \
+                      -d '<style><name>$output</name><filename>$output.sld</filename></style>' \
+               $url/geoserver/rest/styles 2>&1"
   else
     var_=$"--silent --output /dev/null"
   fi
 
-  # Création du style vide - création du xml dans /var/www/geoserver/data/styles
+  cmd="curl $var_v -w %{http_code} \
+                   -u ${login}:${password} \
+                   -XPOST -H 'Content-type: text/xml' \
+                   -d '<style><name>$output</name><filename>$output.sld</filename></style>' \
+            $url/geoserver/rest/styles 2>&1"
 
-  cmd="curl $var_v -w %{http_code} -u ${login}:${password} -XPOST -H 'Content-type: text/xml' -d '<style><name>$output</name><filename>$output.sld</filename></style>' $url/geoserver/rest/styles 4>&1"
-
+  echo $cmd
   statuscode=$(eval $cmd)
   
   #-w %{http_code} pour récupérer le status code de la requête
@@ -122,7 +129,7 @@ style::publish() {
   fi
 
   # si le code de la réponse http est compris entre [200,300[
-  if [[ "$statuscode" -ge "200" ]] && [[ "$statuscode" -lt "300" ]]; then
+  if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
     if  [ $verbose ]; then
       echo "ok $statuscode"
     fi
@@ -131,20 +138,25 @@ style::publish() {
     echoerror "error http code : $statuscode for $output"
   fi  
 
-  # Chargement des caractéristiques du style - création du sld dans /var/www/geoserver/data/styles
+  ## Chargement des caractéristiques du style - création du sld dans /var/www/geoserver/data/styles
   
-  cmd="curl $var_v -w %{http_code} -u ${login}:${password} -XPUT -H 'Content-type: application/vnd.ogc.sld+xml' -d @/home/georchestra-ouvert/owncloudsync/$input \
-  $url/geoserver/rest/styles/$output 2>&1"
+  cmd="curl $var_v -w %{http_code} \
+                   -u ${login}:${password} \
+                   -XPUT -H 'Content-type: application/vnd.ogc.sld+xml' \
+                   -d @/home/georchestra-ouvert/owncloudsync/$input \
+            $url/geoserver/rest/styles/$output 2>&1"
   
   if  [ $verbose ]; then
-    echo "curl $var_v -w %{http_code} -u ${login}:############### -XPUT -H 'Content-type: application/vnd.ogc.sld+xml' -d @/home/georchestra-ouvert/owncloudsync/$input \
-    $url/geoserver/rest/styles/$output 2>&1"
+    echo "curl $var_v -w %{http_code} \
+                      -u ${login}:############### \
+                      -XPUT -H 'Content-type: application/vnd.ogc.sld+xml' \
+                      -d @/home/georchestra-ouvert/owncloudsync/$input \
+               $url/geoserver/rest/styles/$output 2>&1"
   fi
 
   statuscode=$(eval $cmd)
   
   #-w %{http_code} pour récupérer le status code de la requête
-
 
   if  [ $verbose ]; then
     echo "" #saut de ligne
@@ -152,7 +164,7 @@ style::publish() {
   fi
 
   # si le code de la réponse http est compris entre [200,300[
-  if [[ "$statuscode" -ge "200" ]] && [[ "$statuscode" -lt "300" ]]; then
+  if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
     if  [ $verbose ]; then
       echo "ok $statuscode"
     fi
@@ -161,12 +173,49 @@ style::publish() {
     echoerror "error http code : $statuscode for $output"
   fi
 
+  ### Assignation du style à toutes les couches associées : nom_couche_sld_nom_style.shp  <= nom_style.sld 
 
+  #crée un dossier temporaire et stocke son chemin dans une variable
+  local tmpdir="~/tmp/geosync_publish_sld"
 
+  #liste les vecteurs du datastore
+  cmd="curl --silent \
+             -u ${login}:${password} \
+             -XGET $url/geoserver/rest/workspaces/geosync/datastores/shpowncloud/featuretypes.xml"
 
+  if  [ $verbose ]; then
+    echo "récupére la liste des vecteurs"
+    echo $cmd
+  fi
+  
+  xml=$(eval $cmd)
 
+  itemsCount=$(xmllint --xpath "count(//featureTypes/featureType)" - <<<"$xml" 2>/dev/null)
+  # redirige l'erreur standard vers null pour éviter d'être averti de chaque valeur manquante (XPath set is empty)
+  # mais cela peut empêcher de détecter d'autres erreurs
+  # TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
+  echo "itemsCount :  $itemsCount"
 
+  items=$(xmllint --xpath "//featureTypes/featureType/name/text()" - <<<"$xml" 2>/dev/null)
+  echo $items
 
+  touch "${tmpdir}/vectors_with_style"
+
+  exit
+
+  for (( i=1; i < $itemsCount + 1; i++ )); do
+    echo "dans for"
+    name=$(xpath '/featureTypes/featureType['$i']/name/text()') # '
+    if [ "$name" =~ "-sld-$output" ]; then
+      echo "dans if"
+      cmd="echo \"$name\" >> $tmpdir/vectors_with_style"
+      echo $cmd
+      eval $cmd
+    fi
+  done
+
+  
+  
 
 
 
@@ -186,7 +235,7 @@ main() {
 } #end of main
 
 # if this script is a directly call as a subshell (versus being sourced), then call main()
-if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+if [ "${BASH_SOURCE[0]}" == "$0" ]; then
   main "$@"
 fi
 

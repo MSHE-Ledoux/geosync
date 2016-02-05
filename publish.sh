@@ -34,7 +34,7 @@ importallfiles() {
   local newlastdatemodif
 
   # si datapath n'est pas un dossier existant alors on le créée
-  if  [[ ! -d "$datapath" ]]; then
+  if  [ ! -d "$datapath" ]; then
     echo "creation de datapath : $datapath"
     mkdir $datapath
   fi
@@ -44,7 +44,7 @@ importallfiles() {
 
   #test si le fichier  temporaire stockant la date de modif la plus récente existe
   #si tel est le cas, alors la récupère
-  if [[ -f "$configfile" ]]; then 
+  if [ -f "$configfile" ]; then 
     lastdatemodif=$(cat "$configfile")
   fi
   #newlastdatemodif est la valeur qui sera stockée à la place de lastdatemodif
@@ -72,12 +72,12 @@ importallfiles() {
         # le rsync la modifie à l'heure locale lorsque le fichier est a été modifié
         datemodif=$(util::getlastchangedate "$filepath")
     
-        if [[ "$datemodif" > "$lastdatemodif" ]]; then
+        if [ "$datemodif" > "$lastdatemodif" ]; then
     
           importfile "$filepath" ""
     
           # TODO: ne modifier la date que si l'import du fichier a été un succés
-          if [[ "$datemodif" > "$newlastdatemodif" ]]; then
+          if [ "$datemodif" > "$newlastdatemodif" ]; then
             newlastdatemodif=$datemodif
           fi
         fi
@@ -111,7 +111,7 @@ importfile() {
     #examples
     # $(util::cleanName "./tic/tac toe.shp") -> tac_toe.shp
     # $(util::cleanName "./tic/tac toe.shp" -p) -> tic_tac_toe.shp
-    if [[ ! "$outputlayername" ]]; then
+    if [ ! "$outputlayername" ]; then
       echo "filepath : $filepath"
       outputlayername=$(util::cleanName "$filepath" -p)
     fi
@@ -139,7 +139,7 @@ importfile() {
     #examples
     # $(util::cleanName "./tic/tac toe.shp") -> tac_toe.shp
     # $(util::cleanName "./tic/tac toe.shp" -p) -> tic_tac_toe.shp
-    if [[ ! "$outputlayername" ]]; then
+    if [ ! "$outputlayername" ]; then
       outputlayername=$(util::cleanName "$filepath" -p)
     fi
 
@@ -150,8 +150,8 @@ importfile() {
   }
 
   style() {
-  if [[ ! "$outputlayername" ]]; then
-    outputlayername=$(util::cleanName "$filepath" -p)
+  if [ ! "$outputlayername" ]; then
+    outputlayername=$(util::cleanName "$filepath")
   fi 
 
   cmd="style::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$pass' -u '$host' $verbosestr"
@@ -199,9 +199,7 @@ main() {
   done
   shift $((OPTIND-1))
 
-  echo "dans publish"
-
-  if [[ "$help" ]]; then
+  if [ "$help" ]; then
     usage
     exit
   fi
@@ -232,18 +230,18 @@ main() {
   #valeurs des paramètres par défaut
 
   # par défaut index le répertoire courant
-  if [[ ! "$input" ]]; then
+  if [ ! "$input" ]; then
     # répertoire courant par défaut
     input="."
   fi
 
   # par défaut cherche le fichier contenant la dernière date de changement du fichier traité dans le répertoire courant
-  if [[ ! "$datapath" ]]; then
+  if [ ! "$datapath" ]; then
     # par défaut
     datapath="."
   fi
 
-  if  [[ ! -e "$input" ]]; then
+  if  [ ! -e "$input" ]; then
     error "n'existe pas : input : $input"
   fi
 
@@ -269,11 +267,11 @@ main() {
   newlastdatemodif=0
 
   #si c'est le chemin d'un répertoire alors indexe le répertoire
-  if [[ -d "$input" ]]; then
+  if [ -d "$input" ]; then
     importallfiles "$input" "$datapath"
 
   #si c'est le chemin d'un fichier (couche) alors indexe le fichier
-  elif [[ -f "$input" ]]; then
+  elif [ -f "$input" ]; then
     importfile "$input" "$output"
 
   fi
@@ -281,7 +279,7 @@ main() {
 } #end of main
 
 # if this script is a directly call as a subshell (versus being sourced), then call main()
-if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+if [ "${BASH_SOURCE[0]}" == "$0" ]; then
   main "$@"
 fi
 

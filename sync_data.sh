@@ -4,12 +4,12 @@
 # attention : ne pas faire précéder ce code par le flock (ci-dessous) car sinon semble ne pas supprimer le verrou
 
 # sans autofs
-#if [[ ! -d ~/owncloud ]]; then
+#if [ ! -d ~/owncloud ]; then
 #  mount ~/owncloud
 #fi    
 
 # avec autofs
-if [[ ! -d ~/owncloud/owncloud ]]; then
+if [ ! -d ~/owncloud/owncloud ]; then
    cd ~/owncloud/owncloud
 fi
 

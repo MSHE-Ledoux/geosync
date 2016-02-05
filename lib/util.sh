@@ -13,7 +13,7 @@ util::cleanName() {
 
   # par défaut, ne prend que le nom du fichier
   # avec l'option -p, prend tout le chemin
-  if [[ "$option" == "-p" ]]; then  # par défaut
+  if [ "$option" == "-p" ]; then  # par défaut
     match=" "
     repl="-"
     path=${path//$match/$repl}
@@ -28,16 +28,15 @@ util::cleanName() {
     space="_"
     result="$result$space$name_result"
     echo "result clean name : $result" >&2
-  else 
-    result=$(basename "$path") # ne retient pas les parents (ascendants) dans le chemin
-    #rajoute un suffix unique par chemin pour éviter d'avoir des fichiers de même noms (mais de chemin différents) qui s'écrasent
-    #ex : tac toe.shp.xml -> tac toe_3435690277.shp.xml
-    #suffix store just the checksum of the file's path
-    local suffix resultsansext ext
-    suffix=$(echo -n "$path" | cksum | cut -d ' ' -f 1)
-    resultsansext=${result%%.*} # layer.shp.xml -> layer
-    ext=${result#*.} # layer.shp.xml -> shp.xml
-    result="${resultsansext}_${suffix}.${ext}"
+  else
+    result=$(basename "$path")
+    match=" "
+    repl="-"
+    result=${result//$match/$repl}
+    match="_"
+    repl="-"
+    result=${result//$match/$repl}
+    echo "result clean name : $result" >&2
   fi
 
  
@@ -48,7 +47,7 @@ util::cleanName() {
   result=${result,,}              # Replaces all uppercases by lowercases
   ## Si le nom est trop long, le tronque et avertit dans les logs
   length_result=${#result}
-  if [[ "$length_result" -ge "61" ]]; then
+  if [ "$length_result" -ge "61" ]; then
     result=${result: -61}
     echo "nom de table tronqué car trop supérieur à 62 caractères" >&2
   fi 
@@ -106,7 +105,7 @@ util::takefirstdefinedvalue() {
   for val in "$@"; do
       # si une chaine est non vide (not empty) alors la renvoie
       # donc renvoie la première valeur non vide
-      if [[ ! -z val ]]; then
+      if [ ! -z val ]; then
         result=$val
         break
       fi

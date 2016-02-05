@@ -176,7 +176,7 @@ vector::publish() {
   echo "valeur du statuscode $statuscode"
 
   # si le code de la réponse http est compris entre [200,300[
-  if [[ "$statuscode" -ge "200" ]] && [[ "$statuscode" -lt "300" ]]; then
+  if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
     echo "dans statuscode 200-300"
     if  [ $verbose ]; then
       echo "ok vecteur publié depuis postgis $statuscode"
@@ -216,7 +216,7 @@ vector::publish() {
   fi
 
   # si le code de la réponse http est compris entre [200,300[
-  if [[ "$statuscode" -ge "200" ]] && [[ "$statuscode" -lt "300" ]]; then
+  if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
     if  [ $verbose ]; then
       echo "ok $statuscode"
     fi
@@ -234,7 +234,7 @@ main() {
 } #end of main
 
 # if this script is a directly call as a subshell (versus being sourced), then call main()
-if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+if [ "${BASH_SOURCE[0]}" == "$0" ]; then
   main "$@"
 fi
 
