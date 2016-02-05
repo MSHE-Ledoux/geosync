@@ -2,7 +2,7 @@
 
 # si semble non monté alors monte le webdav
 # attention : ne pas faire précédé ce code par le flock (ci-dessous) car sinon semble ne pas supprimer le verrou
-if [[ ! -d ~/owncloud/_geosync ]]; then
+if [ ! -d ~/owncloud/_geosync ]; then
   mount ~/owncloud
 fi    
 
@@ -11,7 +11,7 @@ autoupdate() {
   mkdir -p ~/src/geosync/
   rsync -avr --delete ~/owncloud/_geosync/src/ ~/src/geosync/
   mkdir -p ~/bin/geosync/
-  if [[ -f ~/owncloud/_geosync/src/cron.sh ]]; then 
+  if [ -f ~/owncloud/_geosync/src/cron.sh ]; then 
     cat ~/owncloud/_geosync/src/cron.sh  > ~/bin/geosync/cron
   fi
   dos2unix --quiet ~/bin/geosync/cron
