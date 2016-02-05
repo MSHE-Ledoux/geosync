@@ -49,12 +49,12 @@ main() {
   # vérification des paramètres
   
   # si aucune suppression n'est demandée, alors affiche l'aide
-  if  [[ ! "$deleteall" ]] && [[ ! "$deletediff" ]]; then
+  if  [ ! "$deleteall" ] && [ ! "$deletediff" ]; then
     usage
     exit
   fi
   
-  if  [[ $simulation ]]; then
+  if  [ $simulation ]; then
       echo "simulation !"
   fi
   
@@ -100,7 +100,7 @@ main() {
   #liste les vecteurs du datastore
   
   cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace/datastores/$datastore/featuretypes.xml"
-  if  [[ $verbose ]]; then
+  if  [ $verbose ]; then
     echo "récupére la liste des vecteurs"
     echo $cmd
   fi
@@ -124,7 +124,7 @@ main() {
   #liste les vecteurs du datastore
 
   cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace/datastores/postgis_data/featuretypes.xml"
-  if  [[ $verbose ]]; then
+  if  [ $verbose ]; then
     echo "récupére la liste des vecteurs"
     echo $cmd
   fi
@@ -149,7 +149,7 @@ main() {
   touch "$tmpdir/$output"
   #liste les coveragestores
   cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace/coveragestores.xml" 
-  if  [[ $verbose ]]; then
+  if  [ $verbose ]; then
     echo "récupére la liste des rasteurs"
     echo $cmd
   fi
@@ -169,7 +169,7 @@ main() {
   
   # si on souhaite supprimer la différence entre les couches publiées et celles partagées
   # alors calcule la différence des listes et la stocke dans la liste des couches à supprimer
-  if [[ "$deletediff" ]]; then
+  if [ "$deletediff" ]; then
       #echo "synchronise les fichiers du montage webdav owncloud dans le dossier owncloudsync"
       #cmd="rsync -avr --delete --exclude '_geosync' --exclude 'lost+found' '/home/georchestra-ouvert/owncloud/' '/home/georchestra-ouvert/owncloudsync/'"
       #echo $cmd 
@@ -231,7 +231,7 @@ main() {
   
   # si on souhaite supprimer toutes les couches
   # alors stocke la liste des couches publiées dans la liste des couches à supprimer
-  elif [[ "$deleteall" ]]; then
+  elif [ "$deleteall" ]; then
       cat "$tmpdir/vectors_published" > "$tmpdir/vectors_tobedeleted"
       cat "$tmpdir/vectors_published_pgsql" > "$tmpdir/vectors_tobedeleted_pgsql"
       cat "$tmpdir/rasters_published" > "$tmpdir/rasters_tobedeleted"
@@ -246,10 +246,10 @@ main() {
     cmd="curl --silent -u '$login:$pass' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/$datastore/featuretypes/$vector?recurse=true&purge=all'"
     # http://docs.geoserver.org/stable/en/user/rest/api/featuretypes.html#workspaces-ws-datastores-ds-featuretypes-ft-format
     # dans le cas d'un filesystem "recurse=true" dans le cas d'une bd postgis "recurse=false"
-    if  [[ $verbose ]]; then
+    if  [ $verbose ]; then
       echo $cmd
     fi
-    if  [[ ! $simulation ]]; then
+    if  [ ! $simulation ]; then
       eval $cmd
     fi
 
@@ -265,11 +265,11 @@ main() {
     cmd_pgsql="psql -h localhost -d geoserver_data -U geosync -w -c 'DROP TABLE \"$vector\";'"
     # http://docs.geoserver.org/stable/en/user/rest/api/featuretypes.html#workspaces-ws-datastores-ds-featuretypes-ft-format
     # dans le cas d'un filesystem "recurse=true" dans le cas d'une bd postgis "recurse=false"
-    if  [[ $verbose ]]; then
+    if  [ $verbose ]; then
       echo $cmd
       echo $cmd_pgsql
     fi
-    if  [[ ! $simulation ]]; then
+    if  [ ! $simulation ]; then
       eval $cmd
       eval $cmd_pgsql
     fi
@@ -284,10 +284,10 @@ main() {
     # supprime une couche
     cmd="curl --silent -u '$login:$pass' -XDELETE '$url/geoserver/rest/workspaces/$workspace/coveragestores/$raster?recurse=true&purge=all'"
     # http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-format
-    if  [[ $verbose ]]; then
+    if  [ $verbose ]; then
       echo $cmd
     fi
-    if  [[ ! $simulation ]]; then
+    if  [ ! $simulation ]; then
       eval $cmd
     fi
     
@@ -296,6 +296,6 @@ main() {
 } #end of main
 
 # if this script is a directly call as a subshell (versus being sourced), then call main()
-if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+if [ "${BASH_SOURCE[0]}" == "$0" ]; then
   main "$@"
 fi
