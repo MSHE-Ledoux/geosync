@@ -181,10 +181,13 @@ vector::publish() {
     if  [ $verbose ]; then
       echo "ok vecteur publié depuis postgis $statuscode"
     fi
-    echo "vecteur publié depuis postgis: $output ($input)"
+    echo "vecteur publié depuis postgis: $output_pgsql ($input)"
   else
     echoerror "error vecteur publié depuis postgis http code : $statuscode for $output"
   fi
+
+
+
 
   # -----------------------------------------------------------------
 
@@ -226,6 +229,63 @@ vector::publish() {
   fi  
 
   # NB: le dossier temporaire n'est pas supprimé : rm -R "$tmpdir"
+
+  # ---------------------------- Recherche d'un style correspondant
+
+  #liste les styles et l'assigne à la couche s'il a le même nom
+  cmd="curl --silent \
+             -u ${login}:${password} \
+             -XGET $url/geoserver/rest/styles"
+
+  html_1=$(eval $cmd)
+  html_1=${html_1//' '/'\n'}   # Découpage de la chaine sur plusieurs lignes
+  path_html_1=~/tmp/html_1.txt
+  echo "$html_1" > $path_html_1 # L'utilisation des "" est nécessaire pour garder les retours à la ligne
+
+  if  [ $verbose ]; then
+    echo " html_1 : ${html_1} et path_html : ${path_html_1}"
+  fi
+
+  cmd="sed -n '/href/p' $path_html_1"  # Retenue des seules lignes ayant un lien html
+  html_2=$(eval $cmd)
+  path_html_2=~/tmp/html_2.txt
+  echo "$html_2" > $path_html_2
+
+  if  [ $verbose ]; then
+    echo "html_2 : ${html_2} et path_html_2 : ${path_html_2}"
+  fi
+
+  cmd="sed 's/.*html\">//; s/<\/a.*//' $path_html_2" # Retenue des seuls éléments compris entre html">ELEMENT</a
+  html_3=$(eval $cmd)
+  path_html_3=~/tmp/html_3.txt
+  echo "$html_3" > $path_html_3
+
+  if  [ $verbose ]; then
+    echo "html_3 : $html_3 et path_html_3 : ${path_html_3}"
+  fi
+
+  while read line 
+  do
+    name=$line
+    if [[ "$output" == *"-sld-${name}-sld"* ]]; then
+      cmd="curl --silent \
+                 -u ${login}:${password} \
+                 -XPUT -H \"Content-type: text/xml\" \
+                 -d \"<layer><defaultStyle><name>${name}</name></defaultStyle></layer>\" \
+                 $url/geoserver/rest/layers/geosync:${output_pgsql}"
+      echo $cmd
+      eval $cmd
+      # Temporairement, pour les couches de shpowncloud
+      cmd="curl --silent \
+                 -u ${login}:${password} \
+                 -XPUT -H \"Content-type: text/xml\" \
+                 -d \"<layer><defaultStyle><name>${name}</name></defaultStyle></layer>\" \
+                 $url/geoserver/rest/layers/geosync:${output_pgsql}0"
+      echo $cmd
+      eval $cmd
+    fi
+  done < $path_html_3
+
 }
 
 main() {

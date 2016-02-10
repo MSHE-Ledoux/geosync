@@ -72,12 +72,12 @@ importallfiles() {
         # le rsync la modifie à l'heure locale lorsque le fichier est a été modifié
         datemodif=$(util::getlastchangedate "$filepath")
     
-        if [ "$datemodif" > "$lastdatemodif" ]; then
+        if [[ "$datemodif" > "$lastdatemodif" ]]; then  # [[ .. ]] nécessaire pour comparer les chaines avec >
     
           importfile "$filepath" ""
     
           # TODO: ne modifier la date que si l'import du fichier a été un succés
-          if [ "$datemodif" > "$newlastdatemodif" ]; then
+          if [[ "$datemodif" > "$newlastdatemodif" ]]; then # [[ .. ]] nécessaire pour comparer les chaines avec >
             newlastdatemodif=$datemodif
           fi
         fi
@@ -106,7 +106,7 @@ importfile() {
   #global newlastdatemodif
 
   vector() {
-      
+  
     #takes a filepath and returns a pretty name
     #examples
     # $(util::cleanName "./tic/tac toe.shp") -> tac_toe.shp

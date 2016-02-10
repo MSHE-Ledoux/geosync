@@ -175,20 +175,18 @@ style::publish() {
 
   ### Assignation du style à toutes les couches associées : nom_couche_sld_nom_style.shp  <= nom_style.sld 
 
-  #crée un dossier temporaire et stocke son chemin dans une variable
-  local tmpdir="~/tmp/geosync_publish_sld"
-
-  #liste les vecteurs du datastore
+  #liste les vecteurs du datastore postgis_data et assigne le style à ceux concernés
   cmd="curl --silent \
              -u ${login}:${password} \
-             -XGET $url/geoserver/rest/workspaces/geosync/datastores/shpowncloud/featuretypes.xml"
+             -XGET $url/geoserver/rest/workspaces/geosync/datastores/postgis_data/featuretypes.xml"
+
+  echo "récupére la liste des vecteurs postgis"
+  echo $cmd
+  xml=$(eval $cmd)
 
   if  [ $verbose ]; then
-    echo "récupére la liste des vecteurs"
-    echo $cmd
+    echo $xml
   fi
-  
-  xml=$(eval $cmd)
 
   itemsCount=$(xmllint --xpath "count(//featureTypes/featureType)" - <<<"$xml" 2>/dev/null)
   # redirige l'erreur standard vers null pour éviter d'être averti de chaque valeur manquante (XPath set is empty)
@@ -196,35 +194,50 @@ style::publish() {
   # TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
   echo "itemsCount :  $itemsCount"
 
-  items=$(xmllint --xpath "//featureTypes/featureType/name/text()" - <<<"$xml" 2>/dev/null)
-  echo $items
-
-  touch "${tmpdir}/vectors_with_style"
-
-  exit
-
   for (( i=1; i < $itemsCount + 1; i++ )); do
-    echo "dans for"
-    name=$(xpath '/featureTypes/featureType['$i']/name/text()') # '
-    if [ "$name" =~ "-sld-$output" ]; then
-      echo "dans if"
-      cmd="echo \"$name\" >> $tmpdir/vectors_with_style"
+    name=$(xmllint --xpath "/featureTypes/featureType[$i]/name/text()" - <<<"$xml")
+    if [[ "$name" == *"-sld-$output-sld"* ]]; then
+      cmd="curl --silent \
+                 -u ${login}:${password} \
+                 -XPUT -H \"Content-type: text/xml\" \
+                 -d \"<layer><defaultStyle><name>${output}</name></defaultStyle></layer>\" \
+                 $url/geoserver/rest/layers/geosync:${name}"
       echo $cmd
       eval $cmd
     fi
   done
-
   
-  
+  #liste les vecteurs du datastore shpowncloud et assigne le style à ceux concernés
+  cmd="curl --silent \
+             -u ${login}:${password} \
+             -XGET $url/geoserver/rest/workspaces/geosync/datastores/shpowncloud/featuretypes.xml"
 
+  echo "récupére la liste des vecteurs"
+  echo $cmd
+  xml=$(eval $cmd)
 
+  if  [ $verbose ]; then
+    echo $xml
+  fi
 
+  itemsCount=$(xmllint --xpath "count(//featureTypes/featureType)" - <<<"$xml" 2>/dev/null)
+  # redirige l'erreur standard vers null pour éviter d'être averti de chaque valeur manquante (XPath set is empty)
+  # mais cela peut empêcher de détecter d'autres erreurs
+  # TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
+  echo "itemsCount :  $itemsCount"
 
-
-
-
-
-
+  for (( i=1; i < $itemsCount + 1; i++ )); do
+    name=$(xmllint --xpath "/featureTypes/featureType[$i]/name/text()" - <<<"$xml") 
+    if [[ "$name" == *"-sld-$output-sld"* ]]; then
+      cmd="curl --silent \
+                 -u ${login}:${password} \
+                 -XPUT -H \"Content-type: text/xml\" \
+                 -d \"<layer><defaultStyle><name>${output}</name></defaultStyle></layer>\" \
+                 $url/geoserver/rest/layers/geosync:${name}"
+      echo $cmd
+      eval $cmd
+    fi
+  done
 
 }
 
