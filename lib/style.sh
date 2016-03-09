@@ -196,7 +196,7 @@ style::publish() {
 
   for (( i=1; i < $itemsCount + 1; i++ )); do
     name=$(xmllint --xpath "/featureTypes/featureType[$i]/name/text()" - <<<"$xml")
-    if [[ "$name" == *"-sld-$output-sld"* ]]; then
+    if [[ "$name" == *"_sld_$output_sld"* ]]; then
       cmd="curl --silent \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \

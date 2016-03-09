@@ -135,7 +135,7 @@ vector::publish() {
   # attention : le datastore doit être en UTF-8
 
 
-  # ----------------------------- NOUVEAU TEST POSTGIS -------------
+  # ----------------------------- PUBLICATION POSTGIS -------------
 
   # necessaire car le nom d'une table postgres ne peut avoir de .
   output_pgsql=$(echo $output | cut -d. -f1) 

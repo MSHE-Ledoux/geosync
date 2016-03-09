@@ -121,7 +121,7 @@ raster::publish() {
   local tmpdir1=~/tmp/geosync_raster_step1
   local tmpdir=~/tmp/geosync_raster_step2
 
-  #suprime le dossier temporaire et le recrée
+  # supprime le dossier temporaire et le recrée
   rm -R "$tmpdir1"
   mkdir "$tmpdir1"
   rm -R "$tmpdir"
@@ -143,6 +143,18 @@ raster::publish() {
     echo $cmd
   fi
   eval $cmd
+
+  # ----------------------------- INTEGRATION POSTGIS -------------
+
+  # necessaire car le nom d'une table postgres ne peut avoir de .
+  output_pgsql=$(echo $output | cut -d. -f1)
+  #output_pgsql=${output_pgsql//-/_}  # Gestionnaire de bd de QGIS 2.12 n'accepte pas les rasters avec des - dans le nom
+
+  # envoi du raster vers postgis
+  echo "raster2pgsql -s $epsg //$tmpdir/$output $output_pgsql | psql -h localhost -d geoserver_data -U geosync"
+  raster2pgsql -s $epsg //$tmpdir/$output $output_pgsql | psql -h localhost -d geoserver_data -U geosync 2>/dev/null 1>/dev/null
+
+  # ----------------------------------------------------------------
 
   # publication du raster dans le Geoserver
   # doc : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-file-extension

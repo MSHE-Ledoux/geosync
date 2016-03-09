@@ -121,12 +121,12 @@ importfile() {
     echo $cmd
     eval $cmd
 
-    #publie les metadata même si le .xml n'existe pas pour les couches de de l'entrepot postgis_data (dans ce cas publie les données par défaut)
+    #publie les metadata même si le .xml n'existe pas pour les couches de l'entrepot postgis_data (dans ce cas publie les données par défaut)
     cmd="metadata::publish -i '$filepath.xml' -o '$outputlayername' -l '$login' -p '$pass' -u '$host' -w '$workspace' -d 'postgis_data' $verbosestr"
     echo $cmd
     eval $cmd
   
-    #publie les metadata même si le .xml n'existe pas (dans ce cas publie les données par défaut)
+    #publie les metadata même si le .xml n'existe pas pour les couches de l'entrepot shpowncloud (dans ce cas publie les données par défaut)
     cmd="metadata::publish -i '$filepath.xml' -o '$outputlayername' -l '$login' -p '$pass' -u '$host' -w '$workspace' -d '$datastore' $verbosestr"
     echo $cmd
     eval $cmd

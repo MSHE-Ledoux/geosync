@@ -15,26 +15,27 @@ util::cleanName() {
   # avec l'option -p, prend tout le chemin
   if [ "$option" == "-p" ]; then  # par défaut
     match=" "
-    repl="-"
+    #repl="-"
+    repl="_"
     path=${path//$match/$repl}
-    match="_"
-    repl="-"
+    match="-"
+    repl="_"
     path=${path//$match/$repl}
     result=$(dirname $path)
     result=${result##*/}            # supprime les caractères devant le dernier / 
     local name_result
     name_result=$(basename "$path")
     local space 
-    space="_"
+    space="__"
     result="$result$space$name_result"
     echo "result clean name : $result" >&2
   else
     result=$(basename "$path")
     match=" "
-    repl="-"
+    repl="_"
     result=${result//$match/$repl}
-    match="_"
-    repl="-"
+    match="-"
+    repl="_"
     result=${result//$match/$repl}
     echo "result clean name : $result" >&2
   fi
@@ -42,7 +43,7 @@ util::cleanName() {
  
   #remplace tac toe.shp en tac-toe.shp
   match=" "
-  repl="-"
+  repl="_"
   result=${result//$match/$repl} # Replaces all matches of " " by "-"
   result=${result,,}              # Replaces all uppercases by lowercases
   ## Si le nom est trop long, le tronque et avertit dans les logs
