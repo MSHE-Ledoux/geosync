@@ -277,18 +277,21 @@ main() {
   done <"$tmpdir/vectors_tobedeleted_pgsql"
 
 
-  # parcours la liste des rasteurs à supprimer
+  # parcours la liste des rasteurs à supprimer dans le système de fichiers et postgis
   # et supprime chacun d'eux
   while read raster; do
     echo "suppression de : $raster"
     # supprime une couche
     cmd="curl --silent -u '$login:$pass' -XDELETE '$url/geoserver/rest/workspaces/$workspace/coveragestores/$raster?recurse=true&purge=all'"
     # http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-format
+    cmd_pgsql="psql -h localhost -d geoserver_data -U geosync -w -c 'DROP TABLE \"$raster\";'"
     if  [ $verbose ]; then
       echo $cmd
+      echo $cmd_pgsql
     fi
     if  [ ! $simulation ]; then
       eval $cmd
+      eval $cmd_pgsql
     fi
     
   done <"$tmpdir/rasters_tobedeleted"

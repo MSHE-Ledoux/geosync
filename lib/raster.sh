@@ -151,8 +151,11 @@ raster::publish() {
   #output_pgsql=${output_pgsql//-/_}  # Gestionnaire de bd de QGIS 2.12 n'accepte pas les rasters avec des - dans le nom
 
   # envoi du raster vers postgis
-  echo "raster2pgsql -s $epsg //$tmpdir/$output $output_pgsql | psql -h localhost -d geoserver_data -U geosync"
-  raster2pgsql -s $epsg //$tmpdir/$output $output_pgsql | psql -h localhost -d geoserver_data -U geosync 2>/dev/null 1>/dev/null
+  # utilisation de l'option -d nécessaire pour écraser proprement les tables et d'inscrire des erreurs d'insert dans les logs de postgreql
+  # il est necessaire d'augmenter dans /etc/postgresql/9.4/main/postgresql.conf la valeur par défaut
+  # de checkpoint_segments à 10 ou au-delà pour éviter les erreurs LOG:  les points de vérification (checkpoints) arrivent trop fréquemment
+  echo "raster2pgsql -s $epsg -d //$tmpdir/$output $output_pgsql | psql -h localhost -d geoserver_data -U geosync"
+  raster2pgsql -s $epsg -d //$tmpdir/$output $output_pgsql | psql -h localhost -d geoserver_data -U geosync 2>/dev/null 1>/dev/null
 
   # ----------------------------------------------------------------
 
