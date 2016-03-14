@@ -188,7 +188,7 @@ main() {
       for filepath in **/*.shp; do
         outputlayername=$(util::cleanName "$filepath" -p)
         outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
-        outputlayernamesansext=$outputlayernamesansext"0"
+        outputlayernamesansext=$outputlayernamesansext"1"
         #echo "{$outputlayernamesansext}"
         echo "$outputlayernamesansext" >> "$tmpdir/vectors_shared"
       done
