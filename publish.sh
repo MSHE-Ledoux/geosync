@@ -127,7 +127,7 @@ importfile() {
     eval $cmd
   
     #publie les metadata même si le .xml n'existe pas pour les couches de l'entrepot shpowncloud (dans ce cas publie les données par défaut)
-    cmd="metadata::publish -i '$filepath.xml' -o '${outputlayername}1' -l '$login' -p '$pass' -u '$host' -w '$workspace' -d '$datastore' $verbosestr"
+    cmd="metadata::publish -i '$filepath.xml' -o '$outputlayername' -l '$login' -p '$pass' -u '$host' -w '$workspace' -d '$datastore' $verbosestr"
     echo $cmd
     eval $cmd
 
