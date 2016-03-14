@@ -200,6 +200,8 @@ CMD
 
   local shppath=${input%.*}  # /GPS/Point_ge.shp.xml -> /GPS/Point_ge.shp
 
+  ## --------- Vecteurs issus de postgis  --------------
+
   #attention : spécifier le shp concerné en fin d'url
   #http://docs.geoserver.org/2.6.x/en/user/rest/api/datastores.html#workspaces-ws-datastores-ds-file-url-external-extension
   local statuscode
@@ -212,7 +214,7 @@ Chemin : $shppath</abstract>
 <enabled>true</enabled>
 <description>
   metadata: $metadata </description></featureType>" \
-     "$url/geoserver/rest/workspaces/$workspace/datastores/$datastore/featuretypes/$output"   2>&1)
+     "$url/geoserver/rest/workspaces/$workspace/datastores/postgis_data/featuretypes/$output"   2>&1)
   #--output /dev/null
   #<enabled>true</enabled><advertised>true</advertised> est nécessaire pour éviter que la couche ne soit dépubliée (car par défaut "enabled" est mis à false lors d'un update
   # pour rajouter des mots clés
@@ -228,6 +230,36 @@ Chemin : $shppath</abstract>
   else
     echoerror "http code : $statuscode for metadata of $output"
   fi
+
+  # ---------- Vecteurs issus de shpowncloud --------------
+
+  local statuscode
+  statuscode=$(curl --verbose --output /dev/null -w %{http_code} -u "$login:$password" -XPUT -H "Content-type: text/xml" \
+    -d "<featureType><title>$title</title>
+<abstract>$abstract
+Auteur : $origin
+Date de production de la donnée : $pubdate
+Chemin : $shppath</abstract>
+<enabled>true</enabled>
+<description>
+  metadata: $metadata </description></featureType>" \
+     "$url/geoserver/rest/workspaces/$workspace/datastores/$datastore/featuretypes/${output}1"   2>&1)
+  #--output /dev/null
+  #<enabled>true</enabled><advertised>true</advertised> est nécessaire pour éviter que la couche ne soit dépubliée (car par défaut "enabled" est mis à false lors d'un update
+  # pour rajouter des mots clés
+  # ...</description><keywords><string>my_keyword1</string><string>my_keyword2</string></keywords></featureType>
+
+
+  # si le code de la réponse http est compris entre [200,300[ alors OK
+  if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
+    if  [ $verbose ]; then
+      echo "ok $statuscode"
+    fi
+    echo "metadata publiées : ${output}1 "
+  else
+    echoerror "http code : $statuscode for metadata of $output"
+
+
 
 } #end of importmetadata()
 

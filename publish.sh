@@ -116,17 +116,12 @@ importfile() {
       outputlayername=$(util::cleanName "$filepath" -p)
     fi
 
-    # convertit et publie la couche
+    # convertit et publie la couche pour postgis_data et shpowncloud
     cmd="vector::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$pass' -u '$host'  -w '$workspace' -d '$datastore' -e '$epsg' $verbosestr"
     echo $cmd
     eval $cmd
 
-    #publie les metadata même si le .xml n'existe pas pour les couches de l'entrepot postgis_data (dans ce cas publie les données par défaut)
-    cmd="metadata::publish -i '$filepath.xml' -o '$outputlayername' -l '$login' -p '$pass' -u '$host' -w '$workspace' -d 'postgis_data' $verbosestr"
-    echo $cmd
-    eval $cmd
-  
-    #publie les metadata même si le .xml n'existe pas pour les couches de l'entrepot shpowncloud (dans ce cas publie les données par défaut)
+    #publie les metadata même si le .xml n'existe pas (dans ce cas publie les données par défaut) pour postgis_data et shpowncloud
     cmd="metadata::publish -i '$filepath.xml' -o '$outputlayername' -l '$login' -p '$pass' -u '$host' -w '$workspace' -d '$datastore' $verbosestr"
     echo $cmd
     eval $cmd
