@@ -18,19 +18,14 @@ PASSFILE="$HOME/bin/.geosync.conf"
 # contient le fichier lastdate.txt avec la dernière date de changement de fichier traité
 DATA_PATH="$HOME/data" 
 
-# répertoire provisoire des sources
-APP_DIR="_geosync"
-
-# log dans un répertoire dédié
-# ls -ld /var/log/geosync
-# drwxrwxr-x 2 georchestra       georchestra     4096 juil.  3 15:05 geosync
-LOG_PATH="/var/log/geosync"
+# log dans un répertoire dédié à l'utilisateur
+LOG_PATH="/var/log/geosync-$USER"
 PUBLI_LOG="$LOG_PATH/publish.log"
 ERROR_LOG="$LOG_PATH/publish_error.log"
 
 #synchronise les fichiers du montage webdav pour être plus performant
 #rsync -avr --delete --exclude '_geosync' --exclude 'lost+found' '/home/georchestra-ouvert/owncloud/owncloud' '/home/georchestra-ouvert/owncloudsync/'
-cmd="rsync -avr --delete --exclude '$APP_DIR' --exclude 'lost+found' '$INPUT_OUTPUT_PATH/' '$INPUT_COPY_PATH/'"
+cmd="rsync -avr --delete --exclude 'lost+found' '$INPUT_OUTPUT_PATH/' '$INPUT_COPY_PATH/'"
 echo $cmd
 eval $cmd
 
