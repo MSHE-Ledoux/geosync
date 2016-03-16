@@ -3,7 +3,12 @@
 # si semble non monté alors on monte le webdav
 # attention : ne pas faire précéder ce code par le flock (ci-dessous) car sinon semble ne pas supprimer le verrou
 
-gslog="geosync-$USER"
+# on a besoin ici uniquement des logs
+PARAMFILE="$HOME/bin/.geosync.conf"
+local host login passwd workspace datastore pg_datastore db logs
+source "$PARAMFILE"
+
+PATH_LOG="/var/log/$logs"
 
 # sans autofs
 #if [ ! -d ~/owncloud ]; then
@@ -21,13 +26,13 @@ fi
   flock -x -w 10 200 || exit 1
 
   # date dans les logs
-  date >> /var/log/$gslog/main.log
-  date >> /var/log/$gslog/main_error.log
+  date >> /var/log/$PATH_LOG/main.log
+  date >> /var/log/$PATH_LOG/main_error.log
   
   # appel de main.sh
-  bash /home/georchestra-ouvert/bin/main.sh 1>>/var/log/$gslog/main.log 2>>/var/log/$gslog/main_error.log
+  bash /home/georchestra-ouvert/bin/main.sh 1>>/var/log/$PATH_LOG/main.log 2>>/var/log/$PATH_LOG/main_error.log
 
-) 200>/var/lock/${gslog}.exclusivelock
+) 200>/var/lock/${logs}.exclusivelock
 
 
 # à inclure dans un crontab

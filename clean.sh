@@ -68,22 +68,22 @@ main() {
   #se base sur le répertoire synchronisé obtenu par :
   #rsync -avr --delete --exclude '_geosync' --exclude 'lost+found' '/home/georchestra-ouvert/owncloud/' '/home/georchestra-ouvert/owncloudsync/'
 
-  passfilepath="$BASEDIR/.geosync.conf"
+  paramfilepath="$BASEDIR/.geosync.conf"
 
-  #récupère login ($login), mot de passe ($pass), url du geoserver ($host) dans le fichier .geosync situé dans le même dossier que ce script
-  local login pass host
-  source "$passfilepath"
+  #récupère login ($login), mot de passe ($passwd), url du geoserver ($host) dans le fichier .geosync situé dans le même dossier que ce script
+  local login passwd host
+  source "$paramfilepath"
 
   #attention le fichier .geosync est interprété et fait donc confiance au code
   # pour une solution plus sûr envisager quelque chose comme : #while read -r line; do declare $line; done < "$BASEDIR/.pass"
 
   # vérification du host/login/mot de passe
-  if [ ! "$login" ] || [ ! "$pass" ] || [ ! "$host" ]; then
-    error "url du georserver, login ou mot de passe non définit; le fichier spécifié avec l'option -p [passfilepath] doit contenir la définition des variables suivantes sur 3 lignes : login=[login] pass=[password] host=[geoserver's url]"
+  if [ ! "$login" ] || [ ! "$passwd" ] || [ ! "$host" ]; then
+    error "url du georserver, login ou mot de passe non définit; le fichier spécifié avec l'option -p [paramfilepath] doit contenir la définition des variables suivantes sur 3 lignes : login=[login] passwd=[password] host=[geoserver's url]"
   fi
 
   url=$host
-  password=$pass
+  password=$passwd
 
   #créer un dossier temporaire et stocke son chemin dans une variable
   local tmpdir=~/tmp/geosync_clean
@@ -243,7 +243,7 @@ main() {
     echo "suppression de : $vector"
     # supprime une couche
     
-    cmd="curl --silent -u '$login:$pass' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/$datastore/featuretypes/$vector?recurse=true&purge=all'"
+    cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/$datastore/featuretypes/$vector?recurse=true&purge=all'"
     # http://docs.geoserver.org/stable/en/user/rest/api/featuretypes.html#workspaces-ws-datastores-ds-featuretypes-ft-format
     # dans le cas d'un filesystem "recurse=true" dans le cas d'une bd postgis "recurse=false"
     if  [ $verbose ]; then
@@ -261,7 +261,7 @@ main() {
     echo "suppression de : $vector"
     # supprime une couche
 
-    cmd="curl --silent -u '$login:$pass' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/postgis_data/featuretypes/$vector?recurse=true&purge=all'"
+    cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/postgis_data/featuretypes/$vector?recurse=true&purge=all'"
     cmd_pgsql="psql -h localhost -d geoserver_data -U geosync -w -c 'DROP TABLE \"$vector\";'"
     # http://docs.geoserver.org/stable/en/user/rest/api/featuretypes.html#workspaces-ws-datastores-ds-featuretypes-ft-format
     # dans le cas d'un filesystem "recurse=true" dans le cas d'une bd postgis "recurse=false"
@@ -282,7 +282,7 @@ main() {
   while read raster; do
     echo "suppression de : $raster"
     # supprime une couche
-    cmd="curl --silent -u '$login:$pass' -XDELETE '$url/geoserver/rest/workspaces/$workspace/coveragestores/$raster?recurse=true&purge=all'"
+    cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/workspaces/$workspace/coveragestores/$raster?recurse=true&purge=all'"
     # http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-format
     cmd_pgsql="psql -h localhost -d geoserver_data -U geosync -w -c 'DROP TABLE \"$raster\";'"
     if  [ $verbose ]; then

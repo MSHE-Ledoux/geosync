@@ -12,14 +12,16 @@ INPUT_OUTPUT_PATH="$HOME/owncloud/owncloud"
 
 INPUT_COPY_PATH="$HOME/owncloudsync"
 
-# login + passwd + URL du serveur georchestra
-PASSFILE="$HOME/bin/.geosync.conf"
+# on a besoin ici uniquement des logs
+PARAMFILE="$HOME/bin/.geosync.conf"
+local host login passwd workspace datastore pg_datastore db logs
+source "$PARAMFILE"
 
 # contient le fichier lastdate.txt avec la dernière date de changement de fichier traité
 DATA_PATH="$HOME/data" 
 
 # log dans un répertoire dédié à l'utilisateur
-LOG_PATH="/var/log/geosync-$USER"
+LOG_PATH="/var/log/$logs"
 PUBLI_LOG="$LOG_PATH/publish.log"
 ERROR_LOG="$LOG_PATH/publish_error.log"
 
@@ -35,6 +37,6 @@ fi
 date >> "$PUBLI_LOG"
 date >> "$ERROR_LOG"
 
-cmd="bash '$BASEDIR/publish.sh' -i '$INPUT_COPY_PATH' -w geosync -d shpowncloud -g '$DATA_PATH' -p '$PASSFILE' -v 1>>'$PUBLI_LOG' 2>>'$ERROR_LOG'"
+cmd="bash '$BASEDIR/publish.sh' -i '$INPUT_COPY_PATH' -g '$DATA_PATH' -p '$PARAMFILE' -v 1>>'$PUBLI_LOG' 2>>'$ERROR_LOG'"
 echo $cmd
 eval $cmd

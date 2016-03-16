@@ -3,10 +3,10 @@
 usage() { 
   program=$(basename "$0") 
   echo "==> usage :"
-  echo "$program [-i inputpath=.] [-o output] [-g datapath=.] [-p passfile=./.geosync.conf] -w workspace -d datastore [-c coveragestore] [-e epsg] [-v]"
-  echo "$program -i 'directory of vectors/rasters' [-g datapath=.] [-p passfile=./.geosync.conf] -w workspace -d datastore [-e epsg] [-v]"
-  echo "$program -i vector.shp [-p passfile=./.geosync.conf] -w workspace -d datastore [-e epsg] [-v]"
-  echo "$program -i raster.tif|png|adf|jpg|ecw [-p passfile=./.geosync.conf] -w workspace -c coveragestore [-e epsg] [-v]"
+  echo "$program [-i inputpath=.] [-o output] [-g datapath=.] [-p paramfile=./.geosync.conf] -w workspace -d datastore [-c coveragestore] [-e epsg] [-v]"
+  echo "$program -i 'directory of vectors/rasters' [-g datapath=.] [-p paramfile=./.geosync.conf] -w workspace -d datastore [-e epsg] [-v]"
+  echo "$program -i vector.shp [-p paramfile=./.geosync.conf] -w workspace -d datastore [-e epsg] [-v]"
+  echo "$program -i raster.tif|png|adf|jpg|ecw [-p paramfile=./.geosync.conf] -w workspace -c coveragestore [-e epsg] [-v]"
   echo ""
   echo "Publie les couches (rasteurs, vecteurs) dans le geoserver depuis le dossier donné ([input]) ou sinon courant et ses sous-dossiers"
   echo ""
@@ -39,15 +39,15 @@ importallfiles() {
     mkdir $datapath
   fi
 
-  #fichier dédié à stocker la valeur lastdatemodif, date de changement la plus récente des fichiers indexés
+  # fichier dédié à stocker la valeur lastdatemodif, date de changement la plus récente des fichiers indexés
   configfile="$datapath/lastdate.txt"
 
-  #test si le fichier  temporaire stockant la date de modif la plus récente existe
-  #si tel est le cas, alors la récupère
+  # teste si le fichier  temporaire stockant la date de modif la plus récente existe
+  # si tel est le cas, alors la récupère
   if [ -f "$configfile" ]; then 
     lastdatemodif=$(cat "$configfile")
   fi
-  #newlastdatemodif est la valeur qui sera stockée à la place de lastdatemodif
+  # newlastdatemodif est la valeur qui sera stockée à la place de lastdatemodif
   newlastdatemodif=$lastdatemodif
 
   cd "$path"
@@ -117,12 +117,12 @@ importfile() {
     fi
 
     # convertit et publie la couche pour postgis_data et shpowncloud
-    cmd="vector::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$pass' -u '$host'  -w '$workspace' -d '$datastore' -e '$epsg' $verbosestr"
+    cmd="vector::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' -u '$host'  -w '$workspace' -d '$datastore' -e '$epsg' $verbosestr"
     echo $cmd
     eval $cmd
 
     #publie les metadata même si le .xml n'existe pas (dans ce cas publie les données par défaut) pour postgis_data et shpowncloud
-    cmd="metadata::publish -i '$filepath.xml' -o '$outputlayername' -l '$login' -p '$pass' -u '$host' -w '$workspace' -d '$datastore' $verbosestr"
+    cmd="metadata::publish -i '$filepath.xml' -o '$outputlayername' -l '$login' -p '$passwd' -u '$host' -w '$workspace' -d '$datastore' $verbosestr"
     echo $cmd
     eval $cmd
 
@@ -138,7 +138,7 @@ importfile() {
       outputlayername=$(util::cleanName "$filepath" -p)
     fi
 
-    cmd="raster::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$pass' -u '$host' -w '$workspace' -c '$coveragestore' -e '$epsg' $verbosestr"
+    cmd="raster::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' -u '$host' -w '$workspace' -c '$coveragestore' -e '$epsg' $verbosestr"
     echo $cmd
     eval $cmd
 
@@ -149,7 +149,7 @@ importfile() {
     outputlayername=$(util::cleanName "$filepath")
   fi 
 
-  cmd="style::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$pass' -u '$host' $verbosestr"
+  cmd="style::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' -u '$host' $verbosestr"
   echo $cmd
   eval $cmd
   }
@@ -171,7 +171,7 @@ main() {
   #chemin du script pour pouvoir appeler d'autres scripts dans le même dossier
   BASEDIR=$(dirname "$0")
 
-  #local input output epsg datapath passfile workspace datastore coveragestore verbose help
+  #local input output epsg datapath paramfile workspace datastore coveragestore verbose help
   local OPTIND opt
   while getopts "i:o:e:g:p:w:d:c:vh" opt; do
     # le : signifie que l'option attend un argument
@@ -180,7 +180,7 @@ main() {
       o) output=$OPTARG ;;
       e) epsg=$OPTARG ;;
       g) datapath=$OPTARG ;;
-      p) passfile=$OPTARG ;;
+      p) paramfile=$OPTARG ;;
       w) workspace=$OPTARG ;;
       d) datastore=$OPTARG ;;
       c) coveragestore=$OPTARG ;;
@@ -199,27 +199,27 @@ main() {
     exit
   fi
 
-  # "passfile" nom/chemin du fichier du host/login/mot de passe
+  # "paramfile" nom/chemin du fichier du host/login/mot de passe
   # par défaut, prend le fichier .geosync.conf dans le dossier de ce script
-  if [ ! "$passfile" ]; then
-    passfile="$BASEDIR/.geosync.conf"
+  if [ ! "$paramfile" ]; then
+    paramfile="$BASEDIR/.geosync.conf"
   fi
 
-  #test l'existence du fichier contenant le host/login/mot de passe
-  if [ ! -f "$passfile" ]; then 
-    error "le fichier contenant le host/login/mot de passe n'existe pas; le spécifier avec l'option -p [passfile]"
+  # teste l'existence du fichier contenant le host/login/mot de passe
+  if [ ! -f "$paramfile" ]; then 
+    error "le fichier contenant le host/login/mot de passe n'existe pas; le spécifier avec l'option -p [paramfile]"
   fi
 
-  #récupère login ($login), mot de passe ($pass), url du geoserver ($host) dans le fichier .geosync.conf situé dans le même dossier que ce script
-  local login pass host
-  source "$passfile"
+  # récupère host login passwd workspace datastore pg_datastore db logs  dans le fichier .geosync.conf situé dans le même dossier que ce script
+  local host login passwd workspace datastore pg_datastore db logs
+  source "$paramfile"
 
-  #attention le fichier .geosync.conf est interprété et fait donc confiance au code
-  # pour une solution plus sûr envisager quelque chose comme : #while read -r line; do declare $line; done < "$BASEDIR/.geosync.conf"
+  # attention le fichier .geosync.conf est interprété et fait donc confiance au code
+  # pour une solution plus sûre envisager quelque chose comme : #while read -r line; do declare $line; done < "$BASEDIR/.geosync.conf"
 
   # vérification du host/login/mot de passe
-  if [ ! "$login" ] || [ ! "$pass" ] || [ ! "$host" ]; then
-    error "url du georserver, login ou mot de passe non définit; le fichier spécifié avec l'option -p [passfile] doit contenir la définition des variables suivantes sur 3 lignes : login=[login] pass=[password] host=[geoserver's url]"
+  if [ ! "$login" ] || [ ! "$passwd" ] || [ ! "$host" ]; then
+    error "url du georserver, login ou mot de passe non définit; le fichier spécifié avec l'option -p [paramfile] doit contenir la définition des variables suivantes sur 3 lignes : login=[login] passwd=[password] host=[geoserver's url]"
   fi
 
   #valeurs des paramètres par défaut
