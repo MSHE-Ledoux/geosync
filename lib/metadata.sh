@@ -258,7 +258,7 @@ Chemin : $shppath</abstract>
     echo "metadata publiées : ${output}1 "
   else
     echoerror "http code : $statuscode for metadata of $output"
-
+  fi
 
 
 } #end of importmetadata()

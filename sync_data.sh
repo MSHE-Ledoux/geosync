@@ -26,11 +26,11 @@ fi
   flock -x -w 10 200 || exit 1
 
   # date dans les logs
-  date >> /var/log/$PATH_LOG/main.log
-  date >> /var/log/$PATH_LOG/main_error.log
+  date >> $PATH_LOG/main.log
+  date >> $PATH_LOG/main_error.log
   
   # appel de main.sh
-  bash /home/georchestra-ouvert/bin/main.sh 1>>/var/log/$PATH_LOG/main.log 2>>/var/log/$PATH_LOG/main_error.log
+  bash /home/georchestra-ouvert/bin/main.sh 1>>$PATH_LOG/main.log 2>>$PATH_LOG/main_error.log
 
 ) 200>/var/lock/${logs}.exclusivelock
 
