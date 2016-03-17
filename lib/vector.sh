@@ -5,11 +5,11 @@
 usage() { 
   echo "==> usage : "
   echo "source /lib/vector.sh"
-  echo "vector::publish -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -d datadtore [-v]"
+  echo "vector::publish -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -s datastore -g pg_datastore -b db [-v]"
   echo ""
   echo "1. convertit (une copie du) shapefile (-i input) dans le système de coordonnées désiré (-e epsg)"
   echo "2. publie le shapefile converti sous le nom (-o output=input)"
-  echo "   dans l'entrepôt (-d datastore) de l'espace de travail (-w workspace)"
+  echo "   dans l'entrepôt (-s datastore) de l'espace de travail (-w workspace)"
   echo "   dans le geoserver accéssible à l'adresse donnée (-u url)"
 } 
 
@@ -20,7 +20,7 @@ vector::publish() {
   } 
 
   usage() {
-    echoerror "vector::publish: -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -d datadtore [-v]"
+    echoerror "vector::publish: -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -s datastore -g pg_datastore -b db [-v]"
   }
 
   local DIR
@@ -37,7 +37,7 @@ vector::publish() {
 
   local input output epsg login password url workspace datastore verbose
   local OPTIND opt
-  while getopts "i:o:e:l:p:u:w:d:v" opt; do
+  while getopts "i:o:e:l:p:u:w:s:g:b:v" opt; do
     # le : signifie que l'option attend un argument
     case $opt in
       i) input=$OPTARG ;;
@@ -47,7 +47,9 @@ vector::publish() {
       p) password=$OPTARG ;;
       u) url=$OPTARG ;;
       w) workspace=$OPTARG ;;
-      d) datastore=$OPTARG ;;
+      s) datastore=$OPTARG ;;
+      g) pg_datastore=$OPTARG ;;
+      b) db=$OPTARG ;;
       v) verbose=1 ;;
       *) usage ;;
     esac
@@ -141,13 +143,14 @@ vector::publish() {
   output_pgsql=$(echo $output | cut -d. -f1) 
   
   # envoi du shapefile vers postgis
-  echo "shp2pgsql -I -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h localhost -d geoserver_data -U geosync -w"
-  shp2pgsql -I -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h localhost -d geoserver_data -U geosync -w 2>/dev/null 1>/dev/null
+  cmd="shp2pgsql -I -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h localhost -d $db -U geosync -w"
+  echo $cmd
+  eval $cmd
 
   # si la table est déjà publiée sur geoserver, la dépublie
-  if [ -d "/var/www/geoserver/data/workspaces/$workspace/postgis_data/$output_pgsql" ]; then
+  if [ -d "/var/www/geoserver/data/workspaces/$workspace/$pg_datastore/$output_pgsql" ]; then
     echo "la couche est déjà publiée sur geoserver : elle va être dépubliée"
-    cmd="curl --silent -u '${login}:${password}' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/postgis_data/featuretypes/$output_pgsql?recurse=true&purge=all'"
+    cmd="curl --silent -u '${login}:${password}' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes/$output_pgsql?recurse=true&purge=all'"
     echo $cmd
     eval $cmd
   fi 
@@ -157,13 +160,13 @@ vector::publish() {
   if [ $verbose ]; then
     var_v=$"-v"
     echo "curl $var_v -w %{http_code} -u \"${login}:#########\" -XPOST -H \"Content-type: text/xml\"  -d \"<featureType><name>$output_pgsql</name></featureType>\" \
-    $url/geoserver/rest/workspaces/$workspace/datastores/postgis_data/featuretypes"
+    $url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes"
   else
     var_=$"--silent --output /dev/null"
   fi
 
   cmd="curl $var_v -w %{http_code} -u '${login}:${password}' -XPOST -H 'Content-type: text/xml'  -d '<featureType><name>$output_pgsql</name></featureType>' \
-  $url/geoserver/rest/workspaces/$workspace/datastores/postgis_data/featuretypes 2>&1"
+  $url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes 2>&1"
 
   statuscode=$(eval $cmd)
 

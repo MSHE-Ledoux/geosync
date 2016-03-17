@@ -3,9 +3,9 @@
 usage() { 
   program=$(basename "$0") 
   echo "==> usage :"
-  echo "$program [-i inputpath=.] [-o output] [-g datapath=.] [-p paramfile=./.geosync.conf] -w workspace -d datastore [-c coveragestore] [-e epsg] [-v]"
-  echo "$program -i 'directory of vectors/rasters' [-g datapath=.] [-p paramfile=./.geosync.conf] -w workspace -d datastore [-e epsg] [-v]"
-  echo "$program -i vector.shp [-p paramfile=./.geosync.conf] -w workspace -d datastore [-e epsg] [-v]"
+  echo "$program [-i inputpath=.] [-o output] [-d datapath=.] [-p paramfile=./.geosync.conf] -w workspace -s datastore [-c coveragestore] [-e epsg] [-v]"
+  echo "$program -i 'directory of vectors/rasters' [-d datapath=.] [-p paramfile=./.geosync.conf] -w workspace -s datastore [-e epsg] [-v]"
+  echo "$program -i vector.shp [-p paramfile=./.geosync.conf] -w workspace -s datastore -g pg_datastore -b db [-e epsg] [-v]"
   echo "$program -i raster.tif|png|adf|jpg|ecw [-p paramfile=./.geosync.conf] -w workspace -c coveragestore [-e epsg] [-v]"
   echo ""
   echo "Publie les couches (rasteurs, vecteurs) dans le geoserver depuis le dossier donné ([input]) ou sinon courant et ses sous-dossiers"
@@ -117,12 +117,13 @@ importfile() {
     fi
 
     # convertit et publie la couche pour postgis_data et shpowncloud
-    cmd="vector::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' -u '$host'  -w '$workspace' -d '$datastore' -e '$epsg' $verbosestr"
+    cmd="vector::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' 
+                         -u '$host' -w '$workspace' -s '$datastore' -g '$pg_datastore' -b '$db' -e '$epsg' $verbosestr"
     echo $cmd
     eval $cmd
 
     #publie les metadata même si le .xml n'existe pas (dans ce cas publie les données par défaut) pour postgis_data et shpowncloud
-    cmd="metadata::publish -i '$filepath.xml' -o '$outputlayername' -l '$login' -p '$passwd' -u '$host' -w '$workspace' -d '$datastore' $verbosestr"
+    cmd="metadata::publish -i '$filepath.xml' -o '$outputlayername' -l '$login' -p '$passwd' -u '$host' -w '$workspace' -s '$datastore' $verbosestr"
     echo $cmd
     eval $cmd
 
@@ -173,17 +174,19 @@ main() {
 
   #local input output epsg datapath paramfile workspace datastore coveragestore verbose help
   local OPTIND opt
-  while getopts "i:o:e:g:p:w:d:c:vh" opt; do
+  while getopts "i:o:e:d:p:w:s:c:g:b:vh" opt; do
     # le : signifie que l'option attend un argument
     case $opt in
       i) input=$OPTARG ;;
       o) output=$OPTARG ;;
       e) epsg=$OPTARG ;;
-      g) datapath=$OPTARG ;;
+      d) datapath=$OPTARG ;;
       p) paramfile=$OPTARG ;;
       w) workspace=$OPTARG ;;
-      d) datastore=$OPTARG ;;
+      s) datastore=$OPTARG ;;
       c) coveragestore=$OPTARG ;;
+      g) pg_datastore=$OPTARG ;;
+      b) db=$OPTARG ;;
       v) verbose=1; verbosestr="-v" ;;
       h) help=1 ;;
   # si argument faux renvoie la sortie    
@@ -199,30 +202,23 @@ main() {
     exit
   fi
 
-  # "paramfile" nom/chemin du fichier du host/login/mot de passe
+  # "paramfile" nom/chemin du fichier des paramètres de connexion
   # par défaut, prend le fichier .geosync.conf dans le dossier de ce script
   if [ ! "$paramfile" ]; then
     paramfile="$BASEDIR/.geosync.conf"
   fi
 
-  # teste l'existence du fichier contenant le host/login/mot de passe
+  # teste l'existence du fichier contenant les paramètres de connexion
   if [ ! -f "$paramfile" ]; then 
-    error "le fichier contenant le host/login/mot de passe n'existe pas; le spécifier avec l'option -p [paramfile]"
+    error "le fichier geosync.conf n'existe pas; le spécifier avec l'option -p [paramfile]"
   fi
 
-  # récupère host login passwd workspace datastore pg_datastore db logs  dans le fichier .geosync.conf situé dans le même dossier que ce script
+  # récupère "host login passwd workspace datastore pg_datastore db logs" dans le fichier .geosync.conf situé dans le même dossier que ce script
   local host login passwd workspace datastore pg_datastore db logs
   source "$paramfile"
 
   # attention le fichier .geosync.conf est interprété et fait donc confiance au code
   # pour une solution plus sûre envisager quelque chose comme : #while read -r line; do declare $line; done < "$BASEDIR/.geosync.conf"
-
-  # vérification du host/login/mot de passe
-  if [ ! "$login" ] || [ ! "$passwd" ] || [ ! "$host" ]; then
-    error "url du georserver, login ou mot de passe non définit; le fichier spécifié avec l'option -p [paramfile] doit contenir la définition des variables suivantes sur 3 lignes : login=[login] passwd=[password] host=[geoserver's url]"
-  fi
-
-  #valeurs des paramètres par défaut
 
   # par défaut index le répertoire courant
   if [ ! "$input" ]; then
@@ -240,9 +236,9 @@ main() {
     error "n'existe pas : input : $input"
   fi
 
-  # TODO : refactor
-  if [ ! "$workspace" ]; then
-    echoerror "workspace manquant"
+  # vérification des paramètres passés (soit par argument, soit par le fichier .geosync.conf)
+  if [ -z $host ] || [ -z $login ] || [ -z $passwd ] || [ -z $workspace ] || [ -z $datastore ] || [ -z $pg_datastore ] || [ -z $db ] || [ -z $logs ]; then
+    echoerror "au moins un paramètre maquant !"
     usage
     exit
   fi
@@ -261,13 +257,13 @@ main() {
 
   newlastdatemodif=0
 
-  #si c'est le chemin d'un répertoire alors indexe le répertoire
+  # si c'est le chemin d'un répertoire alors indexe le répertoire
   if [ -d "$input" ]; then
     importallfiles "$input" "$datapath"
 
-  #si c'est le chemin d'un fichier (couche) alors indexe le fichier
-  elif [ -f "$input" ]; then
-    importfile "$input" "$output"
+     # si c'est le chemin d'un fichier (couche) alors indexe le fichier
+     elif [ -f "$input" ]; then
+       importfile "$input" "$output"
 
   fi
 

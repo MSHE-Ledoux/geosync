@@ -5,7 +5,7 @@
 
 # on a besoin ici uniquement des logs
 PARAMFILE="$HOME/bin/.geosync.conf"
-local host login passwd workspace datastore pg_datastore db logs
+#local host login passwd workspace datastore pg_datastore db logs
 source "$PARAMFILE"
 
 PATH_LOG="/var/log/$logs"

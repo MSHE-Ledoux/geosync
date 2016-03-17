@@ -62,16 +62,15 @@ main() {
   # $(util::cleanName "./tic/tac toe.shp") -> tac_toe.shp #takes a filepath and returns a pretty name
   source "$BASEDIR/lib/util.sh"
 
-  workspace="geosync"
-  datastore="shpowncloud"
   path="$HOME/owncloudsync" 
+
   #se base sur le répertoire synchronisé obtenu par :
   #rsync -avr --delete --exclude '_geosync' --exclude 'lost+found' '/home/georchestra-ouvert/owncloud/' '/home/georchestra-ouvert/owncloudsync/'
 
   paramfilepath="$BASEDIR/.geosync.conf"
 
-  #récupère login ($login), mot de passe ($passwd), url du geoserver ($host) dans le fichier .geosync situé dans le même dossier que ce script
-  local login passwd host
+  # récupère les paramètres de connexion dans le fichier .geosync situé dans le même dossier que ce script
+  local host login passwd workspace datastore pg_datastore db logs
   source "$paramfilepath"
 
   #attention le fichier .geosync est interprété et fait donc confiance au code

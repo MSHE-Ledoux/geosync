@@ -27,7 +27,7 @@ ERROR_LOG="$LOG_PATH/publish_error.log"
 
 #synchronise les fichiers du montage webdav pour être plus performant
 #rsync -avr --delete --exclude '_geosync' --exclude 'lost+found' '/home/georchestra-ouvert/owncloud/owncloud' '/home/georchestra-ouvert/owncloudsync/'
-cmd="rsync -avr --delete --exclude 'lost+found' '$INPUT_OUTPUT_PATH/' '$INPUT_COPY_PATH/'"
+cmd="rsync -avr --delete --exclude 'lost+found' --exclude Photos '$INPUT_OUTPUT_PATH/' '$INPUT_COPY_PATH/'"
 echo $cmd
 eval $cmd
 
@@ -37,6 +37,6 @@ fi
 date >> "$PUBLI_LOG"
 date >> "$ERROR_LOG"
 
-cmd="bash '$BASEDIR/publish.sh' -i '$INPUT_COPY_PATH' -g '$DATA_PATH' -p '$PARAMFILE' -v 1>>'$PUBLI_LOG' 2>>'$ERROR_LOG'"
+cmd="bash '$BASEDIR/publish.sh' -i '$INPUT_COPY_PATH' -d '$DATA_PATH' -p '$PARAMFILE' -v 1>>'$PUBLI_LOG' 2>>'$ERROR_LOG'"
 echo $cmd
 eval $cmd

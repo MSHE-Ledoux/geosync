@@ -5,7 +5,7 @@
 usage() { 
   echo "==> usage : "
   echo "source /lib/metadata.sh"
-  echo "metadata::publish -i path/shapefile.shp.xml [-o output=shapefile] -l login -p password -u url -w workspace -d datastore [-v]"
+  echo "metadata::publish -i path/shapefile.shp.xml [-o output=shapefile] -l login -p password -u url -w workspace -s datastore [-v]"
   } 
   
 metadata::publish() {
@@ -17,7 +17,7 @@ metadata::publish() {
   } 
 
   usage() {
-    echoerror "metadata::publish: -i path/shapefile.shp.xml [-o output=shapefile] -l login -p password -u url -w workspace -d datastore [-v]"
+    echoerror "metadata::publish: -i path/shapefile.shp.xml [-o output=shapefile] -l login -p password -u url -w workspace -s datastore [-v]"
   }
 
   local DIR
@@ -31,7 +31,7 @@ metadata::publish() {
 
   local input output login password url workspace datastore verbose
   local OPTIND opt
-  while getopts "i:o:l:p:u:w:d:v" opt; do
+  while getopts "i:o:l:p:u:w:s:v" opt; do
     # le : signifie que l'option attend un argument
     case $opt in
       i) input=$OPTARG ;;
@@ -39,8 +39,8 @@ metadata::publish() {
       l) login=$OPTARG ;;
       p) password=$OPTARG ;;
       u) url=$OPTARG ;;
-  	  w) workspace=$OPTARG ;;
-  	  d) datastore=$OPTARG ;;
+      w) workspace=$OPTARG ;;
+      s) datastore=$OPTARG ;;
       v) verbose=1 ;;
       *) usage ;;
       esac
