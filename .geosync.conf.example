@@ -1,3 +1,8 @@
-host=http://georchestra-dev.umrthema.univ-fcomte.fr
+host=https://georchestra-dev.umrthema.univ-fcomte.fr
 login=georchestra-ouvert
-pass=sonmodepasse
+passwd=sonmotdepasse
+workspace=geosync-ouvert
+datastore=geosync_shp_open
+pg_datastore=geosync_pg_open
+db=geosync_data_open
+logs=geosync-open
