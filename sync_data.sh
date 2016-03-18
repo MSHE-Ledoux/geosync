@@ -10,19 +10,6 @@ source "$PARAMFILE"
 
 PATH_LOG="/var/log/$logs"
 
-# sans autofs
-if grep -qs "$USER/owncloud" /proc/mounts; then
-    echo "It's mounted."
-else
-    echo "It's not mounted."
-    mount ~/owncloud
-fi    
-
-# avec autofs
-#if [ ! -d ~/owncloud/owncloud ]; then
-#   cd ~/owncloud/owncloud
-#fi
-
 # utilisation d'un verrou pour éviter que le script main.sh ne se lance plusieurs fois en même temps
 (
   # Wait for lock on /var/lock/.myscript.exclusivelock (fd 200) for 10 seconds
@@ -41,3 +28,4 @@ fi
 # à inclure dans un crontab
 # toutes les minutes de 8h à 20h, du lundi au vendredi, importe les couches partagées via owncloud dans le geoserver
 # */1 08-20 * * 1-5 /home/georchestra-ouvert/bin/sync_data.sh 
+

@@ -25,11 +25,30 @@ LOG_PATH="/var/log/$logs"
 PUBLI_LOG="$LOG_PATH/publish.log"
 ERROR_LOG="$LOG_PATH/publish_error.log"
 
+# montage au besoin, sans autofs
+if grep -qs "$USER/owncloud" /proc/mounts; then
+    echo "déjà monté"
+else
+    echo "pas encore monté... donc on le monte."
+    mount ~/owncloud
+fi
+
+# montage automatique avec autofs
+# ne fonctionne pas avec deux montages
+#if [ ! -d ~/owncloud/owncloud ]; then
+#   cd ~/owncloud/owncloud
+#fi
+
 #synchronise les fichiers du montage webdav pour être plus performant
-#rsync -avr --delete --exclude '_geosync' --exclude 'lost+found' '/home/georchestra-ouvert/owncloud/owncloud' '/home/georchestra-ouvert/owncloudsync/'
 cmd="rsync -avr --delete --exclude 'lost+found' --exclude Photos '$INPUT_OUTPUT_PATH/' '$INPUT_COPY_PATH/'"
 echo $cmd
 eval $cmd
+
+# démontage forcé, pour éviter les problèmes
+if grep -qs "$USER/owncloud" /proc/mounts; then
+    echo "on démonte"
+    umount ~/owncloud
+fi
 
 if [ ! -d $LOG_PATH ]
     then mkdir -p "$LOG_PATH"
@@ -40,3 +59,4 @@ date >> "$ERROR_LOG"
 cmd="bash '$BASEDIR/publish.sh' -i '$INPUT_COPY_PATH' -d '$DATA_PATH' -p '$PARAMFILE' -v 1>>'$PUBLI_LOG' 2>>'$ERROR_LOG'"
 echo $cmd
 eval $cmd
+
