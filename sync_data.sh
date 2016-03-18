@@ -11,14 +11,17 @@ source "$PARAMFILE"
 PATH_LOG="/var/log/$logs"
 
 # sans autofs
-#if [ ! -d ~/owncloud ]; then
-#  mount ~/owncloud
-#fi    
+if grep -qs "$USER/owncloud" /proc/mounts; then
+    echo "It's mounted."
+else
+    echo "It's not mounted."
+    mount ~/owncloud
+fi    
 
 # avec autofs
-if [ ! -d ~/owncloud/owncloud ]; then
-   cd ~/owncloud/owncloud
-fi
+#if [ ! -d ~/owncloud/owncloud ]; then
+#   cd ~/owncloud/owncloud
+#fi
 
 # utilisation d'un verrou pour éviter que le script main.sh ne se lance plusieurs fois en même temps
 (
@@ -30,7 +33,7 @@ fi
   date >> $PATH_LOG/main_error.log
   
   # appel de main.sh
-  bash /home/georchestra-ouvert/bin/main.sh 1>>$PATH_LOG/main.log 2>>$PATH_LOG/main_error.log
+  bash /home/$USER/bin/main.sh 1>>$PATH_LOG/main.log 2>>$PATH_LOG/main_error.log
 
 ) 200>/var/lock/${logs}.exclusivelock
 

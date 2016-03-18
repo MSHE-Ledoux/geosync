@@ -6,15 +6,15 @@
 BASEDIR=$(dirname "$0")
 
 # sans autofs
-#INPUT_OUTPUT_PATH="$HOME/owncloud"
+INPUT_OUTPUT_PATH="$HOME/owncloud"
 # avec autofs
-INPUT_OUTPUT_PATH="$HOME/owncloud/owncloud"
+#INPUT_OUTPUT_PATH="$HOME/owncloud/owncloud"
 
 INPUT_COPY_PATH="$HOME/owncloudsync"
 
 # on a besoin ici uniquement des logs
 PARAMFILE="$HOME/bin/.geosync.conf"
-local host login passwd workspace datastore pg_datastore db logs
+#local host login passwd workspace datastore pg_datastore db logs
 source "$PARAMFILE"
 
 # contient le fichier lastdate.txt avec la dernière date de changement de fichier traité
