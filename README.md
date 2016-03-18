@@ -1,15 +1,14 @@
 Objectif de geosync :
 ---------------------
 Indexer dans geOrchestra les données déposées par les utilisateurs dans OwnCloud.
-fdfdfdf
 
 Vue d'ensemble de l'architecture :
 ----------------------------------
 
 Description des fichiers de l'utilisateur georchestra-ouvert sur la machine georchestra :
-* **~/owncloud/owncloud** : montage webdav des fichiers de georchestra-ouvert sur OwnCloud
+* **~/owncloud** : montage webdav des fichiers de georchestra-ouvert sur OwnCloud
+* **~/owncloud/*** : toutes les couches qui ont été partagées à georchestra-ouvert
 * **~/owncloudsync** : synchronisation par rsync des fichiers du montage webdav
-* **~/owncloud/owncloud/*** : toutes les couches qui ont été partagées à georchestra-ouvert
 * **~/data** : entrées/sorties de l'outil de synchronisation
 * **~/data/lastdate.txt** : stocke la dernière date des couches synchronisées ; pour resynchroniser toutes les couches, alors supprimer ce fichier
 * **~/bin/** : les scripts
