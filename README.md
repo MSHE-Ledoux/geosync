@@ -1,6 +1,13 @@
 Objectif de geosync :
 ---------------------
-Indexer dans geOrchestra les données déposées par les utilisateurs dans OwnCloud.
+Indexer dans geOrchestra les données déposées par les utilisateurs dans OwnCloud, et partagées soit avec l'utilisateur georchestra-ouvert, pour un accès public, soit avec l'utilisateur georchestra-restreint, pour un accès limité aux personnes identifiées de la plateforme..
+
+Comment installer geosync ?
+---------------------------
+
+avec Ansible, en déployant le playbook geosync-ansible sur une machine sur laquelle geOrchestra a été installé, idéalement avec Ansible également.
+
+https://github.com/MaxiReglisse/geosync-ansible
 
 Vue d'ensemble de l'architecture :
 ----------------------------------
