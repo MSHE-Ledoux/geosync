@@ -1,6 +1,8 @@
 Objectif de geosync :
 ---------------------
-Indexer dans geOrchestra les données déposées par les utilisateurs dans OwnCloud, et partagées soit avec l'utilisateur georchestra-ouvert, pour un accès public, soit avec l'utilisateur georchestra-restreint, pour un accès limité aux personnes identifiées de la plateforme..
+Indexer dans geOrchestra les données déposées par les utilisateurs dans OwnCloud, et partagées :
+- soit avec l'utilisateur georchestra-ouvert, pour un accès public ; 
+- soit avec l'utilisateur georchestra-restreint, pour un accès limité aux personnes identifiées de l'IDS geOrchestra.
 
 Comment installer geosync ?
 ---------------------------
