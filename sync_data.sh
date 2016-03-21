@@ -20,7 +20,7 @@ PATH_LOG="/var/log/$logs"
   date >> $PATH_LOG/main_error.log
   
   # appel de main.sh
-  bash /home/$USER/bin/main.sh 1>>$PATH_LOG/main.log 2>>$PATH_LOG/main_error.log
+  bash /home/$LOGNAME/bin/main.sh 1>>$PATH_LOG/main.log 2>>$PATH_LOG/main_error.log
 
 ) 200>/var/lock/${logs}.exclusivelock
 

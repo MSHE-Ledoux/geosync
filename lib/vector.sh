@@ -233,14 +233,18 @@ vector::publish() {
 
 # ---------------------------- Recherche d'un style correspondant si le nom de la couche envoyée contient la chaine "-sld-"
 
-  if [[ "$output_pgsql" == *"-sld-"* ]]; then     # [[...]] nécessaire car utilisation de *"chaine"*
+  if [[ "$output_pgsql" == *"_sld_"* ]]; then     # [[...]] nécessaire car utilisation de *"chaine"*
 	  #liste les styles et l'assigne à la couche s'il a le même nom
-	  cmd="curl --silent \
+          echo "La couche publiée contient une référence à un style. Recherche du style"
+          cmd="curl --silent \
 	             -u ${login}:${password} \
 	             -XGET $url/geoserver/rest/styles"
 
 	  html_1=$(eval $cmd)
 	  html_1=${html_1//' '/'\n'}   # Découpage de la chaine sur plusieurs lignes
+          local $path_dir=~/tmp/geosync_sld
+          rm -R "$path_dir"
+          mkdir "$path_dir"
 	  path_html_1=~/tmp/geosync_sld/html_1.txt
 	  echo "$html_1" > $path_html_1 # L'utilisation des "" est nécessaire pour garder les retours à la ligne
 
@@ -269,12 +273,12 @@ vector::publish() {
 	  while read line 
 	  do
 	    name=$line
-	    if [[ "$output_pgsql" == *"-sld-${name}-sld"* ]]; then
+	    if [[ "$output_pgsql" == *"_sld_${name}_sld"* ]]; then
 	      cmd="curl --silent \
 	                 -u ${login}:${password} \
 	                 -XPUT -H \"Content-type: text/xml\" \
 	                 -d \"<layer><defaultStyle><name>${name}</name></defaultStyle></layer>\" \
-	                 $url/geoserver/rest/layers/geosync:${output_pgsql}"
+	                 $url/geoserver/rest/layers/${workspace}:${output_pgsql}"
 	      echo $cmd
 	      eval $cmd
 	      # Temporairement, pour les couches de shpowncloud
@@ -282,7 +286,7 @@ vector::publish() {
 	                 -u ${login}:${password} \
 	                 -XPUT -H \"Content-type: text/xml\" \
 	                 -d \"<layer><defaultStyle><name>${name}</name></defaultStyle></layer>\" \
-	                 $url/geoserver/rest/layers/geosync:${output_pgsql}0"
+	                 $url/geoserver/rest/layers/${workspace}:${output_pgsql}1"
 	      echo $cmd
 	      eval $cmd
 	    fi

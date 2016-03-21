@@ -35,7 +35,7 @@ style::publish() {
 
   local input output epsg login password url workspace datastore verbose
   local OPTIND opt
-  while getopts "i:o:l:p:u:v" opt; do
+  while getopts "i:o:l:p:u:w:s:g:v" opt; do
     # le : signifie que l'option attend un argument
     case $opt in
       i) input=$OPTARG ;;
@@ -43,6 +43,9 @@ style::publish() {
       l) login=$OPTARG ;;
       p) password=$OPTARG ;;
       u) url=$OPTARG ;;
+      w) workspace=$OPTARG ;;
+      s) datastore=$OPTARG ;;
+      g) pg_datastore=$OPTARG ;;
       v) verbose=1 ;;
       *) usage ;;
     esac
@@ -67,6 +70,21 @@ style::publish() {
   fi
   if [ ! "$url" ]; then
     echoerror "url missing"
+    usage
+    return 1 # erreur
+  fi
+ if [ ! "$workspace" ]; then
+    echoerror "workspace missing"
+    usage
+    return 1 # erreur
+  fi
+  if [ ! "$datastore" ]; then
+    echoerror "datastore missing"
+    usage
+    return 1 # erreur
+  fi
+if [ ! "$pg_datastore" ]; then
+    echoerror "pg_datastore missing"
     usage
     return 1 # erreur
   fi
@@ -106,7 +124,7 @@ style::publish() {
     echo "curl $var_v -w %{http_code} \
                       -u ${login}:############# \
                       -XPOST -H 'Content-type: text/xml' \
-                      -d '<style><name>$output</name><filename>$output.sld</filename></style>' \
+                      -d '<style><name>$output</name><filename>${output}.sld</filename></style>' \
                $url/geoserver/rest/styles 2>&1"
   else
     var_=$"--silent --output /dev/null"
@@ -115,7 +133,7 @@ style::publish() {
   cmd="curl $var_v -w %{http_code} \
                    -u ${login}:${password} \
                    -XPOST -H 'Content-type: text/xml' \
-                   -d '<style><name>$output</name><filename>$output.sld</filename></style>' \
+                   -d '<style><name>$output</name><filename>${output}.sld</filename></style>' \
             $url/geoserver/rest/styles 2>&1"
 
   echo $cmd
@@ -173,14 +191,14 @@ style::publish() {
     echoerror "error http code : $statuscode for $output"
   fi
 
-  ### Assignation du style à toutes les couches associées : nom_couche_sld_nom_style.shp  <= nom_style.sld 
+  ### Assignation du style à toutes les couches associées : nom_couche_sld_nom_style_sld.shp  <= nom_style.sld 
 
   #liste les vecteurs du datastore postgis_data et assigne le style à ceux concernés
   cmd="curl --silent \
              -u ${login}:${password} \
-             -XGET $url/geoserver/rest/workspaces/geosync/datastores/postgis_data/featuretypes.xml"
+             -XGET $url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes.xml"
 
-  echo "récupére la liste des vecteurs postgis"
+  echo "récupére la liste des vecteurs de $pg_datastore"
   echo $cmd
   xml=$(eval $cmd)
 
@@ -196,12 +214,12 @@ style::publish() {
 
   for (( i=1; i < $itemsCount + 1; i++ )); do
     name=$(xmllint --xpath "/featureTypes/featureType[$i]/name/text()" - <<<"$xml")
-    if [[ "$name" == *"_sld_$output_sld"* ]]; then
+    if [[ "$name" == *"_sld_${output}_sld"* ]]; then
       cmd="curl --silent \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
                  -d \"<layer><defaultStyle><name>${output}</name></defaultStyle></layer>\" \
-                 $url/geoserver/rest/layers/geosync:${name}"
+                 $url/geoserver/rest/layers/$workspace:${name}"
       echo $cmd
       eval $cmd
     fi
@@ -210,9 +228,9 @@ style::publish() {
   #liste les vecteurs du datastore shpowncloud et assigne le style à ceux concernés
   cmd="curl --silent \
              -u ${login}:${password} \
-             -XGET $url/geoserver/rest/workspaces/geosync/datastores/shpowncloud/featuretypes.xml"
+             -XGET $url/geoserver/rest/workspaces/$workspace/datastores/$datastore/featuretypes.xml"
 
-  echo "récupére la liste des vecteurs"
+  echo "récupére la liste des vecteurs de $datastore"
   echo $cmd
   xml=$(eval $cmd)
 
@@ -228,12 +246,12 @@ style::publish() {
 
   for (( i=1; i < $itemsCount + 1; i++ )); do
     name=$(xmllint --xpath "/featureTypes/featureType[$i]/name/text()" - <<<"$xml") 
-    if [[ "$name" == *"-sld-$output-sld"* ]]; then
+    if [[ "$name" == *"_sld_${output}_sld"* ]]; then
       cmd="curl --silent \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
                  -d \"<layer><defaultStyle><name>${output}</name></defaultStyle></layer>\" \
-                 $url/geoserver/rest/layers/geosync:${name}"
+                 $url/geoserver/rest/layers/$workspace:${name}"
       echo $cmd
       eval $cmd
     fi

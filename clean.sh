@@ -122,7 +122,7 @@ main() {
   touch "$tmpdir/$output"
   #liste les vecteurs du datastore
 
-  cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace/datastores/postgis_data/featuretypes.xml"
+  cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes.xml"
   if  [ $verbose ]; then
     echo "récupére la liste des vecteurs"
     echo $cmd
@@ -260,8 +260,8 @@ main() {
     echo "suppression de : $vector"
     # supprime une couche
 
-    cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/postgis_data/featuretypes/$vector?recurse=true&purge=all'"
-    cmd_pgsql="psql -h localhost -d geoserver_data -U geosync -w -c 'DROP TABLE \"$vector\";'"
+    cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes/$vector?recurse=true&purge=all'"
+    cmd_pgsql="psql -h localhost -d $db -U geosync -w -c 'DROP TABLE \"$vector\";'"
     # http://docs.geoserver.org/stable/en/user/rest/api/featuretypes.html#workspaces-ws-datastores-ds-featuretypes-ft-format
     # dans le cas d'un filesystem "recurse=true" dans le cas d'une bd postgis "recurse=false"
     if  [ $verbose ]; then
@@ -283,7 +283,7 @@ main() {
     # supprime une couche
     cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/workspaces/$workspace/coveragestores/$raster?recurse=true&purge=all'"
     # http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-format
-    cmd_pgsql="psql -h localhost -d geoserver_data -U geosync -w -c 'DROP TABLE \"$raster\";'"
+    cmd_pgsql="psql -h localhost -d $db -U geosync -w -c 'DROP TABLE \"$raster\";'"
     if  [ $verbose ]; then
       echo $cmd
       echo $cmd_pgsql

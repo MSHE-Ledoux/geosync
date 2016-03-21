@@ -26,7 +26,7 @@ PUBLI_LOG="$LOG_PATH/publish.log"
 ERROR_LOG="$LOG_PATH/publish_error.log"
 
 # montage au besoin, sans autofs
-if grep -qs "$USER/owncloud" /proc/mounts; then
+if grep -qs "$LOGNAME/owncloud" /proc/mounts; then
     echo "déjà monté"
 else
     echo "pas encore monté... donc on le monte."
@@ -45,7 +45,7 @@ echo $cmd
 eval $cmd
 
 # démontage forcé, pour éviter les problèmes
-if grep -qs "$USER/owncloud" /proc/mounts; then
+if grep -qs "$LOGNAME/owncloud" /proc/mounts; then
     echo "on démonte"
     umount ~/owncloud
 fi

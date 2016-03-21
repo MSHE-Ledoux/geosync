@@ -150,7 +150,8 @@ importfile() {
     outputlayername=$(util::cleanName "$filepath")
   fi 
 
-  cmd="style::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' -u '$host' $verbosestr"
+  cmd="style::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' 
+                      -u '$host' -w '$workspace' -s '$datastore' -g '$pg_datastore' $verbosestr"
   echo $cmd
   eval $cmd
   }
