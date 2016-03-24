@@ -255,7 +255,6 @@ main() {
         outputlayername=$(util::cleanName "$filepath")
         outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
         echo "$outputlayernamesansext" >> "$tmpdir/styles_shared"
-        echo "$outputlayernamesansext"
       done
 
       # prend uniquement les noms présents dans la première liste (arraydiff <- liste1 - liste2)
@@ -276,9 +275,9 @@ main() {
   # et supprime chacun d'eux
   while read style; do
     # Changement de style des couches utilisant le style qui va être supprimé
-    echo  "récupération des couches utilisant le style ${style} qui va être supprimé"
     while read layer; do
       if [[ "$layer" == *"_sld_${style}_sld"* ]]; then
+        echo "Les couches shp symbolisées par ${style} prennent le style par défaut"
         cmd="curl --silent \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
@@ -291,6 +290,7 @@ main() {
     # Idem pour les styles utilisés par les couches pgsql
     while read layer; do
       if [[ "$layer" == *"_sld_${style}_sld"* ]]; then
+        echo "Les couches pgsql symbolisées par ${style} prennent le style par défaut"
         cmd="curl --silent \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
@@ -301,16 +301,17 @@ main() {
       fi
     done <"$tmpdir/vectors_published_pgsql"
 
-    echo "suppression de : $style"
-    #supprime le style en ligne
-    cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/styles/${style}'" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
-    if  [ $verbose ]; then
-      echo $cmd
-    fi
-    if  [ ! $simulation ]; then
-      echo "ceci n'est pas une simulation"
-      eval $cmd
-    fi
+    if [ "$style" != "generic" ] && [ "$style" != "line" ] && [ "$style" != "polygon" ] && [ "$style" != "point" ]; then
+      echo "suppression de : $style"
+      #supprime le style en ligne
+      cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/styles/${style}'" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
+      if  [ $verbose ]; then
+        echo $cmd
+      fi
+      if  [ ! $simulation ]; then
+        eval $cmd
+      fi
+    fi  
   done <"$tmpdir/styles_tobedeleted"
 
 
