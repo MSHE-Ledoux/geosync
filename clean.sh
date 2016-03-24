@@ -275,6 +275,8 @@ main() {
   # et supprime chacun d'eux
   while read style; do
     # Changement de style des couches utilisant le style qui va être supprimé
+    # nécessaire car impossible de supprimer un style qui est utilisé par une couche
+    # nécessaire d'effectuer l'opération avant la suppression des couches sinon erreur si couche supprimée
     while read layer; do
       if [[ "$layer" == *"_sld_${style}_sld"* ]]; then
         echo "Les couches shp symbolisées par ${style} prennent le style par défaut"
