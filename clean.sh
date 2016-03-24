@@ -251,7 +251,7 @@ main() {
       # pour les styles
       ###################
        
-      for filepath in **/*.{sld} ; do
+      for filepath in **/*.sld ; do
         outputlayername=$(util::cleanName "$filepath" -p)
         outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
         echo "$outputlayernamesansext" >> "$tmpdir/styles_shared"
