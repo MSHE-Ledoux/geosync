@@ -252,7 +252,7 @@ main() {
       ###################
        
       for filepath in **/*.sld ; do
-        outputlayername=$(util::cleanName "$filepath" -p)
+        outputlayername=$(util::cleanName "$filepath")
         outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
         echo "$outputlayernamesansext" >> "$tmpdir/styles_shared"
         echo "$outputlayernamesansext"
@@ -303,13 +303,13 @@ main() {
 
     echo "suppression de : $style"
     #supprime le style en ligne
-    cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/styles/${style}" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
+    cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/styles/${style}'" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
     if  [ $verbose ]; then
       echo $cmd
     fi
     if  [ ! $simulation ]; then
       echo "ceci n'est pas une simulation"
-      # eval $cmd
+      eval $cmd
     fi
   done <"$tmpdir/styles_tobedeleted"
 
