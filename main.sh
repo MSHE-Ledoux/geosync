@@ -25,7 +25,7 @@ LOG_PATH="/var/log/$logs"
 PUBLI_LOG="$LOG_PATH/publish.log"
 ERROR_LOG="$LOG_PATH/publish_error.log"
 
-# montage au besoin, sans autofs
+# montage à la demande, sans autofs
 if grep -qs "$LOGNAME/owncloud" /proc/mounts; then
     echo "déjà monté"
 else

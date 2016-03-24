@@ -13,6 +13,14 @@ usage() {
   echo "   dans le geoserver accéssible à l'adresse donnée (-u url)"
 } 
 
+xpath() {
+local xp=$1
+echo $(xmllint --xpath "$xp" "$input" 2>/dev/null )
+# redirige l'erreur standard vers null pour éviter d'être averti de chaque valeur manquante (XPath set is empty)
+# mais cela peut empêcher de détecter d'autres erreurs
+# TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
+}
+
 vector::publish() {
 
   echoerror() {
@@ -238,37 +246,33 @@ vector::publish() {
           echo "La couche publiée contient une référence à un style. Recherche du style"
           cmd="curl --silent \
 	             -u ${login}:${password} \
-	             -XGET $url/geoserver/rest/styles"
+	             -XGET $url/geoserver/rest/styles.xml"
+	  if [ $verbose ]; then
+            echo $cmd
+          fi
+          
+          local tmpdir_styles=~/tmp/geosync_sld
+          rm -R "$tmpdir_styles"
+          mkdir "$tmpdir_styles"
+          output="styles.xml"
+          touch "$tmpdir_styles/$output"
+          
+          xml=$(eval $cmd)
+          echo $xml
+          echo $xml > "$tmpdir_styles/$output"
 
-	  html_1=$(eval $cmd)
-	  html_1=${html_1//' '/'\n'}   # Découpage de la chaine sur plusieurs lignes
-          local $path_dir=~/tmp/geosync_sld
-          rm -R "$path_dir"
-          mkdir "$path_dir"
-	  path_html_1=~/tmp/geosync_sld/html_1.txt
-	  echo "$html_1" > $path_html_1 # L'utilisation des "" est nécessaire pour garder les retours à la ligne
+          input="$tmpdir_styles/$output"
+          itemsCount=$(xpath 'count(/styles/style)')
 
-	  if  [ $verbose ]; then
-	    echo " html_1 : ${html_1} et path_html : ${path_html_1}"
-	  fi
+          touch "$tmpdir_styles/styles_existants"
+          for (( i=1; i < $itemsCount + 1; i++ )); do
+            name=$(xpath '//styles/style['$i']/name/text()')
+            echo $name
+            echo $name >> "$tmpdir_styles/styles_existants"
+          done
 
-	  cmd="sed -n '/href/p' $path_html_1"  # Retenue des seules lignes ayant un lien html
-	  html_2=$(eval $cmd)
-	  path_html_2=~/tmp/geosync_sld/html_2.txt
-	  echo "$html_2" > $path_html_2
 
-	  if  [ $verbose ]; then
-	    echo "html_2 : ${html_2} et path_html_2 : ${path_html_2}"
-	  fi
 
-	  cmd="sed 's/.*html\">//; s/<\/a.*//' $path_html_2" # Retenue des seuls éléments compris entre html">ELEMENT</a
-	  html_3=$(eval $cmd)
-	  path_html_3=~/tmp/geosync_sld/html_3.txt
-	  echo "$html_3" > $path_html_3
-
-	  if  [ $verbose ]; then
-	    echo "html_3 : $html_3 et path_html_3 : ${path_html_3}"
-	  fi
 
 	  while read line 
 	  do
@@ -290,7 +294,7 @@ vector::publish() {
 	      echo $cmd
 	      eval $cmd
 	    fi
-	  done < $path_html_3
+	  done < "$tmpdir_styles/styles_existants"
   fi
 
 }

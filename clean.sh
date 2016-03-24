@@ -87,7 +87,7 @@ main() {
   #créer un dossier temporaire et stocke son chemin dans une variable
   local tmpdir=~/tmp/geosync_clean
 
-  #suprime le dossier temporaire et le recrée
+  #supprime le dossier temporaire et le recrée
   rm -R "$tmpdir"
   mkdir "$tmpdir"
 
@@ -138,8 +138,6 @@ main() {
     name=$(xpath '/featureTypes/featureType['$i']/name/text()') # '
     echo $name >> "$tmpdir/vectors_published_pgsql"
   done
-
-  # --------------------------- Fin vecteurs postgis
   
   ###################
   # pour les rasteurs
@@ -160,12 +158,35 @@ main() {
 
   touch "$tmpdir/rasters_published"
   for (( i=1; i < $itemsCount + 1; i++ )); do 
-    name=$(xpath '/coverageStores/coverageStore['$i']/name/text()') # '
+    name=$(xpath '/coverageStores/coverageStore['$i']/name/text()') 
     echo $name >> "$tmpdir/rasters_published"
   done
 
+  ###################
+  # pour les styles
+  ###################
+  output="styles.xml"
+  touch "$tmpdir/$output"
+  #liste les styles
+  cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/styles.xml"
+  if  [ $verbose ]; then
+    echo "récupére la liste des styles"
+    echo $cmd
+  fi
+  xml=$(eval $cmd)
+  echo $xml > "$tmpdir/$output"
+
+  input="$tmpdir/$output"
+  itemsCount=$(xpath 'count(/styles/style)')
+
+  touch "$tmpdir/styles_published"
+  for (( i=1; i < $itemsCount + 1; i++ )); do
+    name=$(xpath '//styles/style['$i']/name/text()')
+    echo $name >> "$tmpdir/styles_published"
+  done
+
   ######################
-  
+    
   # si on souhaite supprimer la différence entre les couches publiées et celles partagées
   # alors calcule la différence des listes et la stocke dans la liste des couches à supprimer
   if [ "$deletediff" ]; then
@@ -226,7 +247,21 @@ main() {
       # prend uniquement les noms présents dans la première liste (arraydiff <- liste1 - liste2)
       comm -23 <(sort "$tmpdir/rasters_published") <(sort "$tmpdir/rasters_shared") > "$tmpdir/rasters_tobedeleted"
       
-            
+      ####################
+      # pour les styles
+      ###################
+       
+      for filepath in **/*.{sld} ; do
+        outputlayername=$(util::cleanName "$filepath" -p)
+        outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
+        echo "$outputlayernamesansext" >> "$tmpdir/styles_shared"
+        echo "$outputlayernamesansext"
+      done
+
+      # prend uniquement les noms présents dans la première liste (arraydiff <- liste1 - liste2)
+      comm -23 <(sort "$tmpdir/styles_published") <(sort "$tmpdir/styles_shared") > "$tmpdir/styles_tobedeleted"
+
+  # --------------------------    
   
   # si on souhaite supprimer toutes les couches
   # alors stocke la liste des couches publiées dans la liste des couches à supprimer
@@ -234,8 +269,51 @@ main() {
       cat "$tmpdir/vectors_published" > "$tmpdir/vectors_tobedeleted"
       cat "$tmpdir/vectors_published_pgsql" > "$tmpdir/vectors_tobedeleted_pgsql"
       cat "$tmpdir/rasters_published" > "$tmpdir/rasters_tobedeleted"
+      cat "$tmpdir/styles_published" > "$tmpdir/styles_tobedeleted" 
   fi
   
+  # parcourt la liste des styles à supprimer dans le système de fichier
+  # et supprime chacun d'eux
+  while read style; do
+    # Changement de style des couches utilisant le style qui va être supprimé
+    echo  "récupération des couches utilisant le style ${style} qui va être supprimé"
+    while read layer; do
+      if [[ "$layer" == *"_sld_${style}_sld"* ]]; then
+        cmd="curl --silent \
+                 -u ${login}:${password} \
+                 -XPUT -H \"Content-type: text/xml\" \
+                 -d \"<layer><defaultStyle><name>generic</name></defaultStyle></layer>\" \
+                 $url/geoserver/rest/layers/$workspace:${layer}"
+        echo $cmd
+        eval $cmd
+      fi
+    done <"$tmpdir/vectors_published"
+    # Idem pour les styles utilisés par les couches pgsql
+    while read layer; do
+      if [[ "$layer" == *"_sld_${style}_sld"* ]]; then
+        cmd="curl --silent \
+                 -u ${login}:${password} \
+                 -XPUT -H \"Content-type: text/xml\" \
+                 -d \"<layer><defaultStyle><name>generic</name></defaultStyle></layer>\" \
+                 $url/geoserver/rest/layers/$workspace:${layer}"
+        echo $cmd
+        eval $cmd
+      fi
+    done <"$tmpdir/vectors_published_pgsql"
+
+    echo "suppression de : $style"
+    #supprime le style en ligne
+    cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/styles/${style}" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
+    if  [ $verbose ]; then
+      echo $cmd
+    fi
+    if  [ ! $simulation ]; then
+      echo "ceci n'est pas une simulation"
+      # eval $cmd
+    fi
+  done <"$tmpdir/styles_tobedeleted"
+
+
   # parcours la liste des vecteurs à supprimer
   # et supprime chacun d'eux
   while read vector; do
