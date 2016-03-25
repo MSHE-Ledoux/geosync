@@ -12,8 +12,8 @@ PATH_LOG="/var/log/$logs"
 
 # utilisation d'un verrou pour éviter que le script main.sh ne se lance plusieurs fois en même temps
 (
-  # Wait for lock on /var/lock/.myscript.exclusivelock (fd 200) for 10 seconds
-  flock -x -w 10 200 || exit 1
+  # Wait for lock on /var/lock/.myscript.exclusivelock (fd 201) for 10 seconds
+  flock -x -w 10 201 || exit 1
 
   # date dans les logs
   date >> $PATH_LOG/main.log
@@ -22,10 +22,10 @@ PATH_LOG="/var/log/$logs"
   # appel de main.sh
   bash /home/$LOGNAME/bin/main.sh 1>>$PATH_LOG/main.log 2>>$PATH_LOG/main_error.log
 
-) 200>/var/lock/${logs}.exclusivelock
+) 201>/var/lock/${logs}.exclusivelock
 
 
 # à inclure dans un crontab
 # toutes les minutes de 8h à 20h, du lundi au vendredi, importe les couches partagées via owncloud dans le geoserver
-# */1 08-20 * * 1-5 /home/georchestra-ouvert/bin/sync_data.sh 
+# */1 08-20 * * 1-5 /home/$HOME/bin/sync_data.sh 
 

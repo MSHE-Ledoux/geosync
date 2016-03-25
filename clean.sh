@@ -64,9 +64,6 @@ main() {
 
   path="$HOME/owncloudsync" 
 
-  #se base sur le répertoire synchronisé obtenu par :
-  #rsync -avr --delete --exclude '_geosync' --exclude 'lost+found' '/home/georchestra-ouvert/owncloud/' '/home/georchestra-ouvert/owncloudsync/'
-
   paramfilepath="$BASEDIR/.geosync.conf"
 
   # récupère les paramètres de connexion dans le fichier .geosync situé dans le même dossier que ce script

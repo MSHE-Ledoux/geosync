@@ -95,7 +95,7 @@ OUT_GROUP_MEMBER = 'member'
 OUT_USER_FILTER = '(objectClass=inetOrgPerson)'
 
 # protected users (i.e. users present in the LDAP that should not be removed)
-OUT_PROTECTED_USERS = ['testadmin', 'admin', 'geoserver_privileged_user', 'georchestraouvert', 'georchestra-ouvert' ]
+OUT_PROTECTED_USERS = ['testadmin', 'admin', 'geoserver_privileged_user', 'georchestra-restreint', 'georchestra-ouvert' ]
 
 OUT_USERS_OBJECTCLASSES = [ 'top', 'person', 'organizationalPerson', 'inetOrgPerson' ]
 

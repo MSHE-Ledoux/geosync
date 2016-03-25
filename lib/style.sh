@@ -161,14 +161,14 @@ if [ ! "$pg_datastore" ]; then
   cmd="curl $var_v -w %{http_code} \
                    -u ${login}:${password} \
                    -XPUT -H 'Content-type: application/vnd.ogc.sld+xml' \
-                   -d @/home/georchestra-ouvert/owncloudsync/$input \
+                   -d @/home/$login/owncloudsync/$input \
             $url/geoserver/rest/styles/$output 2>&1"
   
   if  [ $verbose ]; then
     echo "curl $var_v -w %{http_code} \
                       -u ${login}:############### \
                       -XPUT -H 'Content-type: application/vnd.ogc.sld+xml' \
-                      -d @/home/georchestra-ouvert/owncloudsync/$input \
+                      -d @/home/$login/owncloudsync/$input \
                $url/geoserver/rest/styles/$output 2>&1"
   fi
 
