@@ -214,7 +214,7 @@ if [ ! "$pg_datastore" ]; then
 
   for (( i=1; i < $itemsCount + 1; i++ )); do
     name=$(xmllint --xpath "/featureTypes/featureType[$i]/name/text()" - <<<"$xml")
-    if [[ "$name" == *"_sld_${output}_sld"* ]]; then
+    if [[ "$output" == "$name" ]] ; then
       cmd="curl --silent \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
@@ -246,7 +246,7 @@ if [ ! "$pg_datastore" ]; then
 
   for (( i=1; i < $itemsCount + 1; i++ )); do
     name=$(xmllint --xpath "/featureTypes/featureType[$i]/name/text()" - <<<"$xml") 
-    if [[ "$name" == *"_sld_${output}_sld"* ]]; then
+    if [[ "${output}1" == "${name}" ]] ; then
       cmd="curl --silent \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
@@ -256,6 +256,41 @@ if [ ! "$pg_datastore" ]; then
       eval $cmd
     fi
   done
+
+  #liste les coveragestores
+  cmd="curl --silent \
+	     -u '${login}:${password}' \
+             -XGET $url/geoserver/rest/workspaces/$workspace/coveragestores.xml"
+
+  echo "récupére la liste des rasters"
+  echo $cmd
+  xml=$(eval $cmd)
+
+  if  [ $verbose ]; then
+    echo $xml
+  fi
+
+  itemsCount=$(xmllint --xpath "count(//coverageStores/coverageStore)" - <<<"$xml" 2>/dev/null)
+  # redirige l'erreur standard vers null pour éviter d'être averti de chaque valeur manquante (XPath set is empty)
+  # mais cela peut empêcher de détecter d'autres erreurs
+  # TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
+  echo "itemsCount :  $itemsCount"
+
+  for (( i=1; i < $itemsCount + 1; i++ )); do
+    name=$(xmllint --xpath "/coverageStores/coverageStore[$i]/name/text()" - <<<"$xml")
+    if [[ "${output}" == "${name}" ]] ; then
+      cmd="curl --silent \
+                 -u ${login}:${password} \
+                 -XPUT -H \"Content-type: text/xml\" \
+                 -d \"<layer><defaultStyle><name>${output}</name></defaultStyle></layer>\" \
+                 $url/geoserver/rest/layers/$workspace:${name}"
+      echo $cmd
+      eval $cmd
+    fi
+  done
+
+
+
 
 }
 

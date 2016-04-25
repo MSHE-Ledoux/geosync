@@ -239,11 +239,8 @@ vector::publish() {
 
   # NB: le dossier temporaire n'est pas supprimé : rm -R "$tmpdir"
 
-# ---------------------------- Recherche d'un style correspondant si le nom de la couche envoyée contient la chaine "-sld-"
+# ---------------------------- Recherche d'un style correspondant au nom de la couche envoyée
 
-  if [[ "$output_pgsql" == *"_sld_"* ]]; then     # [[...]] nécessaire car utilisation de *"chaine"*
-	  #liste les styles et l'assigne à la couche s'il a le même nom
-          echo "La couche publiée contient une référence à un style. Recherche du style"
           cmd="curl --silent \
 	             -u ${login}:${password} \
 	             -XGET $url/geoserver/rest/styles.xml"
@@ -271,13 +268,10 @@ vector::publish() {
             echo $name >> "$tmpdir_styles/styles_existants"
           done
 
-
-
-
 	  while read line 
 	  do
 	    name=$line
-	    if [[ "$output_pgsql" == *"_sld_${name}_sld"* ]]; then
+	    if [[ "$output_pgsql" == "${name}"* ]]; then
 	      cmd="curl --silent \
 	                 -u ${login}:${password} \
 	                 -XPUT -H \"Content-type: text/xml\" \
@@ -295,7 +289,6 @@ vector::publish() {
 	      eval $cmd
 	    fi
 	  done < "$tmpdir_styles/styles_existants"
-  fi
 
 }
 

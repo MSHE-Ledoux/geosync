@@ -149,7 +149,7 @@ importfile() {
 
   style() {
   if [ ! "$outputlayername" ]; then
-    outputlayername=$(util::cleanName "$filepath")
+    outputlayername=$(util::cleanName "$filepath" -p)
   fi 
 
   cmd="style::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' 

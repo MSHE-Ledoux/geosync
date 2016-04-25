@@ -208,6 +208,51 @@ raster::publish() {
   fi  
 
   # NB: le dossier temporaire n'est pas supprimé : rm -R "$tmpdir"
+
+  # Recherche d'un style correspondant
+  cmd="curl --silent \
+                     -u ${login}:${password} \
+                     -XGET $url/geoserver/rest/styles.xml"
+          if [ $verbose ]; then
+            echo $cmd
+          fi
+
+          local tmpdir_styles=~/tmp/geosync_sld
+          rm -R "$tmpdir_styles"
+          mkdir "$tmpdir_styles"
+          output_xml="styles.xml"
+          touch "$tmpdir_styles/$output_xml"
+
+          xml=$(eval $cmd)
+          echo $xml
+          echo $xml > "$tmpdir_styles/$output_xml"
+
+          input="$tmpdir_styles/$output_xml"
+          itemsCount=$(xpath 'count(/styles/style)')
+
+          touch "$tmpdir_styles/styles_existants"
+          for (( i=1; i < $itemsCount + 1; i++ )); do
+            name=$(xpath '//styles/style['$i']/name/text()')
+            echo $name
+            echo $name >> "$tmpdir_styles/styles_existants"
+          done
+
+          while read line 
+          do
+            name=$line
+            if [[ "$output" == "${name}"* ]]; then
+              cmd="curl --silent \
+                         -u ${login}:${password} \
+                         -XPUT -H \"Content-type: text/xml\" \
+                         -d \"<layer><defaultStyle><name>${name}</name></defaultStyle></layer>\" \
+                         $url/geoserver/rest/layers/${workspace}:${output}"
+              echo $cmd
+              eval $cmd
+            fi
+          done < "$tmpdir_styles/styles_existants"
+
+
+
 }
 
 main() {
