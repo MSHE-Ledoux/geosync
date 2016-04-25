@@ -249,7 +249,7 @@ main() {
       ###################
        
       for filepath in **/*.sld ; do
-        outputlayername=$(util::cleanName "$filepath")
+        outputlayername=$(util::cleanName "$filepath" -p)
         outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
         echo "$outputlayernamesansext" >> "$tmpdir/styles_shared"
       done
@@ -275,7 +275,7 @@ main() {
     # nécessaire car impossible de supprimer un style qui est utilisé par une couche
     # nécessaire d'effectuer l'opération avant la suppression des couches sinon erreur si couche supprimée
     while read layer; do
-      if [[ "$layer" == *"_sld_${style}_sld"* ]]; then
+      if [[ "$layer" == "$style" ]]; then
         echo "Les couches shp symbolisées par ${style} prennent le style par défaut"
         cmd="curl --silent \
                  -u ${login}:${password} \
@@ -288,7 +288,7 @@ main() {
     done <"$tmpdir/vectors_published"
     # Idem pour les styles utilisés par les couches pgsql
     while read layer; do
-      if [[ "$layer" == *"_sld_${style}_sld"* ]]; then
+      if [[ "$layer" == "$style" ]]; then
         echo "Les couches pgsql symbolisées par ${style} prennent le style par défaut"
         cmd="curl --silent \
                  -u ${login}:${password} \
@@ -299,8 +299,21 @@ main() {
         eval $cmd
       fi
     done <"$tmpdir/vectors_published_pgsql"
+    # Idem pour les styles utilisés par les rasters
+    while read layer; do
+      if [[ "$layer" == "${style}" ]]; then
+      echo "Les couches rasters symbolisées par ${style} prennent le style par défaut"
+        cmd="curl --silent \
+                 -u ${login}:${password} \
+                 -XPUT -H \"Content-type: text/xml\" \
+                 -d \"<layer><defaultStyle><name>raster</name></defaultStyle></layer>\" \
+                 $url/geoserver/rest/layers/$workspace:${layer}"
+        echo $cmd
+        eval $cmd
+      fi
+    done <"$tmpdir/rasters_published"
 
-    if [ "$style" != "generic" ] && [ "$style" != "line" ] && [ "$style" != "polygon" ] && [ "$style" != "point" ]; then
+    if [ "$style" != "generic" ] && [ "$style" != "line" ] && [ "$style" != "polygon" ] && [ "$style" != "point" ]  && [ "$style" != "raster" ] ; then
       echo "suppression de : $style"
       #supprime le style en ligne
       cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/styles/${style}'" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
