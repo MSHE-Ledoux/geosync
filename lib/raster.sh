@@ -79,7 +79,7 @@ raster::publish() {
     return 1 # erreur
   fi
 
-  #valeurs des paramètres par défaut
+  # valeurs des paramètres par défaut
 
   if [ ! "$output" ]; then
     # par défaut correspondant à l'$input "prettyfied" e
@@ -99,8 +99,8 @@ raster::publish() {
     coveragestore=${output%%.*}
   fi
 
-  #test si le fichier shapefile en $input existe
-  #si le fichier n'existe pas, alors quitter
+  # teste si le fichier shapefile en $input existe
+  # si le fichier n'existe pas, alors quitter
   if [ ! -f "$input" ]; then 
     echoerror "le fichier $input n'existe pas"
     return 1 # erreur
@@ -117,7 +117,7 @@ raster::publish() {
 
   local statuscode=0
 
-  #créer un dossier temporaire et stocke son chemin dans une variable
+  # créer un dossier temporaire et stocke son chemin dans une variable
   local tmpdir1=~/tmp/geosync_raster_step1
   local tmpdir=~/tmp/geosync_raster_step2
 
@@ -146,7 +146,7 @@ raster::publish() {
 
   # ----------------------------- INTEGRATION POSTGIS -------------
 
-  # necessaire car le nom d'une table postgres ne peut avoir de .
+  # nécessaire car le nom d'une table postgres ne peut avoir de .
   output_pgsql=$(echo $output | cut -d. -f1)
   #output_pgsql=${output_pgsql//-/_}  # Gestionnaire de bd de QGIS 2.12 n'accepte pas les rasters avec des - dans le nom
 
@@ -177,19 +177,19 @@ raster::publish() {
   statuscode=$(curl --silent --output /dev/null -w %{http_code} -u "${login}:${password}" -XPUT -H 'Content-type: image/tiff' \
    --data-binary "@$tmpdir/$output" \
    "$url/geoserver/rest/workspaces/$workspace/coveragestores/$coveragestore/file.geotiff?recalculate=nativebbox,latlonbbox" 2>&1)
-   # doc : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-file-extension
-   # doc de recalculate : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#recalculate
-  #tester  avec update=overwrite&
+  # doc : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-file-extension
+  # doc de recalculate : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#recalculate
+  # tester avec update=overwrite&
 
-   # publication uniquement des métadonnées
-   #-d "file://$tmpdir/$output" \
+  # publication uniquement des métadonnées
+  #-d "file://$tmpdir/$output" \
 
-   # publication métadonnées + données
-   #--data-binary "@$tmpdir/$output" \
+  # publication métadonnées + données
+  #--data-binary "@$tmpdir/$output" \
 
- # statuscode=$(curl --silent --output /dev/null -w %{http_code} -u "${login}:${password}" -XPUT -H 'Content-type: text/plain' \
- #   -d "file://$tmpdir/$output" \
- #   "$url/geoserver/rest/workspaces/$workspace/coveragestores/$coveragestore/external.shp?update=overwrite" 2>&1)
+  # statuscode=$(curl --silent --output /dev/null -w %{http_code} -u "${login}:${password}" -XPUT -H 'Content-type: text/plain' \
+  #   -d "file://$tmpdir/$output" \
+  #   "$url/geoserver/rest/workspaces/$workspace/coveragestores/$coveragestore/external.shp?update=overwrite" 2>&1)
   #--silent Silent or quiet mode. Don't show progress meter or error messages
   #-w %{http_code} pour récupérer le status code de la requête
 
@@ -264,5 +264,7 @@ main() {
 if [ "${BASH_SOURCE[0]}" == "$0" ]; then
   main "$@"
 fi
-#source d'inpiration pour le style du code bash https://google-styleguide.googlecode.com/svn/trunk/shell.xml
-#outil pour vérifier la qualité du code : http://www.shellcheck.net/
+
+# source d'inpiration pour le style du code bash https://google-styleguide.googlecode.com/svn/trunk/shell.xml
+# outil pour vérifier la qualité du code : http://www.shellcheck.net/
+
