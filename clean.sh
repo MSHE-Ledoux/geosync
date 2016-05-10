@@ -70,7 +70,7 @@ main() {
   local host login passwd workspace datastore pg_datastore db logs
   source "$paramfilepath"
 
-  #attention le fichier .geosync est interprété et fait donc confiance au code
+  # attention le fichier .geosync est interprété et fait donc confiance au code
   # pour une solution plus sûr envisager quelque chose comme : #while read -r line; do declare $line; done < "$BASEDIR/.pass"
 
   # vérification du host/login/mot de passe
@@ -81,10 +81,10 @@ main() {
   url=$host
   password=$passwd
 
-  #créer un dossier temporaire et stocke son chemin dans une variable
+  # créer un dossier temporaire et stocke son chemin dans une variable
   local tmpdir=~/tmp/geosync_clean
 
-  #supprime le dossier temporaire et le recrée
+  # supprime le dossier temporaire et le recrée
   rm -R "$tmpdir"
   mkdir "$tmpdir"
 
@@ -93,7 +93,7 @@ main() {
   ###################
   output="vectors_featuretypes.xml"
   touch "$tmpdir/$output"
-  #liste les vecteurs du datastore
+  # liste les vecteurs du datastore
   
   cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace/datastores/$datastore/featuretypes.xml"
   if  [ $verbose ]; then
@@ -117,7 +117,7 @@ main() {
 
   output="vectors_featuretypes_pgsql.xml"
   touch "$tmpdir/$output"
-  #liste les vecteurs du datastore
+  # liste les vecteurs du datastore
 
   cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes.xml"
   if  [ $verbose ]; then
@@ -141,7 +141,7 @@ main() {
   ###################
   output="rasters_coveragestores.xml"
   touch "$tmpdir/$output"
-  #liste les coveragestores
+  # liste les coveragestores
   cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace/coveragestores.xml" 
   if  [ $verbose ]; then
     echo "récupére la liste des rasteurs"
@@ -164,7 +164,7 @@ main() {
   ###################
   output="styles.xml"
   touch "$tmpdir/$output"
-  #liste les styles
+  # liste les styles
   cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/styles.xml"
   if  [ $verbose ]; then
     echo "récupére la liste des styles"
@@ -275,7 +275,7 @@ main() {
     # nécessaire car impossible de supprimer un style qui est utilisé par une couche
     # nécessaire d'effectuer l'opération avant la suppression des couches sinon erreur si couche supprimée
     while read layer; do
-      if [[ "$layer" == "$style" ]]; then
+      if [[ "$layer" == "${style}1" ]]; then
         echo "Les couches shp symbolisées par ${style} prennent le style par défaut"
         cmd="curl --silent \
                  -u ${login}:${password} \
@@ -288,7 +288,7 @@ main() {
     done <"$tmpdir/vectors_published"
     # Idem pour les styles utilisés par les couches pgsql
     while read layer; do
-      if [[ "$layer" == "$style" ]]; then
+      if [[ "${layer}1" == "$style" ]]; then
         echo "Les couches pgsql symbolisées par ${style} prennent le style par défaut"
         cmd="curl --silent \
                  -u ${login}:${password} \
@@ -315,7 +315,7 @@ main() {
 
     if [ "$style" != "generic" ] && [ "$style" != "line" ] && [ "$style" != "polygon" ] && [ "$style" != "point" ]  && [ "$style" != "raster" ] ; then
       echo "suppression de : $style"
-      #supprime le style en ligne
+      # supprime le style en ligne
       cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/styles/${style}'" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
       if  [ $verbose ]; then
         echo $cmd
@@ -355,11 +355,11 @@ main() {
     cmd_pgsql="psql -h localhost -d $db -U geosync -w -c 'DROP TABLE \"$vector\";'"
     # http://docs.geoserver.org/stable/en/user/rest/api/featuretypes.html#workspaces-ws-datastores-ds-featuretypes-ft-format
     # dans le cas d'un filesystem "recurse=true" dans le cas d'une bd postgis "recurse=false"
-    if  [ $verbose ]; then
+    if [ $verbose ]; then
       echo $cmd
       echo $cmd_pgsql
     fi
-    if  [ ! $simulation ]; then
+    if [ ! $simulation ]; then
       eval $cmd
       eval $cmd_pgsql
     fi
@@ -392,3 +392,4 @@ main() {
 if [ "${BASH_SOURCE[0]}" == "$0" ]; then
   main "$@"
 fi
+
