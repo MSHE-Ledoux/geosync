@@ -14,7 +14,7 @@ usage() {
 
 style::publish() {
   echoerror() {
-    echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2  #Redirection vers la sortie d'erreurs standard  (stderr)
+    echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2  # Redirection vers la sortie d'erreurs standard  (stderr)
   } 
 
   usage() {
@@ -22,7 +22,7 @@ style::publish() {
   }
 
   local DIR
-  #chemin du script (sourcé ou non) pour pouvoir appeler d'autres scripts dans le même dossier
+  # chemin du script (sourcé ou non) pour pouvoir appeler d'autres scripts dans le même dossier
   DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
   #echo "BASH_SOURCE:${BASH_SOURCE[0]}"
   #echo "DIR:$DIR"
@@ -97,8 +97,8 @@ if [ ! "$pg_datastore" ]; then
     output=$(util::cleanName "$input")
   fi
 
-  #test si le fichier shapefile en $input existe
-  #si le fichier n'existe pas, alors quitter
+  # teste si le fichier shapefile en $input existe
+  # si le fichier n'existe pas, alors quitter
   if [ ! -f "$input" ]; then 
     echoerror "le fichier n'existe pas : $input"
     return 1 # erreur
@@ -115,7 +115,7 @@ if [ ! "$pg_datastore" ]; then
 
   local statuscode=0
 
-  ###  publication du style dans le Geoserver 1- création du style vide 2- chargement du style
+  ### publication du style dans le Geoserver 1- création du style vide 2- chargement du style
 
   ## Création du style vide - création du xml dans /var/www/geoserver/data/styles
 
@@ -164,7 +164,7 @@ if [ ! "$pg_datastore" ]; then
                    -d @/home/$login/owncloudsync/$input \
             $url/geoserver/rest/styles/$output 2>&1"
   
-  if  [ $verbose ]; then
+  if [ $verbose ]; then
     echo "curl $var_v -w %{http_code} \
                       -u ${login}:############### \
                       -XPUT -H 'Content-type: application/vnd.ogc.sld+xml' \
@@ -176,7 +176,7 @@ if [ ! "$pg_datastore" ]; then
   
   #-w %{http_code} pour récupérer le status code de la requête
 
-  if  [ $verbose ]; then
+  if [ $verbose ]; then
     echo "" #saut de ligne
     echo "valeur du statuscode $statuscode"
   fi
@@ -193,7 +193,7 @@ if [ ! "$pg_datastore" ]; then
 
   ### Assignation du style à toutes les couches associées : nom_couche_sld_nom_style_sld.shp  <= nom_style.sld 
 
-  #liste les vecteurs du datastore postgis_data et assigne le style à ceux concernés
+  # liste les vecteurs du datastore postgis_data et assigne le style à ceux concernés
   cmd="curl --silent \
              -u ${login}:${password} \
              -XGET $url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes.xml"
@@ -225,7 +225,7 @@ if [ ! "$pg_datastore" ]; then
     fi
   done
   
-  #liste les vecteurs du datastore shpowncloud et assigne le style à ceux concernés
+  # liste les vecteurs du datastore shpowncloud et assigne le style à ceux concernés
   cmd="curl --silent \
              -u ${login}:${password} \
              -XGET $url/geoserver/rest/workspaces/$workspace/datastores/$datastore/featuretypes.xml"
@@ -257,7 +257,7 @@ if [ ! "$pg_datastore" ]; then
     fi
   done
 
-  #liste les coveragestores
+  # liste les coveragestores
   cmd="curl --silent \
 	     -u '${login}:${password}' \
              -XGET $url/geoserver/rest/workspaces/$workspace/coveragestores.xml"
@@ -289,9 +289,6 @@ if [ ! "$pg_datastore" ]; then
     fi
   done
 
-
-
-
 }
 
 
@@ -305,5 +302,6 @@ if [ "${BASH_SOURCE[0]}" == "$0" ]; then
   main "$@"
 fi
 
-#source d'inpiration pour le style du code bash https://google-styleguide.googlecode.com/svn/trunk/shell.xml
-#outil pour vérifier la qualité du code : http://www.shellcheck.net/
+# source d'inpiration pour le style du code bash https://google-styleguide.googlecode.com/svn/trunk/shell.xml
+# outil pour vérifier la qualité du code : http://www.shellcheck.net/
+

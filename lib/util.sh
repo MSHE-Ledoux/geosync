@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#takes a filepath and returns a pretty name
-#examples
+# takes a filepath and returns a pretty name
+# examples
 # $(util::cleanName "./tic/tac toe.shp") -> tac_toe.shp
 # $(util::cleanName "./tic/tac toe.shp" -p) -> tic_tac_toe.shp
 util::cleanName() { 
@@ -58,7 +58,7 @@ util::cleanName() {
 
 # récupére la date de changement la plus récente des fichiers (de même nom) de la couche, exemple .shp.xml
 # $(util::getlastchangedate "./tic/tac.shp") -> 2015-05-04 16:14:10.063284127 +0200
-# attention cela différe de la date de modification
+# attention cela diffère de la date de modification
 # le rsync la modifie à l'heure locale lorsque le fichier est a été modifié
 # tandis que la date de modification dépend de l'heure de l'OS (machine) sur lequel le fichier a été modifié
 util::getlastchangedate() { 
@@ -66,18 +66,18 @@ util::getlastchangedate() {
   local datemodif
 
   # récupère la date de changement du fichier
-  # attention cela différe de la date de modification
+  # attention cela diffère de la date de modification
   # le rsync la modifie à l'heure locale lorsque le fichier est a été modifié
   datemodif=$(stat --printf=%z "$filepath")
-  #%z   date du dernier changement au format lisible
+  # %z date du dernier changement au format lisible
   # $ stat --printf=%z ./owncloudsync/clementData/clement/GPS/Point_ge.shp
   # 2015-05-04 16:14:10.063284127 +0200
-  #%Z   date  du  dernier changement en secondes depuis le temps zéro de l'ordinateur
+  # %Z date  du  dernier changement en secondes depuis le temps zéro de l'ordinateur
   # $ stat --printf=%Z ./owncloudsync/clementData/clement/GPS/Point_ge.shp
   # 1430748850
   
-  #récupére la date la plus récente des changements des fichiers de la couche (de même nom que le shape) exemple .shp.xml
-  #pour resynchroniser la couche si par exemple les métadata ont été modifiées
+  # récupére la date la plus récente des changements des fichiers de la couche (de même nom que le shape) exemple .shp.xml
+  # pour resynchroniser la couche si par exemple les métadata ont été modifiées
   # ou encore que des dépendances de la couche (ex:.shx) ont été partagées au synchroniseur seulement après la synchronisation de la couche (qui a due échouer)
   local p filenamesansext datefile
   p=$(dirname "$filepath")
@@ -134,3 +134,4 @@ util::typeoflayer() {
 
   echo "$result"
 }
+

@@ -32,10 +32,10 @@ vector::publish() {
   }
 
   local DIR
-  #chemin du script (sourcé ou non) pour pouvoir appeler d'autres scripts dans le même dossier
+  # chemin du script (sourcé ou non) pour pouvoir appeler d'autres scripts dans le même dossier
   DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-  #echo "BASH_SOURCE:${BASH_SOURCE[0]}"
-  #echo "DIR:$DIR"
+  # echo "BASH_SOURCE:${BASH_SOURCE[0]}"
+  # echo "DIR:$DIR"
   # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
   #readonly DIR
 
@@ -96,7 +96,7 @@ vector::publish() {
     return 1 # erreur
   fi
 
-  #valeurs des paramètres par défaut
+  # valeurs des paramètres par défaut
 
   if [ ! "$output" ]; then
     # filename correspondant à l'$input par défaut "prettyfied"
@@ -109,8 +109,8 @@ vector::publish() {
     epsg="2154"
   fi
 
-  #test si le fichier shapefile en $input existe
-  #si le fichier n'existe pas, alors quitter
+  # teste si le fichier shapefile en $input existe
+  # si le fichier n'existe pas, alors quitter
   if [ ! -f "$input" ]; then 
     echoerror "le fichier n'existe pas : $input"
     return 1 # erreur
@@ -239,7 +239,7 @@ vector::publish() {
 
   # NB: le dossier temporaire n'est pas supprimé : rm -R "$tmpdir"
 
-# ---------------------------- Recherche d'un style correspondant au nom de la couche envoyée
+  # ---------------------------- Recherche d'un style correspondant au nom de la couche envoyée
 
           cmd="curl --silent \
 	             -u ${login}:${password} \
@@ -302,5 +302,6 @@ if [ "${BASH_SOURCE[0]}" == "$0" ]; then
   main "$@"
 fi
 
-#source d'inpiration pour le style du code bash https://google-styleguide.googlecode.com/svn/trunk/shell.xml
-#outil pour vérifier la qualité du code : http://www.shellcheck.net/
+# source d'inpiration pour le style du code bash https://google-styleguide.googlecode.com/svn/trunk/shell.xml
+# outil pour vérifier la qualité du code : http://www.shellcheck.net/
+

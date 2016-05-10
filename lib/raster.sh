@@ -16,7 +16,7 @@ usage() {
 raster::publish() {
 
   echoerror() {
-    echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2  #Redirection vers la sortie d'erreurs standard  (stderr)
+    echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2  # Redirection vers la sortie d'erreurs standard  (stderr)
   } 
 
   usage() {
@@ -24,7 +24,7 @@ raster::publish() {
   }
 
   local DIR
-  #chemin du script (sourcé ou non) pour pouvoir appeler d'autres scripts dans le même dossier
+  # chemin du script (sourcé ou non) pour pouvoir appeler d'autres scripts dans le même dossier
   DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
   # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
   #readonly DIR
@@ -117,7 +117,7 @@ raster::publish() {
 
   local statuscode=0
 
-  # créer un dossier temporaire et stocke son chemin dans une variable
+  # crée un dossier temporaire et stocke son chemin dans une variable
   local tmpdir1=~/tmp/geosync_raster_step1
   local tmpdir=~/tmp/geosync_raster_step2
 
