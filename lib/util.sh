@@ -15,7 +15,6 @@ util::cleanName() {
   # avec l'option -p, prend tout le chemin
   if [ "$option" == "-p" ]; then  # par défaut
     match=" "
-    #repl="-"
     repl="_"
     path=${path//$match/$repl}
     match="-"
@@ -40,12 +39,9 @@ util::cleanName() {
     echo "result clean name : $result" >&2
   fi
 
- 
-  #remplace tac toe.shp en tac-toe.shp
-  match=" "
-  repl="_"
-  result=${result//$match/$repl} # Replaces all matches of " " by "-"
-  result=${result,,}              # Replaces all uppercases by lowercases
+  # replaces all uppercases by lowercases
+  result=${result,,}
+
   ## Si le nom est trop long, le tronque et avertit dans les logs
   length_result=${#result}
   if [ "$length_result" -ge "61" ]; then
