@@ -66,10 +66,10 @@ importallfiles() {
       # for filepath in $(find "$path" -iname "*.shp"); do
       # option -iname à find pour un filtre (-name) mais insensible à la casse (.SHP,.shp...)
     
-      # test si le fichier existe bien car (dans certaines conditions encore inconnues selon qu'on le lance par le terminal ou le cron)
+      # teste si le fichier existe bien car (dans certaines conditions encore inconnues selon qu'on le lance par le terminal ou le cron)
       # **/*.shp retourne aussi un fichier nommé "**/*.shp"
       if [ -f "$filepath" ]; then 
-        # récupére la date de changement la plus récente des fichiers (de même nom) de la couche, exemple .shp.xml
+        # récupère la date de changement la plus récente des fichiers (de même nom) de la couche, exemple .shp.xml
         # attention cela différe de la date de modification
         # le rsync la modifie à l'heure locale lorsque le fichier est a été modifié
         datemodif=$(util::getlastchangedate "$filepath")
@@ -133,8 +133,8 @@ importfile() {
 
   raster() {
 
-    #takes a filepath and returns a pretty name
-    #examples
+    # takes a filepath and returns a pretty name
+    # examples
     # $(util::cleanName "./tic/tac toe.shp") -> tac_toe.shp
     # $(util::cleanName "./tic/tac toe.shp" -p) -> tic_tac_toe.shp
     if [ ! "$outputlayername" ]; then
@@ -277,6 +277,6 @@ if [ "${BASH_SOURCE[0]}" == "$0" ]; then
   main "$@"
 fi
 
+# source d'inpiration pour le style du code bash https://google-styleguide.googlecode.com/svn/trunk/shell.xml
+# outil pour vérifier la qualité du code : http://www.shellcheck.net/
 
-#source d'inpiration pour le style du code bash https://google-styleguide.googlecode.com/svn/trunk/shell.xml
-#outil pour vérifier la qualité du code : http://www.shellcheck.net/
