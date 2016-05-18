@@ -1,6 +1,6 @@
 ![Plateforme géomatique de Bourgogne Franche-Comté GeoBFC](images/geobfc.jpg)
 
-GeoSync was originally created in 2015 by Alexandre Maindron and Martin Tovmassian  (engineers at Maison des Sciences de l’Homme et de l’Environnement C. N. Ledoux,  from octobre 2014 to june 2015).
+Ge@Sync was originally created in 2015 by Alexandre Maindron and Martin Tovmassian  (engineers at Maison des Sciences de l’Homme et de l’Environnement C. N. Ledoux,  from octobre 2014 to june 2015).
 
     Alexandre MAINDRON <alexandre@exmackina.com>
     Martin TOVMASSIAN <martin.tovmassian@gmail.com>
