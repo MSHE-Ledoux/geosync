@@ -119,13 +119,14 @@ util::typeoflayer() {
   local result="unknown"
   local filename extension
   filename=$(basename "$filepath")
-  extension="${filename##*.}" # layer.shp.xml -> shp.xml  || layer.tif -> tif  # ! sans "."
+  extension="${filename##*.}" # layer.shp.xml -> xml  || layer.tif -> tif  # ! sans "."
   readonly extension
 
   case $extension in
     shp) result="vector" ;;
     tif|png|adf|jpg|ecw) result="raster" ;;
     sld) result="style" ;;
+    xml) result="metadata" ;;
   esac
 
   echo "$result"

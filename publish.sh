@@ -61,8 +61,8 @@ importallfiles() {
   # TODO: format des rasters supportés: tif, png, adf, jpg, ecw
 
   # si des extension sont rajouter, alors penser à mettre à jour lib/util.sh util::typeoflayer()
-  for filepath in **/*.{shp,tif,png,jpg,ecw,sld} **/w001001.adf; do
-      # alternative dangeureuse :
+  for filepath in **/*.{shp,tif,png,jpg,ecw,sld,xml} **/w001001.adf; do
+      # alternative dangereuse :
       # for filepath in $(find "$path" -iname "*.shp"); do
       # option -iname à find pour un filtre (-name) mais insensible à la casse (.SHP,.shp...)
     
@@ -125,9 +125,9 @@ importfile() {
     eval $cmd
 
     #publie les metadata même si le .xml n'existe pas (dans ce cas publie les données par défaut) pour postgis_data et shpowncloud
-    cmd="metadata::publish -i '$filepath.xml' -o '$outputlayername' -l '$login' -p '$passwd' -u '$host' -w '$workspace' -s '$datastore' $verbosestr"
-    echo $cmd
-    eval $cmd
+    #cmd="metadata::publish -i '$filepath.xml' -o '$outputlayername' -l '$login' -p '$passwd' -u '$host' -w '$workspace' -s '$datastore' $verbosestr"
+    #echo $cmd
+    #eval $cmd
 
   }
 
@@ -159,10 +159,40 @@ importfile() {
   }
 
 
+  metadata() {
+
+  if [ ! "$outputlayername" ]; then
+      outputlayername=$(util::cleanName "$filepath" -p)
+  fi
+
+  base_file=$(echo $filepath | cut -f1 -d.) # metadata.shp.xml => metadata / metadata.xml => metadata
+  ext_file=$(echo $filepath | cut -f2 -d.)  # metadata.shp.xml => shp / metadata.xml => xml
+  test_xml_file="${path}/${base_file}.xml"
+
+  echo $ext_file
+  echo $test_xml_file
+
+  if [ -e test_xml_file ]; then
+    echo "if existence xml"
+  fi
+
+
+  if [ $ext_file == "shp" ] && [ -e $test_xml_file ]; then
+    echo "fichier .shp.xml ignoré car un fichier .xml existe"
+  else
+    cmd="python $BASEDIR/lib/metadata_2_gn.py -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd'
+              -u '$host' -w '$workspace' -s '$datastore' $verbosestr"
+    echo $cmd
+    eval $cmd
+  fi  
+
+  }
+
   case $layertype in
   'vector') vector ;;
   'raster') raster ;;
   'style') style ;;
+  'metadata') metadata ;;
   *) echoerror "file not supported : $filepath" ;;
   esac
 
@@ -257,6 +287,7 @@ main() {
   source "$BASEDIR/lib/metadata.sh"
   # pour importer des fichiers de styles (fichiers .sld)
   source "$BASEDIR/lib/style.sh"
+
 
   newlastdatemodif=0
 
