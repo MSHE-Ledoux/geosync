@@ -76,12 +76,37 @@ def publish_2_gn(input, url, login, password, workspace):
     else :
 	gmd = ''
  
+    typename_csw = gmd + 'MD_Metadata'
+
     balise = gmd + 'fileIdentifier'
     for element in doc.getElementsByTagName(balise):
         print 'fileIdentifier en cours de suppression'
         doc.documentElement.removeChild(element)
 
     balise = gmd + 'MD_DigitalTransferOptions'
+
+    test_digital = doc.getElementsByTagName(balise)
+
+    if not test_digital :	# creation de l'arborescence nécessaire à la creation de la  balise MD_DigitalTransferOptions
+        b_dist = gmd + 'distributionInfo'
+        element_dist = doc.createElement(b_dist)
+        b_MD_dist = gmd + 'MD_Distribution'
+        element_MD_dist = doc.createElement(b_MD_dist)
+        b_transfert = gmd + 'transferOptions'
+        element_transfert = doc.createElement(b_transfert)
+        b_digital = gmd + 'MD_DigitalTransferOptions'
+        element_digital = doc.createElement(b_digital)
+        for element in doc.getElementsByTagName(typename_csw) : 
+            print element.appendChild(element_dist)
+            print element_dist.appendChild(element_MD_dist)
+            print element_MD_dist.appendChild(element_transfert)
+            print element_transfert.appendChild(element_digital)
+ 
+        # AJOUT DES NOEUDS DANS L'ARBRE !!!!
+
+
+
+
     b_online = gmd + 'onLine'				# creation balise online
     element_online = doc.createElement(b_online)
     b_ressource = gmd + 'CI_OnlineResource'		# creation balise ressource
@@ -152,11 +177,11 @@ def publish_2_gn(input, url, login, password, workspace):
     print "resultat : " , resultat 
     for rec in csw.records:
         print "suppression de " + csw.records[rec].title + csw.records[rec].identifier
-        csw.transaction(ttype='delete', typename='gmd:MD_Metadata', identifier=csw.records[rec].identifier)
+        csw.transaction(ttype='delete', typename=typename_csw, identifier=csw.records[rec].identifier)
    
     # Transaction: insert
-    typename_csw = gmd + 'MD_Metadata'
-    print typename_csw
+    #typename_csw = gmd + 'MD_Metadata' # FAIT PLUS HAUT, JUSTE APRES DETERMINATION GMD OU PAS
+    #print typename_csw
     print input_csw
 
 
