@@ -165,8 +165,7 @@ def publish_2_gn(input, url, login, password, workspace):
     from owslib.csw import CatalogueServiceWeb
     #csw = CatalogueServiceWeb(url, skip_caps=True, username=login, password=password)
     url_csw = url + "/geonetwork/srv/fre/csw-publication"
-    print url_csw
-    csw = CatalogueServiceWeb(url_csw, skip_caps=True, username='testadmin', password='testadmin')
+    csw = CatalogueServiceWeb(url_csw, skip_caps=True, username=login, password=password)
     #csw = CatalogueServiceWeb('https://georchestra-dev.umrthema.univ-fcomte.fr/geonetwork/srv/fre/csw-publication', skip_caps=True, username='testadmin', password='testadmin')
     
     # suppression des métadonnées relatives à la même couche geoserver

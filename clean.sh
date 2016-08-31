@@ -365,7 +365,7 @@ main() {
     fi
 
     # suppression de la métadonnée associée
-    cmd="python $BASEDIR/lib/deleteMetadata.py -u '$url' -w '$workspace' -i '$vector' $verbosestr"
+    cmd="python $BASEDIR/lib/deleteMetadata.py -l '$login' -p '$passwd' -u '$url' -w '$workspace' -i '$vector' $verbosestr"
     if [ $verbose ]; then
       echo $cmd
     fi

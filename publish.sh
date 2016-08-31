@@ -167,18 +167,17 @@ importfile() {
 
   base_file=$(echo $filepath | cut -f1 -d.) # metadata.shp.xml => metadata / metadata.xml => metadata
   ext_file=$(echo $filepath | cut -f2 -d.)  # metadata.shp.xml => shp / metadata.xml => xml
+  ext_file2=$(echo $filepath | cut -f3 -d.) # raster.tif.aux.xml => aux 
   test_xml_file="${path}/${base_file}.xml"
 
   echo $ext_file
+  echo $ext_file2
   echo $test_xml_file
-
-  if [ -e test_xml_file ]; then
-    echo "if existence xml"
-  fi
-
 
   if [ $ext_file == "shp" ] && [ -e $test_xml_file ]; then
     echo "fichier .shp.xml ignoré car un fichier .xml existe"
+  elif [ $ext_file == "tif" ] && [ $ext_file2 == "aux" ]; then
+    echo "fichier .aux.xml ignoré car il s'agit d'un fichier de projection/metadonnee"
   else
     cmd="python $BASEDIR/lib/metadata_2_gn.py -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd'
               -u '$host' -w '$workspace' -s '$datastore' $verbosestr"
