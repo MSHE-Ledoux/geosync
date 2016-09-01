@@ -140,7 +140,7 @@ def publish_2_gn(input, url, login, password, workspace):
     b_gco = 'gco:CharacterString'
     element_descr_gco = doc.createElement(b_gco)
     element_descr.appendChild(element_descr_gco)
-    element_descr_txt = doc.createTextNode(u"baies_metadata__baies_metadataéééééééééé")
+    element_descr_txt = doc.createTextNode(output.split(".")[0])   #baies_metadata__baies_metadata      #u"baies_metadata__baies_metadataéééééééééé"
     element_descr_gco.appendChild(element_descr_txt)
 
     print balise

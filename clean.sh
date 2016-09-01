@@ -392,7 +392,16 @@ main() {
       eval $cmd
       eval $cmd_pgsql
     fi
-    
+ 
+  # suppression de la métadonnée associée
+    cmd="python $BASEDIR/lib/deleteMetadata.py -l '$login' -p '$passwd' -u '$url' -w '$workspace' -i '$raster' $verbosestr"
+    if [ $verbose ]; then
+      echo $cmd
+    fi
+    if [ ! $simulation ]; then
+        eval $cmd
+    fi
+  
   done <"$tmpdir/rasters_tobedeleted"
 
 
