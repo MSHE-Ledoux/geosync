@@ -5,25 +5,30 @@
 
 """"""
 
-def publish_2_gn(input, url, login, password, workspace):
+def publish_2_gn(input, url, login, password, workspace, verbose):
 
     from cleanName import cleanName
     import owslib
 
     print "dans metadata.publish_2_gn"
 
+    print "Travail de CleanName.py"
     output = cleanName(input, True)
-    print "input : ", input
-    print "output : ", output
-    print "url : ", url
-    print "login : ", login
-    print "password : ", password
+    print "Fin de CleanName.py"
+    
+    if verbose:
+      print "input : ", input
+      print "output : ", output
+      print "url : ", url
+      print "login : ", login
+      print "password : ", password
+    
 
     import os
     home = os.environ["HOME"] # home = /home/georchestra-ouvert
 
     input = home + "/owncloudsync/" + input  
-    print input   
+    #print input   
 
     import sys  
     reload(sys)  
@@ -71,7 +76,7 @@ def publish_2_gn(input, url, login, password, workspace):
     line2 = line1.nextSibling.toprettyxml()		# si le document xml original en contient
     line1 = line1.toprettyxml()				# GN gère bien l'import avec ou sans gmd, du moment
     if ('gmd:' in line1) or ('gmd:' in line2) :		# que le fichier soit cohérent
-        print "gmd !!!"  
+        print "Fichier avec gmd"  
 	gmd = 'gmd:'
     else :
 	gmd = ''
@@ -146,7 +151,7 @@ def publish_2_gn(input, url, login, password, workspace):
     print balise
  
     for element in doc.getElementsByTagName(balise):
-	print element.appendChild(element_online)
+        print element.appendChild(element_online)
 	print element_online.appendChild(element_ressource)
 	print element_ressource.appendChild(element_linkage)
 	print element_linkage.appendChild(element_url)
@@ -214,9 +219,9 @@ if __name__ == "__main__":
     parser.add_argument('-w', action="store",      dest="workspace", default="geosync-ouvert")
 
     args = parser.parse_args()
-    print parser.parse_args()
+    #print parser.parse_args()
 
 
     if args.input:
-        publish_2_gn(args.input, args.url, args.login, args.password, args.workspace)
+        publish_2_gn(args.input, args.url, args.login, args.password, args.workspace, args.verbose)
 
