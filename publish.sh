@@ -170,9 +170,9 @@ importfile() {
   ext_file2=$(echo $filepath | cut -f3 -d.) # raster.tif.aux.xml => aux 
   test_xml_file="${path}/${base_file}.xml"
 
-  echo $ext_file
-  echo $ext_file2
-  echo $test_xml_file
+  echo "ext_file $ext_file"
+  echo "ext_file2 $ext_file2"
+  echo "test_xml_file $test_xml_file"
 
   if [ $ext_file == "shp" ] && [ -e $test_xml_file ]; then
     echo "fichier .shp.xml ignoré car un fichier .xml existe"

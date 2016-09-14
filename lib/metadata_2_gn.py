@@ -219,7 +219,7 @@ if __name__ == "__main__":
     parser.add_argument('-w', action="store",      dest="workspace", default="geosync-ouvert")
 
     args = parser.parse_args()
-    #print parser.parse_args()
+    print parser.parse_args()
 
 
     if args.input:
