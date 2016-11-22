@@ -151,7 +151,7 @@ vector::publish() {
   output_pgsql=$(echo $output | cut -d. -f1) 
   
   # envoi du shapefile vers postgis
-  cmd="shp2pgsql -I -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h localhost -d $db -U geosync -w"
+  cmd="shp2pgsql -I -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h $localhost -d $db -U geosync -w"
   echo $cmd
   eval $cmd
 

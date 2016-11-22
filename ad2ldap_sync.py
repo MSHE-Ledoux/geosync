@@ -7,7 +7,7 @@
 # dump de l'annuaire ldap :
 # slapcat > ~/slapcat.ldif
 # modification de l'annuaire avec ldapvi :
-# ldapvi --host localhost -D "cn=admin,dc=georchestra,dc=univ-fcomte,dc=fr" -w "********" -b "dc=georchestra,dc=univ-fcomte,dc=fr"
+# ldapvi --host $$localhost -D "cn=admin,dc=georchestra,dc=univ-fcomte,dc=fr" -w "********" -b "dc=georchestra,dc=univ-fcomte,dc=fr"
 
 # pré-requis
 # apt-get install python-ldap
