@@ -1,4 +1,5 @@
 host=https://georchestra-dev.umrthema.univ-fcomte.fr
+localhost=localhost
 login=georchestra-ouvert
 passwd=sonmotdepasse
 workspace=geosync-ouvert
