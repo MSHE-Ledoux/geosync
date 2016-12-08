@@ -160,8 +160,9 @@ def publish_2_gn(input, url, login, password, workspace, verbose):
 	print element_ressource.appendChild(element_descr)
 	
     input_csw = tmpdir + "/csw_" +  output
+    print input_csw
     output_fic = open(input_csw,'w') 
-
+    #output_fic.write('essai')
     txt = doc.toxml().encode('utf-8','ignore')
     output_fic.write(txt)
     output_fic.close()
@@ -198,6 +199,15 @@ def publish_2_gn(input, url, login, password, workspace, verbose):
     csw.transaction(ttype='insert', typename=typename_csw, record=open(input_csw).read())
     #csw.transaction(ttype='insert', typename=typename_csw, record=acc_8)
     #csw.transaction(ttype='insert', typename='gmd:MD_Metadata', record=open('haies_sans_lien_geoserver.xml').read())
+
+
+    #---------TEST UPDATE PRIVILEGE-----
+    sql_req = "set schema 'geonetwork'; INSERT INTO operationallowed SELECT 1, metadata.id, 1 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; \n INSERT INTO operationallowed SELECT 1, metadata.id, 5 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ;"
+    sql_file = open("update_privilege.sql","w")
+    sql_file.write(sql_req)
+    sql_file.close()
+    os.system("psql -h localhost -d georchestra -U geosync -a -f update_privilege.sql")
+
 
 
 # test de la fonction publish_2_gn
