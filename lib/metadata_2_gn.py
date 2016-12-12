@@ -202,7 +202,7 @@ def publish_2_gn(input, url, login, password, workspace, verbose):
 
 
     # Update metadata privilege
-    sql_req = "set schema 'geonetwork'; INSERT INTO operationallowed SELECT 1, metadata.id, 1 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; \n INSERT INTO operationallowed SELECT 1, metadata.id, 5 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ;"
+    sql_req = "set schema 'geonetwork'; INSERT INTO operationallowed SELECT 1, metadata.id, 1 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; INSERT INTO operationallowed SELECT 1, metadata.id, 5 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ;"
     sql_file = open("update_privilege.sql","w")
     sql_file.write(sql_req)
     sql_file.close()
