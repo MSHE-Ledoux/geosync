@@ -41,6 +41,8 @@ def publish_2_gn(input, url, login, password, workspace, verbose):
     	import shutil
         shutil.rmtree(tmpdir)
         os.mkdir(tmpdir)
+    else :
+        os.mkdir(tmpdir) 
 
     # Translate Esri metadata to ISO19139
 
