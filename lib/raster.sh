@@ -5,7 +5,7 @@
 usage() { 
   echo "==> usage : "
   echo "source /lib/raster.sh"
-  echo "raster::publish -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -c coveragestore [-v]"
+  echo "raster::publish -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -c coveragestore -b db -d dbuser [-v]"
   echo ""
   echo "1. convertit (une copie du) raster (-i input) en tiff, dans le système de coordonnées désiré (-e epsg, ex: 4326 pour WGS84 )"
   echo "2. publie le raster converti sous le nom (-o output=input)"
@@ -35,7 +35,7 @@ raster::publish() {
 
   local input output epsg login password url workspace coveragestore verbose
   local OPTIND opt
-  while getopts "i:o:e:l:p:u:w:c:vh" opt; do
+  while getopts "i:o:e:l:p:u:w:c:b:d:vh" opt; do
     # le : signifie que l'option attend un argument
     case $opt in
       i) input=$OPTARG ;;
@@ -46,6 +46,8 @@ raster::publish() {
       u) url=$OPTARG ;;
       w) workspace=$OPTARG ;;
       c) coveragestore=$OPTARG ;;
+      b) db=$OPTARG ;;
+      d) dbuser=$OPTARG ;;
       v) verbose=1 ;;
       *) usage ;;
     esac
@@ -78,6 +80,12 @@ raster::publish() {
     usage
     return 1 # erreur
   fi
+  if [ ! "$datastore" ]; then
+    echoerror "datastore missing"
+    usage
+    return 1 # erreur
+  fi
+
 
   # valeurs des paramètres par défaut
 
@@ -154,8 +162,8 @@ raster::publish() {
   # utilisation de l'option -d nécessaire pour écraser proprement les tables et d'inscrire des erreurs d'insert dans les logs de postgreql
   # il est necessaire d'augmenter dans /etc/postgresql/9.4/main/postgresql.conf la valeur par défaut
   # de checkpoint_segments à 10 ou au-delà pour éviter les erreurs LOG:  les points de vérification (checkpoints) arrivent trop fréquemment
-  echo "raster2pgsql -s $epsg -d //$tmpdir/$output $output_pgsql | psql -h $dbhost -d $db -U geosync"
-  raster2pgsql -s $epsg -d //$tmpdir/$output $output_pgsql | psql -h $dbhost -d $db -U geosync 2>/dev/null 1>/dev/null
+  echo "raster2pgsql -s $epsg -d //$tmpdir/$output $output_pgsql | psql -h $dbhost -d $db -U $dbuser"
+  raster2pgsql -s $epsg -d //$tmpdir/$output $output_pgsql | psql -h $dbhost -d $db -U $dbuser 2>/dev/null 1>/dev/null
 
   # ----------------------------------------------------------------
 

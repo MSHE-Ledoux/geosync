@@ -120,7 +120,7 @@ importfile() {
 
     # convertit et publie la couche pour postgis_data et shpowncloud
     cmd="vector::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' 
-                         -u '$host' -w '$workspace' -s '$datastore' -g '$pg_datastore' -b '$db' -e '$epsg' $verbosestr"
+                         -u '$host' -w '$workspace' -s '$datastore' -g '$pg_datastore' -b '$db' -d '$dbuser' -e '$epsg' $verbosestr"
     echo $cmd
     eval $cmd
 
@@ -141,7 +141,8 @@ importfile() {
       outputlayername=$(util::cleanName "$filepath" -p)
     fi
 
-    cmd="raster::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' -u '$host' -w '$workspace' -c '$coveragestore' -e '$epsg' $verbosestr"
+    cmd="raster::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' 
+                         -u '$host' -w '$workspace' -c '$coveragestore' -e '$epsg' -b '$db' -d '$dbuser' $verbosestr"
     echo $cmd
     eval $cmd
 
@@ -206,7 +207,7 @@ main() {
 
   #local input output epsg datapath paramfile workspace datastore coveragestore verbose help
   local OPTIND opt
-  while getopts "i:o:e:d:p:w:s:c:g:b:vh" opt; do
+  while getopts "i:o:e:d:p:w:s:c:g:b:l:vh" opt; do
     # le : signifie que l'option attend un argument
     case $opt in
       i) input=$OPTARG ;;
@@ -219,6 +220,7 @@ main() {
       c) coveragestore=$OPTARG ;;
       g) pg_datastore=$OPTARG ;;
       b) db=$OPTARG ;;
+      l) dbuser=$OPTARG ;;
       v) verbose=1; verbosestr="-v" ;;
       h) help=1 ;;
   # si argument faux renvoie la sortie    
@@ -246,7 +248,7 @@ main() {
   fi
 
   # récupère "host login passwd workspace datastore pg_datastore db logs" dans le fichier .geosync.conf situé dans le même dossier que ce script
-  local host login passwd workspace datastore pg_datastore db logs
+  local host login passwd workspace datastore pg_datastore db dbuser logs
   source "$paramfile"
 
   # attention le fichier .geosync.conf est interprété et fait donc confiance au code
@@ -269,7 +271,7 @@ main() {
   fi
 
   # vérification des paramètres passés (soit par argument, soit par le fichier .geosync.conf)
-  if [ -z $host ] || [ -z $login ] || [ -z $passwd ] || [ -z $workspace ] || [ -z $datastore ] || [ -z $pg_datastore ] || [ -z $db ] || [ -z $logs ]; then
+  if [ -z $host ] || [ -z $login ] || [ -z $passwd ] || [ -z $workspace ] || [ -z $datastore ] || [ -z $pg_datastore ] || [ -z $db ] || [ -z $dbuser ] || [ -z $logs ]; then
     echoerror "au moins un paramètre maquant !"
     usage
     exit

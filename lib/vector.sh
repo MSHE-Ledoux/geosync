@@ -5,7 +5,7 @@
 usage() { 
   echo "==> usage : "
   echo "source /lib/vector.sh"
-  echo "vector::publish -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -s datastore -g pg_datastore -b db [-v]"
+  echo "vector::publish -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -s datastore -g pg_datastore -b db -d dbuser [-v]"
   echo ""
   echo "1. convertit (une copie du) shapefile (-i input) dans le système de coordonnées désiré (-e epsg)"
   echo "2. publie le shapefile converti sous le nom (-o output=input)"
@@ -28,7 +28,7 @@ vector::publish() {
   } 
 
   usage() {
-    echoerror "vector::publish: -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -s datastore -g pg_datastore -b db [-v]"
+    echoerror "vector::publish: -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -s datastore -g pg_datastore -b db -d dbuser [-v]"
   }
 
   local DIR
@@ -45,7 +45,7 @@ vector::publish() {
 
   local input output epsg login password url workspace datastore verbose
   local OPTIND opt
-  while getopts "i:o:e:l:p:u:w:s:g:b:v" opt; do
+  while getopts "i:o:e:l:p:u:w:s:g:b:d:v" opt; do
     # le : signifie que l'option attend un argument
     case $opt in
       i) input=$OPTARG ;;
@@ -58,6 +58,7 @@ vector::publish() {
       s) datastore=$OPTARG ;;
       g) pg_datastore=$OPTARG ;;
       b) db=$OPTARG ;;
+      d) dbuser=$OPTARG ;;
       v) verbose=1 ;;
       *) usage ;;
     esac
@@ -151,7 +152,7 @@ vector::publish() {
   output_pgsql=$(echo $output | cut -d. -f1) 
   
   # envoi du shapefile vers postgis
-  cmd="shp2pgsql -I -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h $dbhost -d $db -U geosync -w"
+  cmd="shp2pgsql -I -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h $dbhost -d $db -U $dbuser -w"
   echo $cmd
   eval $cmd
 
@@ -197,47 +198,6 @@ vector::publish() {
     echoerror "error vecteur publié depuis postgis http code : $statuscode for $output"
   fi
 
-
-  # -----------------------------------------------------------------
-
-  # publication du shapefile dans le Geoserver
-  # doc : http://docs.geoserver.org/2.6.x/en/user/rest/api/datastores.html#workspaces-ws-datastores-ds-file-url-external-extension
-
-  if [ $verbose ]; then
-    var_v=$"-v"
-    echo "curl $var_v -w %{http_code} -u ${login}:######## -XPUT -H 'Content-type: text/plain' \
-    -d \"file://$tmpdir/$output\" \
-    $url/geoserver/rest/workspaces/$workspace/datastores/$datastore/external.shp?update=overwrite"
-  else
-    var_v=$"--silent --output /dev/null"
-  fi
-  
-  cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${password}' -XPUT -H 'Content-type: text/plain' \
-    -d 'file://$tmpdir/$output' \
-    $url/geoserver/rest/workspaces/$workspace/datastores/$datastore/external.shp?update=overwrite 2>&1"
-
-  statuscode=$(eval $cmd)
-  #--silent Silent or quiet mode. Don't show progress meter or error messages
-  #-w %{http_code} pour récupérer le status code de la requête
-  
-  statuscode=$(echo $statuscode | tail -c 4)
-  echo "valeur du statuscode $statuscode" 
- 
-  if  [ $verbose ]; then
-    echo "" #saut de ligne
-  fi
-
-  # si le code de la réponse http est compris entre [200,300[
-  if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
-    if  [ $verbose ]; then
-      echo "ok $statuscode"
-    fi
-    echo "vecteur publié : $output ($input)"
-  else
-    echoerror "error http code : $statuscode for $output"
-  fi  
-
-  # NB: le dossier temporaire n'est pas supprimé : rm -R "$tmpdir"
 
   # ---------------------------- Recherche d'un style correspondant au nom de la couche envoyée
 
