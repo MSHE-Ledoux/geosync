@@ -87,22 +87,27 @@ main() {
   url=$host
   password=$passwd
 
-  cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces"
-  if  [ $verbose ]; then
-    echo "récupére le code http de réponse du geoserver"
-    echo $cmd
-  fi
-  statuscode=$(eval $cmd)
+  # boucle d'attente d'une réponse de geoserver
+  statuscode=0
+  until [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; do
+      cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces"
+      if  [ $verbose ]; then
+        echo "récupére le code http de réponse du geoserver"
+        echo $cmd
+      fi
+      statuscode=$(eval $cmd)
 
-  # si le code de la réponse http est dans l'intervalle [200,300[
-  if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
-    if  [ $verbose ]; then
-      echo "ok $statuscode"
-    fi
-    echo "connexion aux workspaces réussie"
-  else
-    echoerror "error http code : $statuscode"
-  fi  
+      # si le code de la réponse http est dans l'intervalle [200,300[
+      if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
+        if  [ $verbose ]; then
+          echo "ok $statuscode"
+        fi
+        echo "connexion aux workspaces réussie"
+      else
+        echoerror "error http code : $statuscode"
+        sleep 1
+      fi  
+  done
 
   # recherche du workspace
   cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace | grep $workspace | grep Workspace"
@@ -113,18 +118,41 @@ main() {
   IFS=$'\n'
   result=($(eval $cmd))
   echo $result
-
-  # création du workspace
-  cmd="curl -v -u '${login}:${password}' -XPOST -H 'Content-type: text/xml' 
-            -d '<workspace><name>$login</name></workspace>'
-       $url/geoserver/rest/workspaces"
-  if [ $verbose ]; then
-    echo "création du workspace $workspace"
-    echo $cmd
+  if [ ! $result ]; then
+     # création du workspace
+     cmd="curl -v -u '${login}:${password}' -XPOST -H 'Content-type: text/xml' 
+               -d '<workspace><name>$login</name></workspace>'
+          $url/geoserver/rest/workspaces"
+     if [ $verbose ]; then
+       echo "création du workspace $workspace"
+       echo $cmd
+     fi
+     IFS=$'\n'
+     result=($(eval $cmd))
+     echo $result
   fi
-  IFS=$'\n'
-  result=($(eval $cmd))
-  echo $result
+
+  case $datastore in
+    geosync_shp_open) 
+       auths="${login}.*.r"
+       roles="ROLE_ANONYMOUS,ROLE_AUTHENTICATED,GROUP_ADMIN,ADMIN"
+       ;;
+    geosync_shp_rsct)
+       auths="${login}.*.r"
+       roles="ROLE_AUTHENTICATED,GROUP_ADMIN,ADMIN"
+       ;;
+    :) error 
+       ;;
+  esac
+
+  cmd="curl -v -u '${login}:${password}' -XPOST -H 'Content-type: text/xml' \
+            -d '<?xml version=\"1.0\" encoding=\"UTF-8\"?> \
+                <rules> \
+                  <rule resource=\"$auths\">$roles</rule> \
+               </rules>' \
+       $url/geoserver/rest/security/acl/layers.xml"
+  echo $cmd
+  eval $cmd
 
   # si la réponse était un tableau, on pourrait le parcourir, élément par élément
   #IFS=$'\n'
