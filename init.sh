@@ -106,8 +106,20 @@ main() {
 
   # recherche du workspace
   cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace | grep $workspace | grep Workspace"
-  if  [ $verbose ]; then
+  if [ $verbose ]; then
     echo "est-ce que le workspace $workspace existe ?"
+    echo $cmd
+  fi
+  IFS=$'\n'
+  result=($(eval $cmd))
+  echo $result
+
+  # création du workspace
+  cmd="curl -v -u '${login}:${password}' -XPOST -H 'Content-type: text/xml' 
+            -d '<workspace><name>$login</name></workspace>'
+       $url/geoserver/rest/workspaces"
+  if [ $verbose ]; then
+    echo "création du workspace $workspace"
     echo $cmd
   fi
   IFS=$'\n'
@@ -134,7 +146,7 @@ main() {
   IFS=$'\n'
   result=($(eval $cmd))
   echo $result
-  if [ $result ]; then
+  if [ ! $result ]; then
      cmd="curl -v -u '${login}:${password}' -XPOST -H 'Content-type: text/xml' \
                -d '<dataStore> \
                      <name>$datastore</name> \
@@ -162,7 +174,7 @@ main() {
   IFS=$'\n'
   result=($(eval $cmd))
   echo $result
-  if [ $result ]; then
+  if [ ! $result ]; then
      cmd="curl -v -u '${login}:${password}' -XPOST -H 'Content-type: text/xml' \
                -d '<dataStore> \
                      <name>$pg_datastore</name> \
