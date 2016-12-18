@@ -7,9 +7,13 @@ Indexer dans geOrchestra les données déposées par les utilisateurs dans OwnCl
 Comment installer ge@sync ?
 ---------------------------
 
-avec Ansible, en déployant le playbook geosync-ansible sur une machine sur laquelle geOrchestra a été installé, idéalement avec Ansible également.
-
+1. avec Ansible, en déployant le playbook geosync-ansible sur une machine sur laquelle geOrchestra a été installé, idéalement avec Ansible également.
+CETTE METHODE EST DEPRECIEE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 https://github.com/MaxiReglisse/geosync-ansible
+
+2. avec Docker, en déployant des conteneurs modifiés par rapport aux conteneurs d'origine de geOrchestra. 4 conteneurs sont modifiés.
+
+https://github.com/MSHE-Ledoux/geosync-docker
 
 Vue d'ensemble de l'architecture :
 ----------------------------------
