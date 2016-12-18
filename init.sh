@@ -182,10 +182,11 @@ main() {
                      <type>Directory of spatial files (shapefiles)</type> \
                      <enabled>true</enabled> \
                      <connectionParameters> \
-                     <entry key=\"charset\">UTF-8</entry> \
-                     <entry key=\"url\">file:data/$login/$datastore</entry> \
-                     <entry key=\"enable spatial index\">true</entry> \
-                     <entry key=\"cache and reuse memory maps\">true</entry> \
+                       <entry key=\"charset\">UTF-8</entry> \
+                       <entry key=\"url\">file:data/$login/$datastore</entry> \
+                       <entry key=\"enable spatial index\">true</entry> \
+                       <entry key=\"cache and reuse memory maps\">true</entry> \
+                     </connectionParameters> \
                    </dataStore>' \
                $url/geoserver/rest/workspaces/$login/datastores"
     echo $cmd
