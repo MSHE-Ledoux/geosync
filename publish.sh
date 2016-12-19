@@ -285,7 +285,7 @@ main() {
   # pour importer les rasteurs (couches .tif .adf .png .jpeg .ocw)
   source "$BASEDIR/lib/raster.sh"
   # pour importer les metadonnées des vecteurs
-  source "$BASEDIR/lib/metadata.sh"
+  #source "$BASEDIR/lib/metadata.sh"
   # pour importer des fichiers de styles (fichiers .sld)
   source "$BASEDIR/lib/style.sh"
 
