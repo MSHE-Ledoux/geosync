@@ -124,11 +124,6 @@ importfile() {
     echo $cmd
     eval $cmd
 
-    #publie les metadata même si le .xml n'existe pas (dans ce cas publie les données par défaut) pour postgis_data et shpowncloud
-    #cmd="metadata::publish -i '$filepath.xml' -o '$outputlayername' -l '$login' -p '$passwd' -u '$host' -w '$workspace' -s '$datastore' $verbosestr"
-    #echo $cmd
-    #eval $cmd
-
   }
 
   raster() {
