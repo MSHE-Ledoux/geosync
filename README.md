@@ -8,7 +8,7 @@ Comment installer ge@sync ?
 ---------------------------
 
 1. avec Ansible, en déployant le playbook geosync-ansible sur une machine sur laquelle geOrchestra a été installé, idéalement avec Ansible également.
-CETTE METHODE EST DEPRECIEE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+CETTE METHODE EST DEPRECIEE ACTUELLEMENT ! Merci de patienter et utiliser Docker pour l'instant
 https://github.com/MaxiReglisse/geosync-ansible
 
 2. avec Docker, en déployant des conteneurs modifiés par rapport aux conteneurs d'origine de geOrchestra. 4 conteneurs sont modifiés.
