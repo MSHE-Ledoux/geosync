@@ -104,7 +104,7 @@ main() {
         fi
         echo "connexion aux workspaces réussie"
       else
-        echoerror "error http code : $statuscode"
+        echoerror "geoserver not ready ? ... error http code : $statuscode"
         sleep 1
       fi  
   done
@@ -121,7 +121,7 @@ main() {
   if [ ! $result ]; then
      # création du workspace
      cmd="curl -v -u '${login}:${password}' -XPOST -H 'Content-type: text/xml' 
-               -d '<workspace><name>$login</name></workspace>'
+               -d '<workspace><name>$workspace</name></workspace>'
           $url/geoserver/rest/workspaces"
      if [ $verbose ]; then
        echo "création du workspace $workspace"
@@ -188,7 +188,7 @@ main() {
                        <entry key=\"cache and reuse memory maps\">true</entry> \
                      </connectionParameters> \
                    </dataStore>' \
-               $url/geoserver/rest/workspaces/$login/datastores"
+               $url/geoserver/rest/workspaces/$workspace/datastores"
     echo $cmd
     eval $cmd
   fi
@@ -216,7 +216,7 @@ main() {
                        <dbtype>postgis</dbtype> \
                      </connectionParameters> \
                    </dataStore>' \
-               $url/geoserver/rest/workspaces/$login/datastores"
+               $url/geoserver/rest/workspaces/$workspace/datastores"
     echo $cmd
     eval $cmd
   fi
