@@ -52,15 +52,15 @@ importallfiles() {
 
   cd "$path"
 
-  shopt -s globstar
-  # shopt -s globstar nocaseglob
+  # shopt -s globstar
+  shopt -s globstar nocaseglob
   # set globstar, so that the pattern ** used in a pathname expansion context will 
   # match a files and zero or more directories and subdirectories.
   # nocaseglob : case insensitive
   #shopt -s extglob allow (.tif|.jpg) but does not work with globstar **
   # TODO: format des rasters supportés: tif, png, adf, jpg, ecw
 
-  # si des extension sont rajouter, alors penser à mettre à jour lib/util.sh util::typeoflayer()
+  # si des extensions sont rajoutées, alors penser à mettre à jour lib/util.sh util::typeoflayer()
   for filepath in **/*.{shp,tif,png,jpg,ecw,sld,xml} **/w001001.adf; do
       # alternative dangereuse :
       # for filepath in $(find "$path" -iname "*.shp"); do
