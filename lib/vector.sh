@@ -171,7 +171,7 @@ vector::publish() {
     echo "curl $var_v -w %{http_code} -u \"${login}:#########\" -XPOST -H \"Content-type: text/xml\"  -d \"<featureType><name>$output_pgsql</name></featureType>\" \
     $url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes"
   else
-    var_=$"--silent --output /dev/null"
+    var_v=$"--silent --output /dev/null"
   fi
 
   cmd="curl $var_v -w %{http_code} -u '${login}:${password}' -XPOST -H 'Content-type: text/xml'  -d '<featureType><name>$output_pgsql</name></featureType>' \
