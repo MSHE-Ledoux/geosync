@@ -4,7 +4,7 @@ SCRIPT_FULL_PATH=`realpath "$0"` # /absolute/path/myscript.sh
 SCRIPT_PATH=`dirname "$SCRIPT_FULL_PATH"`  # /absolute/path
 
 # on a besoin ici uniquement des logs
-PARAMFILE="$HOME/bin/.geosync.conf"
+PARAMFILE="$HOME/.geosync.conf"
 #local host login passwd workspace datastore pg_datastore db logs
 source "$PARAMFILE"
 

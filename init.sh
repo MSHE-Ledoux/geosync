@@ -52,13 +52,13 @@ main() {
       echo "test du geoserver !"
   fi
   
-  # récupère les paramètres de connexion dans le fichier .geosync situé dans le même dossier que ce script
-  paramfilepath="$BASEDIR/.geosync.conf"
+  # récupère les paramètres de connexion dans le fichier .geosync situé dans le même dossier utilisateur
+  paramfilepath="$HOME/.geosync.conf"
   local host login passwd workspace datastore pg_datastore db logs
   source "$paramfilepath"
 
   # attention les fichiers .geosync est interprété et fait donc confiance au code
-  # pour une solution plus sûre, envisager quelque chose comme : #while read -r line; do declare $line; done < "$BASEDIR/.pass"
+  # pour une solution plus sûre, envisager quelque chose comme : #while read -r line; do declare $line; done < "$HOME/.pass"
 
   # vérification du host/login/mot de passe
   if [ ! "$login" ] || [ ! "$passwd" ] || [ ! "$host" ]; then

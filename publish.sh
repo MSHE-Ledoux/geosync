@@ -234,7 +234,7 @@ main() {
   # "paramfile" nom/chemin du fichier des paramètres de connexion
   # par défaut, prend le fichier .geosync.conf dans le dossier de ce script
   if [ ! "$paramfile" ]; then
-    paramfile="$BASEDIR/.geosync.conf"
+    paramfile="$HOME/.geosync.conf"
   fi
 
   # teste l'existence du fichier contenant les paramètres de connexion
@@ -242,12 +242,12 @@ main() {
     error "le fichier geosync.conf n'existe pas; le spécifier avec l'option -p [paramfile]"
   fi
 
-  # récupère "host login passwd workspace datastore pg_datastore db logs" dans le fichier .geosync.conf situé dans le même dossier que ce script
+  # récupère "host login passwd workspace datastore pg_datastore db logs" dans le fichier .geosync.conf situé dans le dossier de l'utilisateur
   local host login passwd workspace datastore pg_datastore db dbuser logs
   source "$paramfile"
 
   # attention le fichier .geosync.conf est interprété et fait donc confiance au code
-  # pour une solution plus sûre envisager quelque chose comme : #while read -r line; do declare $line; done < "$BASEDIR/.geosync.conf"
+  # pour une solution plus sûre envisager quelque chose comme : #while read -r line; do declare $line; done < "$HOME/.geosync.conf"
 
   # par défaut index le répertoire courant
   if [ ! "$input" ]; then

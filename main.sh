@@ -13,7 +13,7 @@ INPUT_OUTPUT_PATH="$HOME/owncloud"
 INPUT_COPY_PATH="$HOME/owncloudsync"
 
 # on a besoin ici uniquement des logs
-PARAMFILE="$HOME/bin/.geosync.conf"
+PARAMFILE="$HOME/.geosync.conf"
 #local host login passwd workspace datastore pg_datastore db logs
 source "$PARAMFILE"
 
@@ -59,4 +59,3 @@ date >> "$ERROR_LOG"
 cmd="bash '$BASEDIR/publish.sh' -i '$INPUT_COPY_PATH' -d '$DATA_PATH' -p '$PARAMFILE' -v 1>>'$PUBLI_LOG' 2>>'$ERROR_LOG'"
 echo $cmd
 eval $cmd
-

@@ -7,7 +7,7 @@ SCRIPT_PATH=`dirname "$SCRIPT_FULL_PATH"`  # /absolute/path
 # attention : ne pas faire précéder ce code par le flock (ci-dessous) car sinon semble ne pas supprimer le verrou
 
 # on a besoin ici uniquement des logs
-PARAMFILE="$HOME/bin/.geosync.conf"
+PARAMFILE="$HOME/.geosync.conf"
 #local host login passwd workspace datastore pg_datastore db logs
 source "$PARAMFILE"
 
