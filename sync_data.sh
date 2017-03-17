@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SCRIPT_FULL_PATH=`realpath "$0"` # /absolute/path/myscript.sh
+SCRIPT_PATH=`dirname "$SCRIPT_FULL_PATH"`  # /absolute/path
+
 # si semble non monté alors on monte le webdav
 # attention : ne pas faire précéder ce code par le flock (ci-dessous) car sinon semble ne pas supprimer le verrou
 
@@ -20,12 +23,11 @@ PATH_LOG="/var/log/$logs"
   date >> $PATH_LOG/main_error.log
   
   # appel de main.sh
-  bash /home/$LOGNAME/bin/main.sh 1>>$PATH_LOG/main.log 2>>$PATH_LOG/main_error.log
+  bash "${SCRIPT_PATH}/main.sh" 1>>$PATH_LOG/main.log 2>>$PATH_LOG/main_error.log
 
 ) 201>/var/lock/${logs}.exclusivelock
 
 
 # à inclure dans un crontab
 # toutes les minutes de 8h à 20h, du lundi au vendredi, importe les couches partagées via owncloud dans le geoserver
-# */1 08-20 * * 1-5 /home/$HOME/bin/sync_data.sh 
-
+# */1 08-20 * * 1-5 /path/sync_data.sh 

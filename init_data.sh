@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SCRIPT_FULL_PATH=`realpath "$0"` # /absolute/path/myscript.sh
+SCRIPT_PATH=`dirname "$SCRIPT_FULL_PATH"`  # /absolute/path
+
 # on a besoin ici uniquement des logs
 PARAMFILE="$HOME/bin/.geosync.conf"
 #local host login passwd workspace datastore pg_datastore db logs
@@ -12,5 +15,4 @@ date >> $PATH_LOG/init.log
 date >> $PATH_LOG/init_error.log
   
 # appel de init.sh
-bash $HOME/bin/init.sh -t -v 1>>$PATH_LOG/init.log 2>>$PATH_LOG/init_error.log
-
+bash "${SCRIPT_PATH}/init.sh" -t -v 1>>$PATH_LOG/init.log 2>>$PATH_LOG/init_error.log
