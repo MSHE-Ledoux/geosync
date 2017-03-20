@@ -51,9 +51,10 @@ Chaîne d'appel :
             * **lib/raster.sh**
   * **clean_data.sh**
     * **clean.sh**
-      **lib/deleteMetadata.py**
       * erreurs --> clean_error.log
       * log --> clean.log
+	  * utilise des scripts dans lib
+	    * **lib/deleteMetadata.py**
 
 Pistes d'évolution
 ------------------
