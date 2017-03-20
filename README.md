@@ -42,7 +42,7 @@ Chaîne d'appel :
       * erreurs --> main_error.log
       * log --> main.log
         * **publish.sh**
-          * erreurs --> error.log
+          * erreurs --> publish_error.log
           * log --> publish.log
           * lit/écrit dans lastdate.txt
           * utilise des scripts dans lib
