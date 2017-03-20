@@ -136,12 +136,45 @@ vector::publish() {
   mkdir "$tmpdir"
   #tmpdir=$(mktemp --directory /tmp/geoscript_vector_XXXXXXX) # !!! does NOT work as file://$tmpdir becomes file:/tmp instead of file:///tmp
 
+  # détecte l'encoding, indépendamment de la casse
+  # si présence d'un fichier .cpg
+  #  alors prendre le contenu du fichier .cpg
+  # sinon, si présence d'un .dbf
+  #  détecter l'encoding du fichier .dbf
+  filenameext=$(basename "$input") # /path/t.o/file/vecteur.foo.shp -> vecteur.foo.shp
+  filename=$(echo "$filenameext" | cut -d'.' -f1) # vecteur.foo.shp -> vecteur
+  filepath=$(dirname "$input") # relative/path/to/file/vecteur.shp -> relative/path/to/file
+   
+  echo "filename $filename"
+  echo "filepath $filepath"
+  
+  encoding="UTF-8"
+  
+  cpg_found=($(find "${filepath}" -maxdepth 1 -iname "${filename}.cpg"))
+  if [ ${#cpg_found[@]} -gt 0 ]; then  # ne pas utiliser [ -n $cpg_found ] comme c'est un array
+    echo "cpg existe $cpg_found"
+  	encoding=$(cat "${cpg_found[0]}") # contenu du fichier .cpg, par exemple "UTF-8"
+  else
+	echo "cpg n'existe PAS"
+    dbf_found=($(find "${filepath}" -maxdepth 1 -iname "${filename}.dbf"))
+    if [ ${#dbf_found[@]} -gt 0 ]; then # ne pas utiliser [ -n $dbf_found ] comme c'est un array
+      echo "dbf existe $dbf_found "
+      #exemple de sortie de dbview foo.dbf | file -i -
+	  #/dev/stdin: text/plain; charset=iso-8859-1
+      encoding=$(dbview "${dbf_found[0]}" | file -i - | cut -d= -f2)  # charset du fichier .dbf, par exemple "ISO-8859-1" ou encore "UTF-8"
+    else
+	  echo "dbf n'existe PAS"
+	fi
+  fi
+   
+  echo "encoding $encoding"
+  
   # convertit le système de coordonnées du shapefile (+ encodage en UTF-8)
   # attention : ne pas mettre le résultat directement dans le répertoire du datastore (data_dir) du Geoserver (l'appel à l'API rest s'en charge)
   if  [ $verbose ]; then
-    echo "ogr2ogr -t_srs EPSG:$epsg -lco ENCODING=UTF-8 -overwrite -skipfailures $tmpdir/$output $input"
+    echo "ogr2ogr -t_srs EPSG:$epsg -lco ENCODING=${encoding} -overwrite -skipfailures $tmpdir/$output $input"
   fi
-  ogr2ogr -t_srs "EPSG:$epsg" -lco ENCODING=UTF-8 -overwrite -skipfailures "$tmpdir/$output" "$input"
+  ogr2ogr -t_srs "EPSG:$epsg" -lco ENCODING=${encoding} -overwrite -skipfailures "$tmpdir/$output" "$input"
   #-lco ENCODING=ISO-8859-1  # correspond à LATIN1
   # attention : le datastore doit être en UTF-8
 
@@ -152,7 +185,7 @@ vector::publish() {
   output_pgsql=$(echo $output | cut -d. -f1) 
   
   # envoi du shapefile vers postgis
-  cmd="shp2pgsql -I -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h $dbhost -d $db -U $dbuser -w"
+  cmd="shp2pgsql -I -W ${encoding} -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h $dbhost -d $db -U $dbuser -w"
   echo $cmd
   eval $cmd
 
