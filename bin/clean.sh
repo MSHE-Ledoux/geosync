@@ -132,7 +132,7 @@ main() {
 
   touch "$tmpdir/vectors_published_pgsql"
   for (( i=1; i < $itemsCount + 1; i++ )); do
-    name=$(xpath '/featureTypes/featureType['$i']/name/text()') # '
+    name=$(xpath '/featureTypes/featureType['${i}']/name/text()') # '
     echo $name >> "$tmpdir/vectors_published_pgsql"
   done
   
@@ -155,7 +155,7 @@ main() {
 
   touch "$tmpdir/rasters_published"
   for (( i=1; i < $itemsCount + 1; i++ )); do 
-    name=$(xpath '/coverageStores/coverageStore['$i']/name/text()') 
+    name=$(xpath '/coverageStores/coverageStore['${i}']/name/text()') 
     echo $name >> "$tmpdir/rasters_published"
   done
 
@@ -178,7 +178,7 @@ main() {
 
   touch "$tmpdir/styles_published"
   for (( i=1; i < $itemsCount + 1; i++ )); do
-    name=$(xpath '//styles/style['$i']/name/text()')
+    name=$(xpath '//styles/style['${i}']/name/text()')
     echo $name >> "$tmpdir/styles_published"
   done
 
