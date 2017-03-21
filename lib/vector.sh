@@ -142,7 +142,7 @@ vector::publish() {
   # sinon, si présence d'un .dbf
   #  détecter l'encoding du fichier .dbf
   filenameext=$(basename "$input") # /path/t.o/file/vecteur.foo.shp -> vecteur.foo.shp
-  filename=$(echo "$filenameext" | cut -d'.' -f1) # vecteur.foo.shp -> vecteur
+  filename=${filenameext%%.*}  # vecteur.foo.shp -> vecteur  
   filepath=$(dirname "$input") # relative/path/to/file/vecteur.shp -> relative/path/to/file
    
   echo "filename $filename"
