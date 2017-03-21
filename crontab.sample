@@ -1,0 +1,5 @@
+# importe les couches partagées via owncloud dans le geoserver toutes les minutes des heures de bureau en semaine
+*/1 08-23 * * 1-5 /path/to/geosync/sync_data.sh >> /var/log/geosync/cron_error.log
+
+# toutes les heures de bureau en semaine, nettoie le geoserver des couches qui ne sont plus partagées avec lui
+0 08-23 * * 1-5   /path/to/geosync/clean_data.sh
