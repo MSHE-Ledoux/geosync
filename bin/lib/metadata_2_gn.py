@@ -56,7 +56,7 @@ def publish_2_gn(input, url, login, password, workspace, verbose):
             import subprocess
             saxon_input = "-s:" + input
             print str(saxon_input) 
-            saxon_xsl = "-xsl:" + home + "/bin/lib/ArcGIS2ISO19139.xsl"
+            saxon_xsl = "-xsl:" + home + "/bin/lib/ArcGIS2ISO19139.xsl"  ## TODO vérifier existence et dans le répertoire du script (pas dans home) sinon erreur explicite
             saxon_output = "-o:" + tmpdir + "/sax_" +  output 
             print str(saxon_output)
             subprocess.call(["saxonb-xslt", "-ext:on", saxon_input, saxon_xsl, saxon_output])
