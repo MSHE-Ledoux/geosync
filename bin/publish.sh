@@ -87,6 +87,8 @@ importallfiles() {
       fi
   done
 
+  shopt -u globstar nocaseglob  # unset globstar
+  
   echo "$newlastdatemodif" > "$configfile"
 
 }
