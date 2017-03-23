@@ -40,7 +40,7 @@ fi
 #fi
 
 # synchronise les fichiers du montage webdav pour être plus performant
-cmd="rsync -avr --delete --exclude 'lost+found' --exclude Photos '$INPUT_OUTPUT_PATH/' '$INPUT_COPY_PATH/'"
+cmd="rsync --quiet -avr --delete --exclude 'lost+found' --exclude Photos '$INPUT_OUTPUT_PATH/' '$INPUT_COPY_PATH/'"
 echo $cmd
 eval $cmd
 
