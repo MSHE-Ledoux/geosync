@@ -43,9 +43,6 @@ main() {
   done
   shift $((OPTIND-1))
  
-  # le mode verbeux pour tout afficher
-  verbose=1
- 
   # vérification des paramètres
   
   # si aucune suppression n'est demandée, alors affiche l'aide

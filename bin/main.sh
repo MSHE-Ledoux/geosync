@@ -56,6 +56,6 @@ fi
 date >> "$PUBLI_LOG"
 date >> "$ERROR_LOG"
 
-cmd="bash '$BASEDIR/publish.sh' -i '$INPUT_COPY_PATH' -d '$DATA_PATH' -p '$PARAMFILE' -v 1>>'$PUBLI_LOG' 2>>'$ERROR_LOG'"
+cmd="bash '$BASEDIR/publish.sh' -i '$INPUT_COPY_PATH' -d '$DATA_PATH' -p '$PARAMFILE' 1>>'$PUBLI_LOG' 2>>'$ERROR_LOG'"
 echo $cmd
 eval $cmd
