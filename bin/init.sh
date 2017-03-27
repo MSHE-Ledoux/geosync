@@ -55,7 +55,7 @@ main() {
 
   # récupère les paramètres de connexion dans le fichier .geosync situé dans le même dossier utilisateur
   paramfilepath="$HOME/.geosync.conf"
-  local host login passwd workspace datastore pg_datastore db logs
+  local host login passwd workspace workspace_roles datastore pg_datastore db 
   source "$paramfilepath"
 
   # attention les fichiers .geosync est interprété et fait donc confiance au code
@@ -132,37 +132,31 @@ main() {
 	  echo "YES le workspace $workspace existe déjà"
   fi
 
-  case $datastore in
-    geosync_shp_open) 
-       auths="${login}.*.r"
-       roles="ROLE_ANONYMOUS,ROLE_AUTHENTICATED,GROUP_ADMIN,ADMIN"
-       ;;
-    geosync_shp_rsct)
-       auths="${login}.*.r"
-       roles="ROLE_AUTHENTICATED,GROUP_ADMIN,ADMIN"
-       ;;
-    :) error 
-       ;;
-  esac
-
-  echo_ifverbose "tentative de création des régles d'accés"
-  cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${password}' -XPOST -H 'Content-type: text/xml' \
-            -d '<?xml version=\"1.0\" encoding=\"UTF-8\"?> \
-                <rules> \
-                  <rule resource=\"$auths\">$roles</rule> \
-               </rules>' \
-       $url/geoserver/rest/security/acl/layers.xml"
-  echo_ifverbose $cmd
-
-  statuscode=$(eval $cmd)
-  echo_ifverbose "statuscode $statuscode"
+  roles=$workspace_roles # récupéré de .geosync.conf, exemple : workspace_roles="ROLE_AUTHENTICATED,GROUP_ADMIN,ADMIN"
   
-  if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
-     echo "OK création des régles d'accés réussie"
-  else
-    echoerror "ERROR lors de la création des régles d'accés ... error http code : $statuscode"
-  fi 
+  if [[ $roles ]]; then # roles (accédant au worskpace) définits
+    auths="${login}.*.r"
 
+    echo_ifverbose "tentative de création des régles d'accés"
+    cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${password}' -XPOST -H 'Content-type: text/xml' \
+              -d '<?xml version=\"1.0\" encoding=\"UTF-8\"?> \
+                  <rules> \
+                    <rule resource=\"$auths\">$roles</rule> \
+                 </rules>' \
+         $url/geoserver/rest/security/acl/layers.xml"
+    echo_ifverbose $cmd
+
+    statuscode=$(eval $cmd)
+    echo_ifverbose "statuscode $statuscode"
+    
+    if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
+       echo "OK création des régles d'accés réussie"
+    else
+      echoerror "ERROR lors de la création des régles d'accés ... error http code : $statuscode"
+    fi 
+  else  # aucun role accédant au worskpace de définit
+    echo "WARNING aucun rôle définit dans .geosync.conf pouvant accéder au worskpace $workspace"
+  fi
   
   # recherche du datastore
   echo_ifverbose "#est-ce que le datastore $datastore existe ?"
