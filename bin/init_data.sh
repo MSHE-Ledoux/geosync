@@ -15,4 +15,4 @@ date >> $PATH_LOG/init.log
 date >> $PATH_LOG/init_error.log
   
 # appel de init.sh
-bash "${SCRIPT_PATH}/init.sh" -t 1>>$PATH_LOG/init.log 2>>$PATH_LOG/init_error.log
+bash "${SCRIPT_PATH}/init.sh" -c 1>>$PATH_LOG/init.log 2>>$PATH_LOG/init_error.log
