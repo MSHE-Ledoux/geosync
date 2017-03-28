@@ -185,7 +185,7 @@ vector::publish() {
   output_pgsql=$(echo $output | cut -d. -f1) 
   
   # envoi du shapefile vers postgis
-  cmd="shp2pgsql -I -W ${encoding} -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h $dbhost -d $db -U $dbuser -w"
+  cmd="shp2pgsql -I -W ${encoding} -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h $dbhost -d $db -U $dbuser -w 1>/dev/null"
   echo $cmd
   eval $cmd
 
@@ -218,11 +218,10 @@ vector::publish() {
   fi
 
   statuscode=$(echo $statuscode | tail -c 4)
-  echo "valeur du statuscode $statuscode"
+  echo "statuscode $statuscode"
 
   # si le code de la réponse http est compris entre [200,300[
   if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
-    echo "dans statuscode 200-300"
     if  [ $verbose ]; then
       echo "ok vecteur publié depuis postgis $statuscode"
     fi
