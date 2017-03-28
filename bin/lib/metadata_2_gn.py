@@ -4,8 +4,10 @@
 # pré-requis : apt install python-owslib
 
 """"""
+import os
+import sys 
 
-def publish_2_gn(input, url, login, password, workspace, verbose):
+def publish_2_gn(input, url, login, password, workspace, database_hostname, verbose):
 
     from cleanName import cleanName
     import owslib
@@ -24,28 +26,39 @@ def publish_2_gn(input, url, login, password, workspace, verbose):
       print "password : ", password
     
 
-    import os
-    home = os.environ["HOME"] # home = /home/georchestra-ouvert
-
-    input = home + "/owncloudsync/" + input  
-    #print input   
-
-    import sys  
     reload(sys)  
     sys.setdefaultencoding('utf8')
 
+    # aide au diagnostique : vérifie l'existence du fichier input
+    if not os.path.isfile(input):
+        sys.stderr.write("ERROR input file not found : " + input + "\n")
+        return
+
 
     # création du répertoire temporaire
-    tmpdir = home + "/tmp/geosync_metadata"
+    tmpdir = "/tmp/geosync_metadata"
     if os.path.exists(tmpdir):
-    	import shutil
-        shutil.rmtree(tmpdir)
-        os.mkdir(tmpdir)
+        import shutil
+        shutil.rmtree(tmpdir,True) # ignore_errors
+        try:
+            os.mkdir(tmpdir)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                #sys.stderr.write("erreur lors de la création de tmpdir"+ tmpdir +"\n")
+                raise  # raises the error again
     else :
         os.mkdir(tmpdir) 
 
     # Translate Esri metadata to ISO19139
+    # ATTENTION ce code semble ne pas marcher (lxml.etree.XMLSyntaxError)
 
+    # aide au diagnostique : vérifie la présence de ArcGIS2ISO19139.xsl
+    script_path = os.path.dirname(os.path.abspath(__file__))
+    xsl_path = script_path + "/ArcGIS2ISO19139.xsl"
+    if not os.path.isfile(xsl_path):
+        sys.stderr.write("ERROR xsl file not found : " + xsl_path + "\n")
+        return
+    
     #import codecs					
     #file_input = codecs.open(input,'r',encoding='utf-8') # Force la reconnaissance du fichier en utf-8
     file_input = open(input,'r')
@@ -56,11 +69,12 @@ def publish_2_gn(input, url, login, password, workspace, verbose):
             import subprocess
             saxon_input = "-s:" + input
             print str(saxon_input) 
-            saxon_xsl = "-xsl:" + home + "/bin/lib/ArcGIS2ISO19139.xsl"  ## TODO vérifier existence et dans le répertoire du script (pas dans home) sinon erreur explicite
+            saxon_xsl = "-xsl:" + xsl_path 
             saxon_output = "-o:" + tmpdir + "/sax_" +  output 
             print str(saxon_output)
+            # saxonb-xslt requiert le package libsaxonb-java (apt install libsaxonb-java)
             subprocess.call(["saxonb-xslt", "-ext:on", saxon_input, saxon_xsl, saxon_output])
-	    input = tmpdir + "/sax_" +  output # input = /home/georchestra-ouvert/tmp/geosync_metadata/sax_cc_jura_nord.shp.xml
+            input = tmpdir + "/sax_" +  output # input = /home/georchestra-ouvert/tmp/geosync_metadata/sax_cc_jura_nord.shp.xml
             print input
             break
     file_input.close() 
@@ -76,9 +90,9 @@ def publish_2_gn(input, url, login, password, workspace, verbose):
     
     line1 = root.firstChild				# Permet d'insérer des balises avec le namespace gmd
     line2 = line1.nextSibling.toprettyxml()		# si le document xml original en contient
-    line1 = line1.toprettyxml()				# GN gère bien l'import avec ou sans gmd, du moment
+    line1 = line1.toprettyxml()				# geonetwork gère bien l'import avec ou sans gmd, du moment
     if ('gmd:' in line1) or ('gmd:' in line2) :		# que le fichier soit cohérent
-        print "Fichier avec gmd"  
+        print "Fichier avec gmd"  # GMD : Geographic MetaData extensible markup language
 	gmd = 'gmd:'
     else :
 	gmd = ''
@@ -214,7 +228,7 @@ def publish_2_gn(input, url, login, password, workspace, verbose):
     sql_file = open(sql_file_name,"w")
     sql_file.write(sql_req)
     sql_file.close()
-    os.system("psql -h localhost -d georchestra -U geosync -a -f " + sql_file_name)
+    os.system("psql -h " + database_hostname + " -d georchestra -U geosync -a -f " + sql_file_name)
 
 
 
@@ -235,11 +249,12 @@ if __name__ == "__main__":
     parser.add_argument('-u', action="store",      dest="url"     , default="http://geonetwork-mshe.univ-fcomte.fr:8080/geonetwork/srv/fre/csw-publication")
     parser.add_argument('-v', action="store_true", dest="verbose",  default=False)
     parser.add_argument('-w', action="store",      dest="workspace", default="geosync-ouvert")
+    parser.add_argument('--db_hostname',           action="store",      dest="database_hostname", default="localhost")
 
     args = parser.parse_args()
     print parser.parse_args()
 
 
     if args.input:
-        publish_2_gn(args.input, args.url, args.login, args.password, args.workspace, args.verbose)
+        publish_2_gn(args.input, args.url, args.login, args.password, args.workspace, args.database_hostname, args.verbose)
 

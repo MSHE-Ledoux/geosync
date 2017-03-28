@@ -178,7 +178,7 @@ importfile() {
     echo "fichier .aux.xml ignoré car il s'agit d'un fichier de projection/metadonnee"
   else
     cmd="python $BASEDIR/lib/metadata_2_gn.py -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd'
-              -u '$host' -w '$workspace' -s '$datastore' $verbosestr"
+              -u '$host' -w '$workspace' -s '$datastore' --db_hostname '$dbhost' $verbosestr"
     echo $cmd
     eval $cmd
   fi  
