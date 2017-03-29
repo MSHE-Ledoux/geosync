@@ -68,7 +68,7 @@ main() {
 
   # récupère les paramètres d'authentification dans le fichier .pgpass (attendu dans le $HOME)
   # on utilise awk mais il faudrait faire quelque chose de plus propre !!
-  cmd="cat $HOME/.pgpass | grep $db"
+  cmd="cat $HOME/.pgpass | grep :$db:"
   result=($(eval $cmd)) # nom_hote:port:database:nom_utilisateur:mot_de_passe 
   cmd="echo $result | awk -F':' '{print \$4}'"
   db_login=($(eval $cmd))
@@ -77,6 +77,15 @@ main() {
   cmd="echo $result | awk -F':' '{print \$1}'"
   db_host=($(eval $cmd))
   echo_ifverbose "login : ${db_login}; password : ${db_passwd}; host : ${db_host}"
+
+  # aide au diagnostique : vérifie la présence d'un host, login, password
+  # si l'une des valeurs est vide, elle le sera lors de la création du datastore postgis (pg_datastore)
+  # ce qui n'est peut-être pas désirée
+  if [[ -z $db_host ]] || [[ -z $db_login ]] || [[ -z $db_passwd ]]; then
+    msg="WARNING l'hôte, le login ou le mot de passe sont vides dans .pgpass pour la base PostGIS ($db); ceci peut être volontaire ou bien dûe à des erreurs, notamment dans le nom de la base"
+    echoerror $msg
+    echo $msg
+  fi
 
   url=$host
   password=$passwd
