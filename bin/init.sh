@@ -229,12 +229,12 @@ main() {
 	echo_ifverbose "statuscode $statuscode"
 	
 	if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
-		echo "OK création du datastore $datastore réussie"
+		echo "OK création du datastore $pg_datastore réussie"
 	else
-		echoerror "ERROR lors de la création du datastore $datastore... error http code : $statuscode"
+		echoerror "ERROR lors de la création du datastore $pg_datastore... error http code : $statuscode"
 	fi 
   elif [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
-	  echo "YES le datastore $datastore existe déjà"
+	  echo "YES le datastore $pg_datastore existe déjà"
   fi
 
 } #end of main
