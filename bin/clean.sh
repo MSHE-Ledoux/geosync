@@ -83,7 +83,7 @@ main() {
 
   # supprime le dossier temporaire et le recrée
   rm -R "$tmpdir"
-  mkdir "$tmpdir"
+  mkdir -p "$tmpdir"
 
   ###################
   # pour les vecteurs

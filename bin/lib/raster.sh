@@ -131,9 +131,9 @@ raster::publish() {
 
   # supprime le dossier temporaire et le recrée
   rm -R "$tmpdir1"
-  mkdir "$tmpdir1"
+  mkdir -p "$tmpdir1"
   rm -R "$tmpdir"
-  mkdir "$tmpdir"
+  mkdir -p "$tmpdir"
   #tmpdir=$(mktemp --directory /tmp/geoscript_vector_XXXXXXX) # !!! does NOT work as file://$tmpdir becomes file:/tmp instead of file:///tmp
 
   # convertit le raster en .tif
@@ -227,7 +227,7 @@ raster::publish() {
 
           local tmpdir_styles=~/tmp/geosync_sld
           rm -R "$tmpdir_styles"
-          mkdir "$tmpdir_styles"
+          mkdir -p "$tmpdir_styles"
           output_xml="styles.xml"
           touch "$tmpdir_styles/$output_xml"
 

@@ -36,7 +36,7 @@ importallfiles() {
   # si datapath n'est pas un dossier existant alors on le créée
   if  [ ! -d "$datapath" ]; then
     echo "creation de datapath : $datapath"
-    mkdir $datapath
+    mkdir -p $datapath
   fi
 
   # fichier dédié à stocker la valeur lastdatemodif, date de changement la plus récente des fichiers indexés
