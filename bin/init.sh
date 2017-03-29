@@ -158,9 +158,13 @@ main() {
     echo "WARNING aucun rôle définit dans .geosync.conf pouvant accéder au worskpace $workspace"
   fi
   
+createDatastore() {
+  local datastore_name=$1
+  local datastore_xml=$2
+
   # recherche du datastore
-  echo_ifverbose "#est-ce que le datastore $datastore existe ?"
-  cmd="curl -silent --output /dev/null -w %{http_code} -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace/datastores/$datastore"
+  echo_ifverbose "#est-ce que le datastore $datastore_name existe ?"
+  cmd="curl -silent --output /dev/null -w %{http_code} -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace/datastores/$datastore_name"
   echo_ifverbose $cmd
  
   statuscode=$(eval $cmd)
@@ -168,74 +172,54 @@ main() {
   
   if [ "$statuscode" -eq "404" ]; then # not found
     echo_ifverbose "le datastore n'existe pas"
-	
-	echo_ifverbose "tentative de création du datastore"
-    cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${password}' -XPOST -H 'Content-type: text/xml' \
-               -d '<dataStore> \
-                     <name>$datastore</name> \
-                     <description>shp dans owncloud</description> \
-                     <type>Directory of spatial files (shapefiles)</type> \
-                     <enabled>true</enabled> \
-                     <connectionParameters> \
-                       <entry key=\"charset\">UTF-8</entry> \
-                       <entry key=\"url\">file:data/$login/$datastore</entry> \
-                       <entry key=\"enable spatial index\">true</entry> \
-                       <entry key=\"cache and reuse memory maps\">true</entry> \
-                     </connectionParameters> \
-                   </dataStore>' \
-               $url/geoserver/rest/workspaces/$workspace/datastores"
-	echo_ifverbose $cmd
-
-  statuscode=$(eval $cmd)
-	echo_ifverbose "statuscode $statuscode"
-	  
-	if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
-		echo "OK création du datastore $datastore réussie"
-	else
-		echoerror "ERROR lors de création du datastore $datastore... error http code : $statuscode"
-	fi 
-  elif [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
-	  echo "YES le datastore $datastore existe déjà"
-  fi
   
-  # recherche du pg_datastore
-  echo_ifverbose "#est-ce que le pg_datastore $pg_datastore existe ?"
-  cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore"
+  echo_ifverbose "tentative de création du datastore"
+    cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${password}' -XPOST -H 'Content-type: text/xml' \
+               -d '$datastore_xml' \
+               $url/geoserver/rest/workspaces/$workspace/datastores"
   echo_ifverbose $cmd
 
   statuscode=$(eval $cmd)
   echo_ifverbose "statuscode $statuscode"
-  
-  if [ "$statuscode" -eq "404" ]; then # not found
- 	echo_ifverbose "le datastore n'existe pas"
-	
-	echo_ifverbose "tentative de création du datastore"
-    cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${password}' -XPOST -H 'Content-type: text/xml' \
-               -d '<dataStore> \
-                     <name>$pg_datastore</name> \
-                     <connectionParameters> \
-                       <host>$db_host</host> \
-                       <port>5432</port> \
-                       <database>$db</database> \
-                       <user>$db_login</user> \
-                       <passwd>$db_passwd</passwd> \
-                       <dbtype>postgis</dbtype> \
-                     </connectionParameters> \
-                   </dataStore>' \
-               $url/geoserver/rest/workspaces/$workspace/datastores"
-	echo_ifverbose $cmd
-	
-  statuscode=$(eval $cmd)
-	echo_ifverbose "statuscode $statuscode"
-	
-	if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
-		echo "OK création du datastore $pg_datastore réussie"
-	else
-		echoerror "ERROR lors de la création du datastore $pg_datastore... error http code : $statuscode"
-	fi 
+    
+  if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
+    echo "OK création du datastore $datastore_name réussie"
+  else
+    echoerror "ERROR lors de création du datastore $datastore_name... error http code : $statuscode"
+  fi 
   elif [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
-	  echo "YES le datastore $pg_datastore existe déjà"
+    echo "YES le datastore $datastore_name existe déjà"
   fi
+}
+
+
+  createDatastore $datastore \
+                   "<dataStore> 
+                     <name>$datastore</name> 
+                     <description>shp dans owncloud</description> 
+                     <type>Directory of spatial files (shapefiles)</type> 
+                     <enabled>true</enabled> 
+                     <connectionParameters> 
+                       <entry key=\"charset\">UTF-8</entry> 
+                       <entry key=\"url\">file:data/$login/$datastore</entry> 
+                       <entry key=\"enable spatial index\">true</entry> 
+                       <entry key=\"cache and reuse memory maps\">true</entry> 
+                     </connectionParameters> 
+                   </dataStore>"
+
+   
+  createDatastore $pg_datastore \
+                   "<dataStore> 
+                     <name>$pg_datastore</name> 
+                     <connectionParameters> 
+                       <host>$db_host</host> 
+                       <port>5432</port> 
+                       <database>$db</database> 
+                       <user>$db_login</user> 
+                       <passwd>$db_passwd</passwd> 
+                       <dbtype>postgis</dbtype> 
+                     </connectionParameters>
+                   </dataStore>"
 
 } #end of main
 
