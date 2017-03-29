@@ -144,7 +144,7 @@ main() {
   roles=$workspace_roles # récupéré de .geosync.conf, exemple : workspace_roles="ROLE_AUTHENTICATED,GROUP_ADMIN,ADMIN"
   
   if [[ $roles ]]; then # roles (accédant au worskpace) définits
-    auths="${login}.*.r"
+    auths="${workspace}.*.r"
 
     echo_ifverbose "tentative de création des régles d'accés"
     cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${password}' -XPOST -H 'Content-type: text/xml' \
