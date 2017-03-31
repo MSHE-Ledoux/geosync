@@ -35,6 +35,11 @@ Description des fichiers de l'utilisateur georchestra-ouvert sur la machine geor
 Chaîne d'appel :
 ----------------
 
+* **init_data.sh**
+  * **init.sh**
+    * erreurs --> init_error.log
+    * log --> init.log
+  
 * **crontab**
   * **sync_data.sh**
     * erreurs --> cron_error.log
