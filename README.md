@@ -37,8 +37,11 @@ Chaîne d'appel :
 
 * **init_data.sh**
   * **init.sh**
+<<<<<<< HEAD
     * erreurs --> init_error.log
     * log --> init.log
+=======
+>>>>>>> bc9dbd005d349c19832517bdd5cbf0f268043423
   
 * **crontab**
   * **sync_data.sh**
