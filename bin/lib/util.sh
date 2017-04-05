@@ -27,7 +27,6 @@ util::cleanName() {
     local space 
     space="__"
     result="$result$space$name_result"
-    echo "result clean name : $result" >&2
   else
     result=$(basename "$path")
     match=" "
@@ -36,17 +35,15 @@ util::cleanName() {
     match="-"
     repl="_"
     result=${result//$match/$repl}
-    echo "result clean name : $result" >&2
   fi
 
   # replaces all uppercases by lowercases
   result=${result,,}
 
-  ## Si le nom est trop long, le tronque et avertit dans les logs
+  ## Si le nom est trop long, le tronque
   length_result=${#result}
   if [ "$length_result" -ge "61" ]; then
     result=${result: -61}
-    echo "nom de table tronqué car trop supérieur à 62 caractères" >&2
   fi 
 
   echo "$result"
