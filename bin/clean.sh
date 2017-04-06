@@ -21,6 +21,15 @@ echo $(xmllint --xpath "$xp" "$input" 2>/dev/null )
 # TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
 } 
 
+echoerror() {
+  echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2  #Redirection vers la sortie d'erreurs standard  (stderr)
+} 
+
+#echo if verbose=1
+echo_ifverbose() {
+  if [ $verbose ]; then echo "$@"; fi
+} 
+
 main() {
   # chemin du script pour pouvoir appeler d'autres scripts dans le même dossier
   BASEDIR=$(dirname "$0")
@@ -44,7 +53,7 @@ main() {
   shift $((OPTIND-1))
  
   # vérification des paramètres
-  
+verbose=1  # TODO supprimer cette ligne temporaire 
   # si aucune suppression n'est demandée, alors affiche l'aide
   if  [ ! "$deleteall" ] && [ ! "$deletediff" ]; then
     usage
@@ -161,12 +170,11 @@ main() {
   ###################
   output="styles.xml"
   touch "$tmpdir/$output"
-  # liste les styles
+  
+  echo_ifverbose "récupére la liste des styles"
   cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/styles.xml"
-  if  [ $verbose ]; then
-    echo "récupére la liste des styles"
-    echo $cmd
-  fi
+  echo_ifverbose $cmd
+
   xml=$(eval $cmd)
   echo $xml > "$tmpdir/$output"
 
@@ -314,14 +322,21 @@ main() {
     done <"$tmpdir/rasters_published"
 
     if [ "$style" != "generic" ] && [ "$style" != "line" ] && [ "$style" != "polygon" ] && [ "$style" != "point" ]  && [ "$style" != "raster" ] ; then
-      echo "suppression du style : $style"
+      echo_ifverbose "suppression du style : $style"
       # supprime le style en ligne
-      cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/styles/${style}'" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
-      if  [ $verbose ]; then
-        echo $cmd
-      fi
+      cmd="curl --silent --output /dev/null -w %{http_code} -u '$login:$passwd' -XDELETE '$url/geoserver/rest/styles/${style}'" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
+      echo_ifverbose $cmd
+
       if  [ ! $simulation ]; then
-        eval $cmd
+        statuscode=$(eval $cmd)
+        echo_ifverbose "statuscode $statuscode"
+
+        if [[ "$statuscode" -ge "200" ]] && [[ "$statuscode" -lt "300" ]]; then
+          echo "OK suppression du style $style réussie"
+        else
+          echoerror "ERROR suppression du style $style échouée... error http code : $statuscode"
+          echo "ERROR suppression du style $style échouée ($statuscode)"
+        fi 
       fi
     fi  
   done <"$tmpdir/styles_tobedeleted"
