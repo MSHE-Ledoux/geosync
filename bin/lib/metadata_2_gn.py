@@ -93,9 +93,9 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     line1 = line1.toprettyxml()				# geonetwork gère bien l'import avec ou sans gmd, du moment
     if ('gmd:' in line1) or ('gmd:' in line2) :		# que le fichier soit cohérent
         print "Fichier avec gmd"  # GMD : Geographic MetaData extensible markup language
-	gmd = 'gmd:'
+        gmd = 'gmd:'
     else :
-	gmd = ''
+        gmd = ''
  
     typename_csw = gmd + 'MD_Metadata'
 
@@ -168,13 +168,13 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
  
     for element in doc.getElementsByTagName(balise):
         print element.appendChild(element_online)
-	print element_online.appendChild(element_ressource)
-	print element_ressource.appendChild(element_linkage)
-	print element_linkage.appendChild(element_url)
-	print element_ressource.appendChild(element_protocol)
-	print element_ressource.appendChild(element_name)
-	print element_ressource.appendChild(element_descr)
-	
+        print element_online.appendChild(element_ressource)
+        print element_ressource.appendChild(element_linkage)
+        print element_linkage.appendChild(element_url)
+        print element_ressource.appendChild(element_protocol)
+        print element_ressource.appendChild(element_name)
+        print element_ressource.appendChild(element_descr)
+
     input_csw = tmpdir + "/csw_" +  output
     output_fic = open(input_csw,'w') 
 
