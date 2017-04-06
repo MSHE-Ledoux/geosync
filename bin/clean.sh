@@ -53,7 +53,7 @@ main() {
   shift $((OPTIND-1))
  
   # vérification des paramètres
-verbose=1  # TODO supprimer cette ligne temporaire 
+
   # si aucune suppression n'est demandée, alors affiche l'aide
   if  [ ! "$deleteall" ] && [ ! "$deletediff" ]; then
     usage
