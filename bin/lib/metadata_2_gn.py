@@ -215,11 +215,28 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     #csw.transaction(ttype='insert', typename=typename_csw, record=acc_8)
     #csw.transaction(ttype='insert', typename='gmd:MD_Metadata', record=open('haies_sans_lien_geoserver.xml').read())
 
-        # Update metadata privilege
-#    sql_req = """set schema 'geonetwork'; 
-#               INSERT INTO operationallowed SELECT 1, metadata.id, 1 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; 
-#               INSERT INTO operationallowed SELECT 1, metadata.id, 5 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; 
-#               INSERT INTO operationallowed SELECT 1, metadata.id, 0 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' AND NOT EXISTS (SELECT * FROM operationallowed JOIN metadata ON operationallowed.metadataid = metadata.id WHERE data ILIKE '%" + name_layer_gs + "%' AND operationid = 0) ; """ # """ permette l'écriture sur plusieurs lignes"
+    # Modification des privilèges d'une fiche de metadata pour pouvoir voir sa carte interactive / voir son lien de téléchargement des données :
+    # doc : http://geonetwork-opensource.org/manuals/trunk/eng/users/user-guide/publishing/managing-privileges.html
+
+    # via l'interface web : https://georchestra-mshe.univ-fcomte.fr/geonetwork/srv/fre/catalog.edit#/board
+
+    # via la base de données (schema geonetwork) :
+    # INSERT INTO geonetwork.operationallowed ( metadataid, groupid, operationid) VALUES ( '[METADATAID]', '1', '[OPERATIONID]');
+    # (groupid=1 pour "Tous")
+    # * Télécharger (operationid=1)
+    # * Carte interactive (operationid=5)
+
+    # Update metadata privilege
+    #    sql_req = """set schema 'geonetwork'; 
+    #               INSERT INTO operationallowed SELECT 1, metadata.id, 1 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; 
+    #               INSERT INTO operationallowed SELECT 1, metadata.id, 5 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; 
+    #               INSERT INTO operationallowed SELECT 1, metadata.id, 0 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' AND NOT EXISTS (SELECT * FROM operationallowed JOIN metadata ON operationallowed.metadataid = metadata.id WHERE data ILIKE '%" + name_layer_gs + "%' AND operationid = 0) ; """ # """ permette l'écriture sur plusieurs lignes"
+
+    # -- attention --
+    # la recherche via "data ILIKE '%fouilles_chailluz__pt_limsit_sra%'" peut occasionner des doublons (par exemple avec un nom plus large qui inclut la chaîne cherchée, ou si la fiche de metadata a été duppliquée d'une autre sans être bien modifiée)
+    # dans ce cas, produit l'erreur suivante :
+    # psql:/tmp/geosync_metadata/update_privilege.sql:1: ERREUR:  la valeur d'une clé dupliquée rompt la contrainte unique « operationallowed_pkey »
+    # DÉTAIL : La clé « (groupid, metadataid, operationid)=(1, 485713, 1) » existe déjà.
 
     sql_req = "set schema 'geonetwork';  INSERT INTO operationallowed SELECT 1, metadata.id, 1 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; INSERT INTO operationallowed SELECT 1, metadata.id, 5 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; INSERT INTO operationallowed SELECT 1, metadata.id, 0 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' AND NOT EXISTS (SELECT * FROM operationallowed JOIN metadata ON operationallowed.metadataid = metadata.id WHERE data ILIKE '%" + name_layer_gs + "%' AND operationid = 0) ; "
 
