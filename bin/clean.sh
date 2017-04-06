@@ -314,7 +314,7 @@ main() {
     done <"$tmpdir/rasters_published"
 
     if [ "$style" != "generic" ] && [ "$style" != "line" ] && [ "$style" != "polygon" ] && [ "$style" != "point" ]  && [ "$style" != "raster" ] ; then
-      echo "suppression de : $style"
+      echo "suppression du style : $style"
       # supprime le style en ligne
       cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/styles/${style}'" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
       if  [ $verbose ]; then
@@ -330,7 +330,7 @@ main() {
   # parcours la liste des vecteurs à supprimer
   # et supprime chacun d'eux
   while read vector; do
-    echo "suppression de : $vector"
+    echo "suppression du vecteur : $vector"
     # supprime une couche
     
     cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/$datastore/featuretypes/$vector?recurse=true&purge=all'"
@@ -348,7 +348,7 @@ main() {
   # parcours la liste des vecteurs de postgis à supprimer
   # et supprime chacun d'eux
   while read vector; do
-    echo "suppression de : $vector"
+    echo "suppression du vecteur (postgis) : $vector"
     # supprime une couche
 
     cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes/$vector?recurse=true&purge=all'"
@@ -364,6 +364,7 @@ main() {
       eval $cmd_pgsql
     fi
 
+    echo "suppression des metadata du vecteur (postgis) : $vector"
     # suppression de la métadonnée associée
     cmd="python $BASEDIR/lib/deleteMetadata.py -l '$login' -p '$passwd' -u '$url' -w '$workspace' -i '$vector' $verbosestr"
     if [ $verbose ]; then
@@ -379,7 +380,7 @@ main() {
   # parcours la liste des rasteurs à supprimer dans le système de fichiers et postgis
   # et supprime chacun d'eux
   while read raster; do
-    echo "suppression de : $raster"
+    echo "suppression du raster : $raster"
     # supprime une couche
     cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/workspaces/$workspace/coveragestores/$raster?recurse=true&purge=all'"
     # http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-format
@@ -393,6 +394,7 @@ main() {
       eval $cmd_pgsql
     fi
  
+  echo "suppression des metadata du raster : $raster"
   # suppression de la métadonnée associée
     cmd="python $BASEDIR/lib/deleteMetadata.py -l '$login' -p '$passwd' -u '$url' -w '$workspace' -i '$raster' $verbosestr"
     if [ $verbose ]; then
