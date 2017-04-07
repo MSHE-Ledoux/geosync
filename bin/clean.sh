@@ -97,51 +97,50 @@ main() {
   ###################
   # pour les vecteurs
   ###################
-  output="vectors_featuretypes.xml"
-  touch "$tmpdir/$output"
-  # liste les vecteurs du datastore
-  
-  cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace/datastores/$datastore/featuretypes.xml"
-  if  [ $verbose ]; then
-    echo "récupére la liste des vecteurs"
-    echo $cmd
-  fi
-  xml=$(eval $cmd)
-  echo $xml > "$tmpdir/$output"
-  
-  input="$tmpdir/$output"
-  itemsCount=$(xpath 'count(/featureTypes/featureType)')
+  # ------------------------ Pour les vecteurs issus du datastore de type Directory $datastore
+  xml_path="${tmpdir}/vectors_featuretypes_directory.xml" 
+  list_path="${tmpdir}/vectors_published_directory"
 
-  touch "$tmpdir/vectors_published"
-  for (( i=1; i < $itemsCount + 1; i++ )); do 
-    name=$(xpath '/featureTypes/featureType['$i']/name/text()') # '
-    echo $name >> "$tmpdir/vectors_published"
+  echo_ifverbose "INFO liste les vecteurs du datastore de type Directory : $datastore"
+  cmd="curl --silent -u '${login}:${password}' -XGET ${url}/geoserver/rest/workspaces/${workspace}/datastores/$datastore/featuretypes.xml"
+  echo_ifverbose "INFO ${cmd}"
+  
+  xml=$(eval ${cmd})
+  echo "${xml}" > "${xml_path}"
+  # extrait du contenu du xml :
+  #<featureTypes> <featureType> <name>test_ids__chailluz_charbonniere</name> <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="https://georchestra-mshe.univ-fcomte.fr/geoserver/rest/workspaces/geosync-ouvert/featuretypes/test_ids__chailluz_charbonniere.xml" type="application/xml"/> </featureType> <featureType>...</featureType> ... </featureTypes>
+  input="${xml_path}"
+  itemsCount=$(xpath 'count(/featureTypes/featureType)')
+  echo_ifverbose "INFO ${itemsCount} vecteur(s) trouvé(s)"
+
+  > "${list_path}" # (re)créer le fichier vide
+  for (( i=1; i < ${itemsCount} + 1; i++ )); do 
+    name=$(xpath '/featureTypes/featureType['${i}']/name/text()') 
+    echo "${name}" >> "${list_path}"
   done
 
+  # ------------------------ Pour les vecteurs issus du datastore de type PostGIS $pg_datastore
 
-  # ------------------------ Pour vecteurs issus de postgis
+  xml_path="${tmpdir}/vectors_featuretypes_postgis.xml" 
+  list_path="${tmpdir}/vectors_published_postgis"
 
-  output="vectors_featuretypes_pgsql.xml"
-  touch "$tmpdir/$output"
-  # liste les vecteurs du datastore
-
-  cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes.xml"
-  if  [ $verbose ]; then
-    echo "récupére la liste des vecteurs"
-    echo $cmd
-  fi
-  xml=$(eval $cmd)
-  echo $xml > "$tmpdir/$output"
-
-  input="$tmpdir/$output"
-  itemsCount=$(xpath 'count(/featureTypes/featureType)')
-
-  touch "$tmpdir/vectors_published_pgsql"
-  for (( i=1; i < $itemsCount + 1; i++ )); do
-    name=$(xpath '/featureTypes/featureType['${i}']/name/text()') # '
-    echo $name >> "$tmpdir/vectors_published_pgsql"
-  done
+  echo_ifverbose "INFO liste les vecteurs du datastore de type PostGIS : $pg_datastore"
+  cmd="curl --silent -u '${login}:${password}' -XGET ${url}/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes.xml"
+  echo_ifverbose "INFO ${cmd}"
   
+  xml=$(eval ${cmd})
+  echo "${xml}" > "${xml_path}"
+
+  input="${xml_path}"
+  itemsCount=$(xpath 'count(/featureTypes/featureType)')
+  echo_ifverbose "INFO ${itemsCount} vecteur(s) trouvé(s)"
+
+  > "${list_path}" # (re)créer le fichier vide
+  for (( i=1; i < ${itemsCount} + 1; i++ )); do 
+    name=$(xpath '/featureTypes/featureType['${i}']/name/text()') 
+    echo "${name}" >> "${list_path}"
+  done
+
   ###################
   # pour les rasteurs
   ###################
@@ -211,31 +210,21 @@ main() {
       for filepath in **/*.shp; do
         outputlayername=$(util::cleanName "$filepath" -p)
         outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
-        outputlayernamesansext=$outputlayernamesansext"1"
         #echo "{$outputlayernamesansext}"
         echo "$outputlayernamesansext" >> "$tmpdir/vectors_shared"
       done
       
       # prend uniquement les noms présents dans la première liste (arraydiff <- liste1 - liste2)
-      comm -23 <(sort "$tmpdir/vectors_published") <(sort "$tmpdir/vectors_shared") > "$tmpdir/vectors_tobedeleted"
+      comm -23 <(sort "$tmpdir/vectors_published_directory") <(sort "$tmpdir/vectors_shared") > "$tmpdir/vectors_tobedeleted_directory"
       # -2 suppress lines unique to FILE2
       # -3 suppress lines that appear in both files
-      
-      
-      # ------------------ pour les vecteurs postgis
 
-      for filepath in **/*.shp; do
-        outputlayername=$(util::cleanName "$filepath" -p)
-        outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
-        #echo "{$outputlayernamesansext}"
-        echo "$outputlayernamesansext" >> "$tmpdir/vectors_shared_pgsql"
-      done
+      # ------------------------ Pour les vecteurs issus du datastore de type PostGIS $pg_datastore
 
       # prend uniquement les noms présents dans la première liste (arraydiff <- liste1 - liste2)
-      comm -23 <(sort "$tmpdir/vectors_published_pgsql") <(sort "$tmpdir/vectors_shared_pgsql") > "$tmpdir/vectors_tobedeleted_pgsql"
+      comm -23 <(sort "$tmpdir/vectors_published_postgis") <(sort "$tmpdir/vectors_shared") > "$tmpdir/vectors_tobedeleted_postgis"
       # -2 suppress lines unique to FILE2
       # -3 suppress lines that appear in both files
-
 
       ###################
       # pour les rasters
@@ -270,8 +259,8 @@ main() {
   # si on souhaite supprimer toutes les couches
   # alors stocke la liste des couches publiées dans la liste des couches à supprimer
   elif [ "$deleteall" ]; then
-      cat "$tmpdir/vectors_published" > "$tmpdir/vectors_tobedeleted"
-      cat "$tmpdir/vectors_published_pgsql" > "$tmpdir/vectors_tobedeleted_pgsql"
+      cat "$tmpdir/vectors_published_directory" > "$tmpdir/vectors_tobedeleted_directory"
+      cat "$tmpdir/vectors_published_postgis" > "$tmpdir/vectors_tobedeleted_postgis"
       cat "$tmpdir/rasters_published" > "$tmpdir/rasters_tobedeleted"
       cat "$tmpdir/styles_published" > "$tmpdir/styles_tobedeleted" 
   fi
@@ -279,25 +268,20 @@ main() {
   # parcourt la liste des styles à supprimer dans le système de fichier
   # et supprime chacun d'eux
   while read style; do
-    # Changement de style des couches utilisant le style qui va être supprimé
+    # Suppression des dépendances du style à supprimer
+    # en mettant à jour les couches qui utilisaient le style à supprimer
+    # c'est à dire en remplaçant leur style par un style par défaut
+    # pour toutes les couches du workspace (quelque soit le datastore : Directory, PostGIS...)
     # nécessaire car impossible de supprimer un style qui est utilisé par une couche
     # nécessaire d'effectuer l'opération avant la suppression des couches sinon erreur si couche supprimée
+
+    # fusion des listes de vecteurs des différents datastore (Directory, PostGIS) en une, car le traitement est le même
+    cat "$tmpdir/vectors_published_directory" > "$tmpdir/vectors_published_any_datastore"
+    cat "$tmpdir/vectors_published_postgis" >> "$tmpdir/vectors_published_any_datastore"
+
     while read layer; do
       if [[ "${layer}" == "${style}" ]]; then
-        echo "Les couches shp symbolisées par ${style} prennent le style par défaut"
-        cmd="curl --silent \
-                 -u ${login}:${password} \
-                 -XPUT -H \"Content-type: text/xml\" \
-                 -d \"<layer><defaultStyle><name>generic</name></defaultStyle></layer>\" \
-                 $url/geoserver/rest/layers/$workspace:${layer}"
-        echo $cmd
-        eval $cmd
-      fi
-    done <"$tmpdir/vectors_published"
-    # Idem pour les styles utilisés par les couches pgsql (du datastore PostGIS)
-    while read layer; do
-      if [[ "${layer}" == "${style}" ]]; then
-        echo_ifverbose "INFO suppression de la dépendance au style '${style}' et remplacement par le style 'generic' pour la couche du datastore PostGIS : ${layer}"
+        echo_ifverbose "INFO suppression de la dépendance au style '${style}' et remplacement par le style 'generic' pour la couche : ${layer}"
         cmd="curl --silent --output /dev/null -w %{http_code} \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
@@ -317,7 +301,7 @@ main() {
           fi 
         fi
       fi
-    done <"$tmpdir/vectors_published_pgsql"
+    done <"$tmpdir/vectors_published_any_datastore"
     # Idem pour les styles utilisés par les rasters
     while read layer; do
       if [[ "$layer" == "${style}" ]]; then
@@ -369,7 +353,7 @@ main() {
       eval $cmd
     fi
 
-  done <"$tmpdir/vectors_tobedeleted"
+  done <"$tmpdir/vectors_tobedeleted_directory"
   
   # parcours la liste des vecteurs de postgis à supprimer
   # et supprime chacun d'eux
@@ -400,7 +384,7 @@ main() {
         eval $cmd
     fi  
 
-  done <"$tmpdir/vectors_tobedeleted_pgsql"
+  done <"$tmpdir/vectors_tobedeleted_postgis"
 
 
   # parcours la liste des rasteurs à supprimer dans le système de fichiers et postgis
