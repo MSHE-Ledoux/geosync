@@ -294,17 +294,28 @@ main() {
         eval $cmd
       fi
     done <"$tmpdir/vectors_published"
-    # Idem pour les styles utilisés par les couches pgsql
+    # Idem pour les styles utilisés par les couches pgsql (du datastore PostGIS)
     while read layer; do
       if [[ "${layer}" == "${style}" ]]; then
-        echo "Les couches pgsql symbolisées par ${style} prennent le style par défaut"
-        cmd="curl --silent \
+        echo_ifverbose "INFO suppression de la dépendance au style '${style}' et remplacement par le style 'generic' pour la couche du datastore PostGIS : ${layer}"
+        cmd="curl --silent --output /dev/null -w %{http_code} \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
                  -d \"<layer><defaultStyle><name>generic</name></defaultStyle></layer>\" \
-                 $url/geoserver/rest/layers/$workspace:${layer}"
-        echo $cmd
-        eval $cmd
+                 ${url}/geoserver/rest/layers/${workspace}:${layer}.xml"
+        echo_ifverbose "INFO ${cmd}"
+
+        if  [ ! $simulation ]; then
+          statuscode=$(eval $cmd)
+          echo_ifverbose "INFO statuscode=${statuscode}"
+
+          if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+            echo "OK suppression de la dépendance au style '${style}' pour '${layer}' réussie"
+          else
+            echoerror "ERROR suppression de la dépendance au style '${style}' pour '${layer}' échouée... error http code : ${statuscode}"
+            echo "ERROR suppression de la dépendance au style '${style}' pour '${layer}' échouée (${statuscode})"
+          fi 
+        fi
       fi
     done <"$tmpdir/vectors_published_pgsql"
     # Idem pour les styles utilisés par les rasters
