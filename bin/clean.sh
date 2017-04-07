@@ -283,7 +283,7 @@ main() {
     # nécessaire car impossible de supprimer un style qui est utilisé par une couche
     # nécessaire d'effectuer l'opération avant la suppression des couches sinon erreur si couche supprimée
     while read layer; do
-      if [[ "$layer" == "${style}1" ]]; then
+      if [[ "${layer}" == "${style}" ]]; then
         echo "Les couches shp symbolisées par ${style} prennent le style par défaut"
         cmd="curl --silent \
                  -u ${login}:${password} \
@@ -296,7 +296,7 @@ main() {
     done <"$tmpdir/vectors_published"
     # Idem pour les styles utilisés par les couches pgsql
     while read layer; do
-      if [[ "${layer}1" == "$style" ]]; then
+      if [[ "${layer}" == "${style}" ]]; then
         echo "Les couches pgsql symbolisées par ${style} prennent le style par défaut"
         cmd="curl --silent \
                  -u ${login}:${password} \

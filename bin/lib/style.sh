@@ -246,7 +246,7 @@ if [ ! "$pg_datastore" ]; then
 
   for (( i=1; i < $itemsCount + 1; i++ )); do
     name=$(xmllint --xpath "/featureTypes/featureType[$i]/name/text()" - <<<"$xml") 
-    if [[ "${output}1" == "${name}" ]] ; then
+    if [[ "${output}" == "${name}" ]] ; then 
       cmd="curl --silent \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
