@@ -255,7 +255,7 @@ vector::publish() {
 
           touch "$tmpdir_styles/styles_existants"
           for (( i=1; i < $itemsCount + 1; i++ )); do
-            name=$(xpath '//styles/style['$i']/name/text()')
+            name=$(xpath '//styles/style['${i}']/name/text()')
             echo $name
             echo $name >> "$tmpdir_styles/styles_existants"
           done
@@ -269,14 +269,6 @@ vector::publish() {
 	                 -XPUT -H \"Content-type: text/xml\" \
 	                 -d \"<layer><defaultStyle><name>${name}</name></defaultStyle></layer>\" \
 	                 $url/geoserver/rest/layers/${workspace}:${output_pgsql}"
-	      echo $cmd
-	      eval $cmd
-	      # Temporairement, pour les couches de shpowncloud
-	      cmd="curl --silent \
-	                 -u ${login}:${password} \
-	                 -XPUT -H \"Content-type: text/xml\" \
-	                 -d \"<layer><defaultStyle><name>${name}</name></defaultStyle></layer>\" \
-	                 $url/geoserver/rest/layers/${workspace}:${output_pgsql}1"
 	      echo $cmd
 	      eval $cmd
 	    fi

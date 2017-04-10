@@ -6,7 +6,7 @@ usage() {
   echo ""
   echo "Options"
   echo " -a     (all) supprime toutes les couches du geoserver"
-  echo " -d     (diff) supprime les couches qui ne sont plus partagées (différence entre les couches du geoserver par celles de owncloud"
+  echo " -d     (diff) supprime les couches qui ne sont plus partagées (différence entre les couches du geoserver par celles du dossier partagé)"
   echo " -s     (simulation) ne supprime rien"  
   echo " -v     verbeux"  
   echo " (-h)   affiche cette aide"
@@ -42,7 +42,7 @@ main() {
       a) deleteall=1 ;;
       d) deletediff=1 ;;
       s) simulation=1 ;;
-      v) verbose=1 ;;
+      v) verbose=1; verbosestr="-v" ;;
       h) help=1 ;;
   # si argument faux renvoie la sortie    
       \?) error "Option invalide : -$OPTARG" ;;
@@ -61,9 +61,17 @@ main() {
   fi
   
   if  [ $simulation ]; then
-      echo "simulation !"
+      echo "INFO simulation !"
   fi
   
+  if  [ $deleteall ]; then
+    echo_ifverbose "INFO suppression toutes les couches du geoserver..."
+  fi
+
+  if  [ $deletediff ]; then
+    echo_ifverbose "INFO suppression des couches qui ne sont plus partagées..."
+  fi
+
   # pour générer un nom lisible et simplifier pour fichier
   # $(util::cleanName "./tic/tac toe.shp") -> tac_toe.shp #takes a filepath and returns a pretty name
   source "$BASEDIR/lib/util.sh"
@@ -95,14 +103,14 @@ main() {
   mkdir -p "$tmpdir"
 
   ###################
-  # pour les vecteurs
+  # vecteurs : liste ceux publiés sur le geoserver
   ###################
   # ------------------------ Pour les vecteurs issus du datastore de type Directory $datastore
   xml_path="${tmpdir}/vectors_featuretypes_directory.xml" 
   list_path="${tmpdir}/vectors_published_directory"
 
-  echo_ifverbose "INFO liste les vecteurs du datastore de type Directory : $datastore"
-  cmd="curl --silent -u '${login}:${password}' -XGET ${url}/geoserver/rest/workspaces/${workspace}/datastores/$datastore/featuretypes.xml"
+  echo_ifverbose "INFO liste les vecteurs du datastore de type Directory : ${datastore}"
+  cmd="curl --silent -u '${login}:${password}' -XGET ${url}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}/featuretypes.xml"
   echo_ifverbose "INFO ${cmd}"
   
   xml=$(eval ${cmd})
@@ -111,7 +119,7 @@ main() {
   #<featureTypes> <featureType> <name>test_ids__chailluz_charbonniere</name> <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="https://georchestra-mshe.univ-fcomte.fr/geoserver/rest/workspaces/geosync-ouvert/featuretypes/test_ids__chailluz_charbonniere.xml" type="application/xml"/> </featureType> <featureType>...</featureType> ... </featureTypes>
   input="${xml_path}"
   itemsCount=$(xpath 'count(/featureTypes/featureType)')
-  echo_ifverbose "INFO ${itemsCount} vecteur(s) trouvé(s)"
+  echo_ifverbose "INFO ${itemsCount} vecteur(s) publié(s)"
 
   > "${list_path}" # (re)créer le fichier vide
   for (( i=1; i < ${itemsCount} + 1; i++ )); do 
@@ -124,8 +132,8 @@ main() {
   xml_path="${tmpdir}/vectors_featuretypes_postgis.xml" 
   list_path="${tmpdir}/vectors_published_postgis"
 
-  echo_ifverbose "INFO liste les vecteurs du datastore de type PostGIS : $pg_datastore"
-  cmd="curl --silent -u '${login}:${password}' -XGET ${url}/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes.xml"
+  echo_ifverbose "INFO liste les vecteurs du datastore de type PostGIS : ${pg_datastore}"
+  cmd="curl --silent -u '${login}:${password}' -XGET ${url}/geoserver/rest/workspaces/${workspace}/datastores/$pg_datastore/featuretypes.xml"
   echo_ifverbose "INFO ${cmd}"
   
   xml=$(eval ${cmd})
@@ -133,7 +141,7 @@ main() {
 
   input="${xml_path}"
   itemsCount=$(xpath 'count(/featureTypes/featureType)')
-  echo_ifverbose "INFO ${itemsCount} vecteur(s) trouvé(s)"
+  echo_ifverbose "INFO ${itemsCount} vecteur(s) publié(s)"
 
   > "${list_path}" # (re)créer le fichier vide
   for (( i=1; i < ${itemsCount} + 1; i++ )); do 
@@ -142,61 +150,66 @@ main() {
   done
 
   ###################
-  # pour les rasteurs
+  # rasteurs : liste ceux publiés sur le geoserver
   ###################
-  output="rasters_coveragestores.xml"
-  touch "$tmpdir/$output"
-  # liste les coveragestores
-  cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/workspaces/$workspace/coveragestores.xml" 
-  if  [ $verbose ]; then
-    echo "récupére la liste des rasteurs"
-    echo $cmd
-  fi
-  xml=$(eval $cmd)
-  echo $xml > "$tmpdir/$output"
+  xml_path="${tmpdir}/rasters_coveragestores.xml" 
+  list_path="${tmpdir}/rasters_published"
+
+  echo_ifverbose "INFO liste les rasteurs (coveragestores)"
+  cmd="curl --silent -u '${login}:${password}' -XGET ${url}/geoserver/rest/workspaces/${workspace}/coveragestores.xml" 
+  echo_ifverbose "INFO ${cmd}"
+
+  xml=$(eval ${cmd})
+  echo "${xml}" > "${xml_path}"
+
+  # extrait du contenu du xml :
+  #<coverageStores><coverageStore><name>mos</name><atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="https://georchestra-mshe.univ-fcomte.fr/geoserver/rest/workspaces/geosync-ouvert/coveragestores/mos.xml" type="application/xml"/></coverageStore><coverageStore>...</coverageStore> ... </coverageStores>
   
-  input="$tmpdir/$output"
+  input="${xml_path}"
   itemsCount=$(xpath 'count(/coverageStores/coverageStore)')
+  echo_ifverbose "INFO ${itemsCount} rasteur(s) publié(s)"
 
-  touch "$tmpdir/rasters_published"
-  for (( i=1; i < $itemsCount + 1; i++ )); do 
+  > "${list_path}" # (re)créer le fichier vide
+  for (( i=1; i < ${itemsCount} + 1; i++ )); do 
     name=$(xpath '/coverageStores/coverageStore['${i}']/name/text()') 
-    echo $name >> "$tmpdir/rasters_published"
+    echo "${name}" >> "${list_path}"
   done
 
   ###################
-  # pour les styles
+  # styles : liste ceux publiés sur le geoserver
   ###################
-  output="styles.xml"
-  touch "$tmpdir/$output"
+  xml_path="${tmpdir}/styles.xml" 
+  list_path="${tmpdir}/styles_published"
   
-  echo_ifverbose "récupére la liste des styles"
-  cmd="curl --silent -u '${login}:${password}' -XGET $url/geoserver/rest/styles.xml"
-  echo_ifverbose $cmd
+  echo_ifverbose "INFO liste les styles"
+  cmd="curl --silent -u '${login}:${password}' -XGET ${url}/geoserver/rest/styles.xml"  # TODO ../rest/workspaces/${workspace}/styles.xml
+  echo_ifverbose "INFO ${cmd}"
 
-  xml=$(eval $cmd)
-  echo $xml > "$tmpdir/$output"
+  xml=$(eval ${cmd})
+  echo "${xml}" > "${xml_path}"
 
-  input="$tmpdir/$output"
+  # extrait du contenu du xml :
+  #<styles> <style> <name>generic</name> <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="https://georchestra-mshe.univ-fcomte.fr/geoserver/rest/styles/generic.xml" type="application/xml"/> </style> <style>...</style> ... </styles>
+
+  input="${xml_path}"
   itemsCount=$(xpath 'count(/styles/style)')
+  echo_ifverbose "INFO ${itemsCount} style(s) publié(s)"
 
-  touch "$tmpdir/styles_published"
-  for (( i=1; i < $itemsCount + 1; i++ )); do
-    name=$(xpath '//styles/style['${i}']/name/text()')
-    echo $name >> "$tmpdir/styles_published"
+  > "${list_path}" # (re)créer le fichier vide
+  for (( i=1; i < ${itemsCount} + 1; i++ )); do 
+    name=$(xpath '/styles/style['${i}']/name/text()')
+    echo "${name}" >> "${list_path}"
   done
+
+  # TODO il faudrait aussi supprimer les fiches de metadata (qui peuvent être orphelines, sans couche associée)
 
   ######################
     
   # si on souhaite supprimer la différence entre les couches publiées et celles partagées
   # alors calcule la différence des listes et la stocke dans la liste des couches à supprimer
   if [ "$deletediff" ]; then
-      #echo "synchronise les fichiers du montage webdav owncloud dans le dossier owncloudsync"
-      #cmd="rsync -avr --delete --exclude '_geosync' --exclude 'lost+found' '/home/georchestra-ouvert/owncloud/' '/home/georchestra-ouvert/owncloudsync/'"
-      #echo $cmd 
-      #eval $cmd
       
-      cd "$path"
+    cd "$path"
       
 	  shopt -s globstar nocaseglob
 	  # set globstar, so that the pattern ** used in a pathname expansion context will 
@@ -207,50 +220,79 @@ main() {
       ###################
       # pour les vecteurs
       ###################
+      list_path="${tmpdir}/vectors_shared"
+
+      echo_ifverbose "INFO liste les vecteurs partagés"
+      echo_ifverbose "INFO for filepath in **/*.shp; do...done"
       for filepath in **/*.shp; do
         outputlayername=$(util::cleanName "$filepath" -p)
         outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
         #echo "{$outputlayernamesansext}"
-        echo "$outputlayernamesansext" >> "$tmpdir/vectors_shared"
+        echo "$outputlayernamesansext" >> "${list_path}"
       done
+
+      cmd="wc -l < '${list_path}'"
+      echo_ifverbose "INFO ${cmd}"
+      itemsCount=$(eval ${cmd})
+      echo_ifverbose "INFO ${itemsCount} vecteur(s) partagé(s)"
       
       # prend uniquement les noms présents dans la première liste (arraydiff <- liste1 - liste2)
       comm -23 <(sort "$tmpdir/vectors_published_directory") <(sort "$tmpdir/vectors_shared") > "$tmpdir/vectors_tobedeleted_directory"
       # -2 suppress lines unique to FILE2
       # -3 suppress lines that appear in both files
 
+      cmd="wc -l < '$tmpdir/vectors_tobedeleted_directory'"
+      echo_ifverbose "INFO ${cmd}"
+      itemsCount=$(eval ${cmd})
+      echo_ifverbose "INFO ${itemsCount} vecteur(s) (Directory) à supprimer"  
+
       # ------------------------ Pour les vecteurs issus du datastore de type PostGIS $pg_datastore
 
       # prend uniquement les noms présents dans la première liste (arraydiff <- liste1 - liste2)
       comm -23 <(sort "$tmpdir/vectors_published_postgis") <(sort "$tmpdir/vectors_shared") > "$tmpdir/vectors_tobedeleted_postgis"
-      # -2 suppress lines unique to FILE2
-      # -3 suppress lines that appear in both files
 
       ###################
       # pour les rasters
       ###################
+      list_path="${tmpdir}/rasters_shared"
+
+      echo_ifverbose "INFO liste les rasteurs partagés"
+      echo_ifverbose "INFO for filepath in **/*.{tif,png,jpg,ecw} **/w001001.adf; do...done"
       for filepath in **/*.{tif,png,jpg,ecw} **/w001001.adf; do
         outputlayername=$(util::cleanName "$filepath" -p)
         outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
         #echo "{$outputlayernamesansext}"
-        echo "$outputlayernamesansext" >> "$tmpdir/rasters_shared"
+        echo "$outputlayernamesansext" >> "${list_path}"
       done
-      
+
+      cmd="wc -l < '${list_path}'"
+      echo_ifverbose "INFO ${cmd}"
+      itemsCount=$(eval ${cmd})
+      echo_ifverbose "INFO ${itemsCount} rasteur(s) partagé(s)"
+
       # prend uniquement les noms présents dans la première liste (arraydiff <- liste1 - liste2)
       comm -23 <(sort "$tmpdir/rasters_published") <(sort "$tmpdir/rasters_shared") > "$tmpdir/rasters_tobedeleted"
       
       ####################
       # pour les styles
       ###################
-       
+      list_path="${tmpdir}/styles_shared"
+
+      echo_ifverbose "INFO liste les styles partagés"
+      echo_ifverbose "INFO for filepath in **/*.sld ; do...done"
       for filepath in **/*.sld ; do
         outputlayername=$(util::cleanName "$filepath" -p)
         outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
-        echo "$outputlayernamesansext" >> "$tmpdir/styles_shared"
+        echo "$outputlayernamesansext" >> "${list_path}"
       done
 
+      cmd="wc -l < '${list_path}'"
+      echo_ifverbose "INFO ${cmd}"
+      itemsCount=$(eval ${cmd})
+      echo_ifverbose "INFO ${itemsCount} style(s) partagé(s)"
+
       # prend uniquement les noms présents dans la première liste (arraydiff <- liste1 - liste2)
-      comm -23 <(sort "$tmpdir/styles_published") <(sort "$tmpdir/styles_shared") > "$tmpdir/styles_tobedeleted"
+      comm -23 <(sort "$tmpdir/styles_published") <(sort "$tmpdir/styles_shared") > "$tmpdir/styles_tobedeleted_potentially"
 
 	shopt -u globstar nocaseglob
 	  
@@ -262,8 +304,37 @@ main() {
       cat "$tmpdir/vectors_published_directory" > "$tmpdir/vectors_tobedeleted_directory"
       cat "$tmpdir/vectors_published_postgis" > "$tmpdir/vectors_tobedeleted_postgis"
       cat "$tmpdir/rasters_published" > "$tmpdir/rasters_tobedeleted"
-      cat "$tmpdir/styles_published" > "$tmpdir/styles_tobedeleted" 
+      cat "$tmpdir/styles_published" > "$tmpdir/styles_tobedeleted_potentially" 
   fi
+
+  # Attention : retirer ici des listes les éléments que l'on souhaite tout de même conserver
+  # par exemple les styles par défaut que la liste des styles publiés inclut
+  list_to_keep_path="${tmpdir}/styles_to_keep"
+  > "${list_to_keep_path}" # (re)créer le fichier vide
+  echo "generic" >> "${list_to_keep_path}"
+  echo "line" >> "${list_to_keep_path}"
+  echo "polygon" >> "${list_to_keep_path}"
+  echo "point" >> "${list_to_keep_path}"
+  echo "raster" >> "${list_to_keep_path}"
+  # prend uniquement les noms présents dans la première liste (arraydiff <- liste1 - liste2)
+  comm -23 <(sort "$tmpdir/styles_tobedeleted_potentially") <(sort "${list_to_keep_path}") > "$tmpdir/styles_tobedeleted"
+
+
+  cmd="wc -l < '$tmpdir/vectors_tobedeleted_postgis'"
+  echo_ifverbose "INFO ${cmd}"
+  itemsCount=$(eval ${cmd})
+  echo_ifverbose "INFO ${itemsCount} vecteur(s) (PostGIS) à supprimer"  
+
+  cmd="wc -l < '$tmpdir/rasters_tobedeleted'"
+  echo_ifverbose "INFO ${cmd}"
+  itemsCount=$(eval ${cmd})
+  echo_ifverbose "INFO ${itemsCount} rasteur(s) à supprimer"  
+
+  cmd="wc -l < '$tmpdir/styles_tobedeleted'"
+  echo_ifverbose "INFO ${cmd}"
+  itemsCount=$(eval ${cmd})
+  echo_ifverbose "INFO ${itemsCount} style(s) à supprimer"     
+
   
   # parcourt la liste des styles à supprimer dans le système de fichier
   # et supprime chacun d'eux
@@ -304,82 +375,109 @@ main() {
     done <"$tmpdir/vectors_published_any_datastore"
     # Idem pour les styles utilisés par les rasters
     while read layer; do
-      if [[ "$layer" == "${style}" ]]; then
-      echo "Les couches rasters symbolisées par ${style} prennent le style par défaut"
+      if [[ "${layer}" == "${style}" ]]; then
+        echo_ifverbose "INFO suppression de la dépendance au style '${style}' et remplacement par le style 'raster' pour la couche : ${layer}"
         cmd="curl --silent \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
                  -d \"<layer><defaultStyle><name>raster</name></defaultStyle></layer>\" \
-                 $url/geoserver/rest/layers/$workspace:${layer}"
-        echo $cmd
-        eval $cmd
+                 $url/geoserver/rest/layers/${workspace}:${layer}.xml"
+
+        if  [ ! $simulation ]; then
+          statuscode=$(eval $cmd)
+          echo_ifverbose "INFO statuscode=${statuscode}"
+
+          if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+            echo "OK suppression de la dépendance au style '${style}' pour '${layer}' réussie"
+          else
+            echoerror "ERROR suppression de la dépendance au style '${style}' pour '${layer}' échouée... error http code : ${statuscode}"
+            echo "ERROR suppression de la dépendance au style '${style}' pour '${layer}' échouée (${statuscode})"
+          fi 
+        fi
       fi
     done <"$tmpdir/rasters_published"
 
-    if [ "$style" != "generic" ] && [ "$style" != "line" ] && [ "$style" != "polygon" ] && [ "$style" != "point" ]  && [ "$style" != "raster" ] ; then
-      echo_ifverbose "suppression du style : $style"
-      # supprime le style en ligne
-      cmd="curl --silent --output /dev/null -w %{http_code} -u '$login:$passwd' -XDELETE '$url/geoserver/rest/styles/${style}'" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
-      echo_ifverbose $cmd
+    # enfin, suppression du style lui-même
+    # attention : ne vérifie pas qu'il s'agit d'un style par défaut à ce stade (generic, point...)
+    #             il faut donc s'assurer avant que les styles par défaut ne se retrouvent pas dans la liste styles_tobedeleted si on veut les conserver
+    echo_ifverbose "INFO suppression du style : ${style}"
+    cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${passwd}' -XDELETE '${url}/geoserver/rest/styles/${style}'" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
+    echo_ifverbose "INFO ${cmd}"
 
-      if  [ ! $simulation ]; then
-        statuscode=$(eval $cmd)
-        echo_ifverbose "statuscode $statuscode"
+    if  [ ! ${simulation} ]; then
+      statuscode=$(eval ${cmd})
+      echo_ifverbose "INFO statuscode=${statuscode}"
 
-        if [[ "$statuscode" -ge "200" ]] && [[ "$statuscode" -lt "300" ]]; then
-          echo "OK suppression du style $style réussie"
-        else
-          echoerror "ERROR suppression du style $style échouée... error http code : $statuscode"
-          echo "ERROR suppression du style $style échouée ($statuscode)"
-        fi 
-      fi
-    fi  
+      if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+        echo "OK suppression du style ${style} réussie"
+      else
+        echoerror "ERROR suppression du style ${style} échouée... error http code : ${statuscode}"
+        echo "ERROR suppression du style ${style} échouée (${statuscode})"
+      fi 
+    fi 
+
   done <"$tmpdir/styles_tobedeleted"
 
 
   # parcours la liste des vecteurs à supprimer
   # et supprime chacun d'eux
   while read vector; do
-    echo "suppression du vecteur : $vector"
+    echo_ifverbose "INFO suppression du vecteur (Directory): ${vector}"
     # supprime une couche
     
-    cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/$datastore/featuretypes/$vector?recurse=true&purge=all'"
+    cmd="curl --silent --output /dev/null -w %{http_code} -u '$login:$passwd' -XDELETE '${url}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}/featuretypes/${vector}?recurse=true&purge=all'"
+    echo_ifverbose "INFO ${cmd}"
     # http://docs.geoserver.org/stable/en/user/rest/api/featuretypes.html#workspaces-ws-datastores-ds-featuretypes-ft-format
     # dans le cas d'un filesystem "recurse=true" dans le cas d'une bd postgis "recurse=false"
-    if  [ $verbose ]; then
-      echo $cmd
-    fi
-    if  [ ! $simulation ]; then
-      eval $cmd
-    fi
+
+    if  [ ! ${simulation} ]; then
+      statuscode=$(eval ${cmd})
+      echo_ifverbose "INFO statuscode=${statuscode}"
+
+      if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+        echo "OK suppression du vecteur ${vector} réussie"
+      else
+        echoerror "ERROR suppression du vecteur ${vector} échouée... error http code : ${statuscode}"
+        echo "ERROR suppression du vecteur ${vector} échouée (${statuscode})"
+      fi 
+    fi 
 
   done <"$tmpdir/vectors_tobedeleted_directory"
   
   # parcours la liste des vecteurs de postgis à supprimer
   # et supprime chacun d'eux
   while read vector; do
-    echo "suppression du vecteur (postgis) : $vector"
-    # supprime une couche
+    echo_ifverbose "INFO suppression du vecteur (PostGIS) : ${vector}..."
 
-    cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes/$vector?recurse=true&purge=all'"
-    cmd_pgsql="psql -h $dbhost -d $db -U geosync -w -c 'DROP TABLE \"$vector\";'"
+    echo_ifverbose "INFO suppression du vecteur (PostGIS) ${vector} du geoserver"
+    cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${passwd}' -XDELETE '${url}/geoserver/rest/workspaces/${workspace}/datastores/${pg_datastore}/featuretypes/${vector}?recurse=true&purge=all'"
+    echo_ifverbose "INFO ${cmd}"
     # http://docs.geoserver.org/stable/en/user/rest/api/featuretypes.html#workspaces-ws-datastores-ds-featuretypes-ft-format
     # dans le cas d'un filesystem "recurse=true" dans le cas d'une bd postgis "recurse=false"
-    if [ $verbose ]; then
-      echo $cmd
-      echo $cmd_pgsql
-    fi
+
+    if  [ ! ${simulation} ]; then
+      statuscode=$(eval ${cmd})
+      echo_ifverbose "INFO statuscode=${statuscode}"
+
+      if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+        echo "OK suppression du vecteur (PostGIS) ${vector} réussie"
+      else
+        echoerror "ERROR suppression du vecteur ${vector} échouée... error http code : ${statuscode}"
+        echo "ERROR suppression du vecteur (PostGIS) ${vector} échouée (${statuscode})"
+      fi 
+    fi 
+
+    cmd="psql -h ${dbhost} -d ${db} -U geosync -w -c 'DROP TABLE \"${vector}\";'"
+    echo_ifverbose "INFO ${cmd}"
+
     if [ ! $simulation ]; then
       eval $cmd
-      eval $cmd_pgsql
     fi
 
-    echo "suppression des metadata du vecteur (postgis) : $vector"
-    # suppression de la métadonnée associée
-    cmd="python $BASEDIR/lib/deleteMetadata.py -l '$login' -p '$passwd' -u '$url' -w '$workspace' -i '$vector' $verbosestr"
-    if [ $verbose ]; then
-      echo $cmd
-    fi
+    echo_ifverbose "INFO suppression des metadata du vecteur (PostGIS) : ${vector}"
+    cmd="python $BASEDIR/lib/deleteMetadata.py -l '${login}' -p '${passwd}' -u '${url}' -w '${workspace}' -i '${vector}'" # TODO ${verbosestr}
+    echo_ifverbose "INFO ${cmd}"
+
     if [ ! $simulation ]; then
         eval $cmd
     fi  
@@ -390,32 +488,44 @@ main() {
   # parcours la liste des rasteurs à supprimer dans le système de fichiers et postgis
   # et supprime chacun d'eux
   while read raster; do
-    echo "suppression du raster : $raster"
-    # supprime une couche
-    cmd="curl --silent -u '$login:$passwd' -XDELETE '$url/geoserver/rest/workspaces/$workspace/coveragestores/$raster?recurse=true&purge=all'"
+    echo_ifverbose "INFO suppression du rasteur : ${raster}..."
+
+    echo_ifverbose "INFO suppression du rasteur ${raster} du geoserver"
+    cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${passwd}' -XDELETE '${url}/geoserver/rest/workspaces/${workspace}/coveragestores/${raster}?recurse=true&purge=all'"
+    echo_ifverbose "INFO ${cmd}"
     # http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-format
-    cmd_pgsql="psql -h $dbhost -d $db -U geosync -w -c 'DROP TABLE \"$raster\";'"
-    if  [ $verbose ]; then
-      echo $cmd
-      echo $cmd_pgsql
-    fi
+
+    if  [ ! ${simulation} ]; then
+      statuscode=$(eval ${cmd})
+      echo_ifverbose "INFO statuscode=${statuscode}"
+
+      if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+        echo "OK suppression du rasteur ${raster} réussie"
+      else
+        echoerror "ERROR suppression du rasteur ${raster} échouée... error http code : ${statuscode}"
+        echo "ERROR suppression du rasteur ${raster} échouée (${statuscode})"
+      fi 
+    fi 
+
+    echo_ifverbose "INFO suppression du rasteur ${raster} de la base PostGIS"
+    cmd="psql -h ${dbhost} -d ${db} -U geosync -w -c 'DROP TABLE \"${raster}\";'"
+    echo_ifverbose "INFO ${cmd}"
+
     if  [ ! $simulation ]; then
       eval $cmd
-      eval $cmd_pgsql
     fi
  
-  echo "suppression des metadata du raster : $raster"
-  # suppression de la métadonnée associée
-    cmd="python $BASEDIR/lib/deleteMetadata.py -l '$login' -p '$passwd' -u '$url' -w '$workspace' -i '$raster' $verbosestr"
-    if [ $verbose ]; then
-      echo $cmd
-    fi
+    echo_ifverbose "INFO suppression des metadata du rasteur : ${raster}"
+    cmd="python $BASEDIR/lib/deleteMetadata.py -l '${login}' -p '${passwd}' -u '${url}' -w '${workspace}' -i '${raster}'" # TODO ${verbosestr}
+    echo_ifverbose "INFO ${cmd}"
+
     if [ ! $simulation ]; then
         eval $cmd
     fi
   
   done <"$tmpdir/rasters_tobedeleted"
 
+  echo_ifverbose "INFO ...terminée"
 
 } #end of main
 
@@ -423,4 +533,3 @@ main() {
 if [ "${BASH_SOURCE[0]}" == "$0" ]; then
   main "$@"
 fi
-
