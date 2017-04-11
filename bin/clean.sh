@@ -475,7 +475,7 @@ main() {
     fi
 
     echo_ifverbose "INFO suppression des metadata du vecteur (PostGIS) : ${vector}"
-    cmd="python $BASEDIR/lib/deleteMetadata.py -l '${login}' -p '${passwd}' -u '${url}' -w '${workspace}' -i '${vector}'" # TODO ${verbosestr}
+    cmd="python $BASEDIR/lib/deleteMetadata.py -l '${login}' -p '${passwd}' -u '${url}' -w '${workspace}' -i '${vector}' ${verbosestr}"
     echo_ifverbose "INFO ${cmd}"
 
     if [ ! $simulation ]; then
@@ -516,7 +516,7 @@ main() {
     fi
  
     echo_ifverbose "INFO suppression des metadata du rasteur : ${raster}"
-    cmd="python $BASEDIR/lib/deleteMetadata.py -l '${login}' -p '${passwd}' -u '${url}' -w '${workspace}' -i '${raster}'" # TODO ${verbosestr}
+    cmd="python $BASEDIR/lib/deleteMetadata.py -l '${login}' -p '${passwd}' -u '${url}' -w '${workspace}' -i '${raster}' ${verbosestr}"
     echo_ifverbose "INFO ${cmd}"
 
     if [ ! $simulation ]; then
