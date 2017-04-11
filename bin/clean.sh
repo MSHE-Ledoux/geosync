@@ -182,7 +182,7 @@ main() {
   list_path="${tmpdir}/styles_published"
   
   echo_ifverbose "INFO liste les styles"
-  cmd="curl --silent -u '${login}:${password}' -XGET ${url}/geoserver/rest/styles.xml"  # TODO ../rest/workspaces/${workspace}/styles.xml
+  cmd="curl --silent -u '${login}:${password}' -XGET ${url}/geoserver/rest/workspaces/${workspace}/styles.xml"
   echo_ifverbose "INFO ${cmd}"
 
   xml=$(eval ${cmd})
@@ -401,7 +401,7 @@ main() {
     # attention : ne vérifie pas qu'il s'agit d'un style par défaut à ce stade (generic, point...)
     #             il faut donc s'assurer avant que les styles par défaut ne se retrouvent pas dans la liste styles_tobedeleted si on veut les conserver
     echo_ifverbose "INFO suppression du style : ${style}"
-    cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${passwd}' -XDELETE '${url}/geoserver/rest/styles/${style}'" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
+    cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${passwd}' -XDELETE '${url}/geoserver/rest/workspaces/${workspace}/styles/${style}'" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
     echo_ifverbose "INFO ${cmd}"
 
     if  [ ! ${simulation} ]; then

@@ -125,7 +125,7 @@ if [ ! "$pg_datastore" ]; then
                       -u ${login}:############# \
                       -XPOST -H 'Content-type: text/xml' \
                       -d '<style><name>$output</name><filename>${output}.sld</filename></style>' \
-               $url/geoserver/rest/styles 2>&1"
+               $url/geoserver/rest/workspaces/${workspace}/styles 2>&1"
   else
     var_=$"--silent --output /dev/null"
   fi
@@ -134,7 +134,7 @@ if [ ! "$pg_datastore" ]; then
                    -u ${login}:${password} \
                    -XPOST -H 'Content-type: text/xml' \
                    -d '<style><name>$output</name><filename>${output}.sld</filename></style>' \
-            $url/geoserver/rest/styles 2>&1"
+            $url/geoserver/rest/workspaces/${workspace}/styles 2>&1"
 
   echo $cmd
   statuscode=$(eval $cmd)
@@ -162,14 +162,14 @@ if [ ! "$pg_datastore" ]; then
                    -u ${login}:${password} \
                    -XPUT -H 'Content-type: application/vnd.ogc.sld+xml' \
                    -d @/home/$login/owncloudsync/$input \
-            $url/geoserver/rest/styles/$output 2>&1"
+            $url/geoserver/rest/workspaces/${workspace}/styles/$output 2>&1"
   
   if [ $verbose ]; then
     echo "curl $var_v -w %{http_code} \
                       -u ${login}:############### \
                       -XPUT -H 'Content-type: application/vnd.ogc.sld+xml' \
                       -d @/home/$login/owncloudsync/$input \
-               $url/geoserver/rest/styles/$output 2>&1"
+               $url/geoserver/rest/workspaces/${workspace}/styles/$output 2>&1"
   fi
 
   statuscode=$(eval $cmd)
