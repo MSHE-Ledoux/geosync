@@ -18,7 +18,7 @@ def deleteMetadata(name, login, password, url, workspace, verbose=False):
     csw = CatalogueServiceWeb(url_csw, skip_caps=True, username=login, password=password)
     # suppression des métadonnées relatives à "keyword" / couche geoserver
     from owslib.fes import PropertyIsEqualTo, PropertyIsLike
-    myquery = PropertyIsEqualTo('csw:AnyText',keyword)
+    myquery = PropertyIsEqualTo('csw:AnyText',keyword)  # TODO vérifier que la recherche est stricte sinon risque de retourner des résultats non désirés (ex: 'myworkspace:foobar' en cherchant 'myworkspace:foo')
     if verbose:
       print "INFO CatalogueServiceWeb(" + url_csw + ",...) ... PropertyIsEqualTo('csw:AnyText'," + keyword + ")"
     csw.getrecords2(constraints=[myquery], maxrecords=10)
