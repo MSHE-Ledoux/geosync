@@ -148,6 +148,20 @@ vector::publish() {
   echo "filename $filename"
   echo "filepath $filepath"
   
+  # vérifie la présence des 2 fichiers .shx et .prj qui sont nécessaires en plus du .shp
+  shx_found=($(find "${filepath}" -maxdepth 1 -iname "${filename}.shx"))
+  if [ ${#shx_found[@]} -eq 0 ]; then  # ne pas utiliser [ -n $cpg_found ] comme c'est un array
+    echo "ERROR le fichier ${filename}.shx n'a pas été trouvé. Interruption de la publication de ${input}"
+    echoerror "le fichier .shx n'a pas été trouvé : ${filename}.shx"
+    return 1 # erreur
+  fi
+  prj_found=($(find "${filepath}" -maxdepth 1 -iname "${filename}.prj"))
+  if [ ${#prj_found[@]} -eq 0 ]; then  # ne pas utiliser [ -n $cpg_found ] comme c'est un array
+    echo "ERROR le fichier ${filename}.prj n'a pas été trouvé. Interruption de la publication de ${input}"
+    echoerror "le fichier .prj n'a pas été trouvé : ${filename}.prj"
+    return 1 # erreur
+  fi
+
   encoding="UTF-8"
   
   cpg_found=($(find "${filepath}" -maxdepth 1 -iname "${filename}.cpg"))
