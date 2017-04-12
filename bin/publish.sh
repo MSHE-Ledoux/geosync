@@ -61,6 +61,10 @@ importallfiles() {
   # TODO: format des rasters supportés: tif, png, adf, jpg, ecw
 
   # si des extensions sont rajoutées, alors penser à mettre à jour lib/util.sh util::typeoflayer()
+  # ATTENTION si xml est ajouté cela peut entrainer la publication de metadata peut importe s'il y a une couche associée, ou si celle-ci a bien été publiée
+  #           peut convenir si on souhaite pouvoir publier des metadata seules
+  #           sinon TODO il faudrait envisager de lancer la publication des metadata seulement si la publication de la couche a réussie
+  #                                       et de chercher les metadata disponibles voire d'en prendre par défaut pour qu'une couche sans metadata apparaisse tout de même au catalogue geonetwork
   for filepath in **/*.{shp,tif,png,jpg,ecw,sld,xml} **/w001001.adf; do
       # alternative dangereuse :
       # for filepath in $(find "$path" -iname "*.shp"); do
@@ -156,7 +160,8 @@ importfile() {
   eval $cmd
   }
 
-
+  # TODO prendre en compte les fichiers peut importe leur casse -> requiert de trouver les fichiers au lieu de tester leur existence
+ 
   metadata() {
 
   if [ ! "$outputlayername" ]; then
@@ -185,6 +190,10 @@ importfile() {
 
   }
 
+  # ici, en rajoutant metadata et style à la liste, la logique qui s'appliquait aux couches (vecteur ou rasteur) a été prolongée aux metadata et aux styles
+  # s'il est en effet possible d'avoir des fiches de metadata dans le geonetwork sans data associées ou un style sans couche qui l'utilise
+  # on peut s'interroger de savoir si c'est ce qu'on souhaite
+  # sinon il faudrait à partir d'une couche vecteur ou rasteur, rechercher les styles ou metadata à publier, au lieu de les publier en tant que tels dès qu'on en trouve
   case $layertype in
   'vector') vector ;;
   'raster') raster ;;
