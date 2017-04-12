@@ -34,9 +34,10 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
         sys.stderr.write("ERROR input file not found : " + input + "\n")
         return
 
+    home = os.environ["HOME"] 
 
     # création du répertoire temporaire
-    tmpdir = "/tmp/geosync_metadata"
+    tmpdir = home + "/tmp/geosync_metadata"
     if os.path.exists(tmpdir):
         import shutil
         shutil.rmtree(tmpdir,True) # ignore_errors
