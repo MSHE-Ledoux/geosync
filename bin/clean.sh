@@ -353,7 +353,7 @@ main() {
     while read layer; do
       if [[ "${layer}" == "${style}" ]]; then
         echo_ifverbose "INFO suppression de la dépendance au style '${style}' et remplacement par le style 'generic' pour la couche : ${layer}"
-        cmd="curl --silent --output /dev/null -w %{http_code} \
+        cmd="curl --silent -w %{http_code} \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
                  -d \"<layer><defaultStyle><name>generic</name></defaultStyle></layer>\" \
@@ -361,7 +361,8 @@ main() {
         echo_ifverbose "INFO ${cmd}"
 
         if  [ ! $simulation ]; then
-          statuscode=$(eval $cmd)
+          result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+          statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
           echo_ifverbose "INFO statuscode=${statuscode}"
 
           if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
@@ -401,11 +402,12 @@ main() {
     # attention : ne vérifie pas qu'il s'agit d'un style par défaut à ce stade (generic, point...)
     #             il faut donc s'assurer avant que les styles par défaut ne se retrouvent pas dans la liste styles_tobedeleted si on veut les conserver
     echo_ifverbose "INFO suppression du style : ${style}"
-    cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${passwd}' -XDELETE '${url}/geoserver/rest/workspaces/${workspace}/styles/${style}'" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
+    cmd="curl --silent -w %{http_code} -u '${login}:${passwd}' -XDELETE '${url}/geoserver/rest/workspaces/${workspace}/styles/${style}'" # erreur lors du curl : Accès interdit / Désolé, vous n'avez pas accès à cette page
     echo_ifverbose "INFO ${cmd}"
 
     if  [ ! ${simulation} ]; then
-      statuscode=$(eval ${cmd})
+      result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+      statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
       echo_ifverbose "INFO statuscode=${statuscode}"
 
       if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
@@ -425,13 +427,14 @@ main() {
     echo_ifverbose "INFO suppression du vecteur (Directory): ${vector}"
     # supprime une couche
     
-    cmd="curl --silent --output /dev/null -w %{http_code} -u '$login:$passwd' -XDELETE '${url}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}/featuretypes/${vector}?recurse=true&purge=all'"
+    cmd="curl --silent -w %{http_code} -u '$login:$passwd' -XDELETE '${url}/geoserver/rest/workspaces/${workspace}/datastores/${datastore}/featuretypes/${vector}?recurse=true&purge=all'"
     echo_ifverbose "INFO ${cmd}"
     # http://docs.geoserver.org/stable/en/user/rest/api/featuretypes.html#workspaces-ws-datastores-ds-featuretypes-ft-format
     # dans le cas d'un filesystem "recurse=true" dans le cas d'une bd postgis "recurse=false"
 
     if  [ ! ${simulation} ]; then
-      statuscode=$(eval ${cmd})
+      result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+      statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
       echo_ifverbose "INFO statuscode=${statuscode}"
 
       if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
@@ -450,13 +453,14 @@ main() {
     echo_ifverbose "INFO suppression du vecteur (PostGIS) : ${vector}..."
 
     echo_ifverbose "INFO suppression du vecteur (PostGIS) ${vector} du geoserver"
-    cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${passwd}' -XDELETE '${url}/geoserver/rest/workspaces/${workspace}/datastores/${pg_datastore}/featuretypes/${vector}?recurse=true&purge=all'"
+    cmd="curl --silent -w %{http_code} -u '${login}:${passwd}' -XDELETE '${url}/geoserver/rest/workspaces/${workspace}/datastores/${pg_datastore}/featuretypes/${vector}?recurse=true&purge=all'"
     echo_ifverbose "INFO ${cmd}"
     # http://docs.geoserver.org/stable/en/user/rest/api/featuretypes.html#workspaces-ws-datastores-ds-featuretypes-ft-format
     # dans le cas d'un filesystem "recurse=true" dans le cas d'une bd postgis "recurse=false"
 
     if  [ ! ${simulation} ]; then
-      statuscode=$(eval ${cmd})
+      result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+      statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
       echo_ifverbose "INFO statuscode=${statuscode}"
 
       if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
@@ -491,12 +495,13 @@ main() {
     echo_ifverbose "INFO suppression du rasteur : ${raster}..."
 
     echo_ifverbose "INFO suppression du rasteur ${raster} du geoserver"
-    cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${passwd}' -XDELETE '${url}/geoserver/rest/workspaces/${workspace}/coveragestores/${raster}?recurse=true&purge=all'"
+    cmd="curl --silent -w %{http_code} -u '${login}:${passwd}' -XDELETE '${url}/geoserver/rest/workspaces/${workspace}/coveragestores/${raster}?recurse=true&purge=all'"
     echo_ifverbose "INFO ${cmd}"
     # http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-format
 
     if  [ ! ${simulation} ]; then
-      statuscode=$(eval ${cmd})
+      result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code
+      statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
       echo_ifverbose "INFO statuscode=${statuscode}"
 
       if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
