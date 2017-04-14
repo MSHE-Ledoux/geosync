@@ -350,6 +350,16 @@ main() {
     cat "$tmpdir/vectors_published_directory" > "$tmpdir/vectors_published_any_datastore"
     cat "$tmpdir/vectors_published_postgis" >> "$tmpdir/vectors_published_any_datastore"
 
+    # suppression de la dépendance au style
+    # TODO une piste d'évolution pour simplifier les opérations et rendre plus performant a priori
+    #      serait, lors de la définition d'un style pour une couche, de ne pas le mettre en style par défaut mais en style additionnel
+    #      la suppression d'un style utilisé en style additionnel pour une couche (et non par défaut) ne pose a priori pas de problème
+    #      on pourrait donc d'abord supprimer les styles sans avoir besoin de supprimer leur dépendance (sachant qu'en plus, souvent la couche est au final supprimée également)
+    #      donc au lieu de supprimer la dépendance au style, le style, puis la couche, on pourrait supprimer les couches puis les styles
+    #   sinon, une optimisation intermédiaire (tout en continuant de supprimer les dépendances) serait de supprimer les couches d'abord
+    #      puis uniquement pour celles restantes supprimer la dépendance au style, puis le style
+    #     (cela demande de bien considérer toutes les couches restantes et non celles qui auraient dues l'être mais qui sont encore là pour cause d'erreur ou autre)
+
     while read layer; do
       if [[ "${layer}" == "${style}" ]]; then
         echo_ifverbose "INFO suppression de la dépendance au style '${style}' et remplacement par le style 'generic' pour la couche : ${layer}"
