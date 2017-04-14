@@ -12,7 +12,6 @@ PATH_LOG="/var/log/$logs"
 
 # date dans les logs
 date >> $PATH_LOG/clean.log
-date >> $PATH_LOG/clean_error.log
   
 # appel de clean.sh
 bash "${SCRIPT_PATH}/clean.sh" -d 1>>$PATH_LOG/clean.log 2>>$PATH_LOG/clean_error.log

@@ -379,6 +379,7 @@ main() {
             echo "OK suppression de la dépendance au style '${style}' pour '${layer}' réussie"
           else
             echoerror "ERROR suppression de la dépendance au style '${style}' pour '${layer}' échouée... error http code : ${statuscode}"
+            echoerror "${cmd}"
             echo "ERROR suppression de la dépendance au style '${style}' pour '${layer}' échouée (${statuscode})"
           fi 
         fi
@@ -402,6 +403,7 @@ main() {
             echo "OK suppression de la dépendance au style '${style}' pour '${layer}' réussie"
           else
             echoerror "ERROR suppression de la dépendance au style '${style}' pour '${layer}' échouée... error http code : ${statuscode}"
+            echoerror "${cmd}"
             echo "ERROR suppression de la dépendance au style '${style}' pour '${layer}' échouée (${statuscode})"
           fi 
         fi
@@ -424,6 +426,7 @@ main() {
         echo "OK suppression du style ${style} réussie"
       else
         echoerror "ERROR suppression du style ${style} échouée... error http code : ${statuscode}"
+        echoerror "${cmd}"
         echo "ERROR suppression du style ${style} échouée (${statuscode})"
       fi 
     fi 
@@ -451,6 +454,7 @@ main() {
         echo "OK suppression du vecteur ${vector} réussie"
       else
         echoerror "ERROR suppression du vecteur ${vector} échouée... error http code : ${statuscode}"
+        echoerror "${cmd}"
         echo "ERROR suppression du vecteur ${vector} échouée (${statuscode})"
       fi 
     fi 
@@ -477,6 +481,7 @@ main() {
         echo "OK suppression du vecteur (PostGIS) ${vector} réussie"
       else
         echoerror "ERROR suppression du vecteur ${vector} échouée... error http code : ${statuscode}"
+        echoerror "${cmd}"
         echo "ERROR suppression du vecteur (PostGIS) ${vector} échouée (${statuscode})"
       fi 
     fi 
@@ -518,6 +523,7 @@ main() {
         echo "OK suppression du rasteur ${raster} réussie"
       else
         echoerror "ERROR suppression du rasteur ${raster} échouée... error http code : ${statuscode}"
+        echoerror "${cmd}"
         echo "ERROR suppression du rasteur ${raster} échouée (${statuscode})"
       fi 
     fi 
