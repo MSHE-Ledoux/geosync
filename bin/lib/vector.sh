@@ -31,6 +31,11 @@ vector::publish() {
     echoerror "vector::publish: -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -s datastore -g pg_datastore -b db -d dbuser [-v]"
   }
 
+  #echo if verbose=1
+  echo_ifverbose() {
+    if [ $verbose ]; then echo "$@"; fi
+  }
+
   local DIR
   # chemin du script (sourcé ou non) pour pouvoir appeler d'autres scripts dans le même dossier
   DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
@@ -192,11 +197,12 @@ vector::publish() {
   
   # convertit le système de coordonnées du shapefile
   # attention : ne pas mettre le résultat directement dans le répertoire du datastore (data_dir) du Geoserver (l'appel à l'API rest s'en charge)
-  if  [ $verbose ]; then
-    echo "ogr2ogr -t_srs EPSG:$epsg -overwrite -skipfailures $tmpdir/$output $input"
-   fi
+  echo_ifverbose "INFO convertit le shapefile (système de coordonnées) avec ogr2ogr"
+  cmd="ogr2ogr -t_srs EPSG:$epsg -overwrite -skipfailures $tmpdir/$output $input"
+  echo_ifverbose "INFO ${cmd}"
+
+  eval ${cmd}
   # ogr2ogr -t_srs "EPSG:$epsg" -lco ENCODING=${encoding} -overwrite -skipfailures "$tmpdir/$output" "$input"
-  ogr2ogr -t_srs "EPSG:$epsg" -lco ENCODING=${encoding} -overwrite -skipfailures "$tmpdir/$output" "$input"
   #-lco ENCODING=ISO-8859-1  # correspond à LATIN1
   # attention : le datastore doit être en UTF-8
   # lorsque l'encodage, qui est connu, est définit à ce niveau par la Layer creation option (-lco ENCODING=${encoding})
