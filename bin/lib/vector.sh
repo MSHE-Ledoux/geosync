@@ -174,8 +174,15 @@ vector::publish() {
     if [ ${#dbf_found[@]} -gt 0 ]; then # ne pas utiliser [ -n $dbf_found ] comme c'est un array
       echo "dbf existe $dbf_found "
       #exemple de sortie de dbview foo.dbf | file -i -
-	  #/dev/stdin: text/plain; charset=iso-8859-1
+      #/dev/stdin: text/plain; charset=iso-8859-1
       encoding=$(dbview "${dbf_found[0]}" | file -i - | cut -d= -f2)  # charset du fichier .dbf, par exemple "ISO-8859-1" ou encore "UTF-8"
+
+      # avec encoding=unknown-8bit on obtient l'erreur suivante :
+      # Unable to convert field name to UTF-8 (iconv reports "Argument invalide"). Current encoding is "unknown-8bit". Try "LATIN1" (Western European), or one of the values described at http://www.gnu.org/software/libiconv/
+      # donc dans ce cas, cosidére encoding=LATIN1
+      if [[ $encoding == unknown* ]]; then
+        encoding="LATIN1"
+      fi
     else
 	  echo "dbf n'existe PAS"
 	fi
