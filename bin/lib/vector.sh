@@ -217,7 +217,10 @@ vector::publish() {
   output_pgsql=$(echo $output | cut -d. -f1) 
   
   # envoi du shapefile vers postgis
-  cmd="shp2pgsql -I -W ${encoding} -s 2154 -d //$tmpdir/$output $output_pgsql | psql -h $dbhost -d $db -U $dbuser -w 1>/dev/null"
+  cmd="shp2pgsql -I -W ${encoding} -s 2154 -d //$tmpdir/$output $output_pgsql | sed -e 's/DROP TABLE/DROP TABLE IF EXISTS/' | psql -h $dbhost -d $db -U $dbuser -w 1>/dev/null"
+  # -d  Drops the table, then recreates it # attention : génére une erreur (à tord) si n'existe pas déjà 
+  # ERREUR:  la table « ... » n'existe pas
+  # pour éviter d'avoir une erreur, on substitue le DROP TABLE par un DROP TABLE IF EXISTS  # | sed -e "s/DROP TABLE/DROP TABLE IF EXISTS/" |
   echo $cmd
   eval $cmd
 
