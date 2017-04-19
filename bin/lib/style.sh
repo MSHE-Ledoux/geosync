@@ -130,8 +130,8 @@ if [ ! "$pg_datastore" ]; then
   cmd="curl --silent -w %{http_code} \
                    -u ${login}:${password} \
                    -XPOST -H 'Content-type: text/xml' \
-                   -d '<style><name>$style</name><filename>${style}.sld</filename></style>' \
-            $url/geoserver/rest/workspaces/${workspace}/styles 2>&1"
+                   -d '<style><name>${style}</name><filename>${style}.sld</filename></style>' \
+            ${url}/geoserver/rest/workspaces/${workspace}/styles 2>&1"
   echo_ifverbose "INFO ${cmd}"
 
   result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
@@ -179,7 +179,6 @@ if [ ! "$pg_datastore" ]; then
   cmd="curl --silent -w %{http_code} \
              -u ${login}:${password} \
              -XGET ${url}/geoserver/rest/workspaces/${workspace}/datastores/${pg_datastore}/featuretypes.xml"
-
   echo_ifverbose "INFO ${cmd}"
   
   result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
@@ -260,11 +259,13 @@ if [ ! "$pg_datastore" ]; then
   for (( i=1; i < $itemsCount + 1; i++ )); do
     layer=$(xmllint --xpath "/featureTypes/featureType[$i]/name/text()" - <<<"$xml")
     if [[ "${style}" == "${layer}" ]] ; then
+      echo_ifverbose "INFO assigne le style ${style} à la couche ${layer}"
       cmd="curl --silent -w %{http_code} \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
                  -d \"<layer><defaultStyle><name>${style}</name></defaultStyle></layer>\" \
                  $url/geoserver/rest/layers/${workspace}:${layer}"
+      echo_ifverbose "INFO ${cmd}"
 
       result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
       statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
@@ -285,7 +286,6 @@ if [ ! "$pg_datastore" ]; then
   cmd="curl --silent -w %{http_code} \
 	     -u '${login}:${password}' \
              -XGET ${url}/geoserver/rest/workspaces/${workspace}/coveragestores.xml"
-
   echo_ifverbose "INFO ${cmd}"
   
   result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
@@ -312,11 +312,13 @@ if [ ! "$pg_datastore" ]; then
   for (( i=1; i < $itemsCount + 1; i++ )); do
     layer=$(xmllint --xpath "/coverageStores/coverageStore[$i]/name/text()" - <<<"$xml")
     if [[ "${style}" == "${layer}" ]] ; then
+      echo_ifverbose "INFO assigne le style ${style} à la couche ${layer}"
       cmd="curl --silent -w %{http_code} \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
                  -d \"<layer><defaultStyle><name>${style}</name></defaultStyle></layer>\" \
                  ${url}/geoserver/rest/layers/${workspace}:${layer}"
+      echo_ifverbose "INFO ${cmd}"
 
       result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
       statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
