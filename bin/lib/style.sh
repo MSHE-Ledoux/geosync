@@ -1,6 +1,14 @@
 #!/bin/bash
 #
-# Importe une couche .shp dans un geoserver
+# Importe un style .sld dans un geoserver et l'assigne à des couches (vecteurs, rasteurs)
+
+# TODO envisager de revoir l'assignation des styles aux couches
+# pour l'instant lors de l'assignation d'un style à une couche, le style remplace celui par défaut
+# et pour qu'un style soit assigné à une couche, le nom de la couche doit être le même que celui du style (intialement envisagé : le nom de la couche devait finir par celui du style; cas particulier : être identique)
+# mais sachant qu'une couche peut avoir plusieurs styles (et un style plusieurs couches)
+# on pourrait envisager de conserver le style par défaut et de rajouter si besoin le style aux autres styles d'une couche
+# (le fait de ne pas modifier le style par défaut devrait faciliter le clean des styles mais compliquer l'assignation d'un style (-> car ajout à une couche si pas déjà le cas))
+# le lien entre les couches et les styles pourrait être fait au niveau des fichiers avec par exemple nom_couche.shp.nom_sytle_autonome.sld (et nom_sytle_autonome.sld) (en plus du nom_couche.sld)
 
 usage() { 
   echo "==> usage : "
@@ -9,7 +17,7 @@ usage() {
   echo ""
   echo "1. Publie un nouveau style à partir du fichier sld "
   echo "2. Affecte ce nouveau style aux couches qui lui sont associées"
-  echo "   (dont le nom contient le préfixe sld_nom_couche"
+  echo "   (de même nom)"
 } 
 
 style::publish() {
@@ -19,6 +27,11 @@ style::publish() {
 
   usage() {
     echoerror "vector::publish: -i input [-o output=input] -l login -p password -u url [-v]"
+  }
+
+  #echo if verbose=1
+  echo_ifverbose() {
+    if [ $verbose ]; then echo "$@"; fi
   }
 
   local DIR
@@ -105,13 +118,7 @@ if [ ! "$pg_datastore" ]; then
   fi
 
   # Suppression du .sld à la fin du nom du fichier
-  output=${output:0:-4}
-
-  if  [ $verbose ]; then
-    echo "sld en entrée : $input"
-    echo "sld en sortie : $output"
-    echo "url du Geoserver : $url"
-  fi
+  style=${output:0:-4}
 
   local statuscode=0
 
@@ -119,173 +126,209 @@ if [ ! "$pg_datastore" ]; then
 
   ## Création du style vide - création du xml dans /var/www/geoserver/data/styles
 
-  if [ $verbose ]; then
-    var_v=$"-v"
-    echo "curl $var_v -w %{http_code} \
-                      -u ${login}:############# \
-                      -XPOST -H 'Content-type: text/xml' \
-                      -d '<style><name>$output</name><filename>${output}.sld</filename></style>' \
-               $url/geoserver/rest/workspaces/${workspace}/styles 2>&1"
-  else
-    var_=$"--silent --output /dev/null"
-  fi
-
-  cmd="curl $var_v -w %{http_code} \
+  echo_ifverbose "INFO création du style vide : ${style}.sld"
+  cmd="curl --silent -w %{http_code} \
                    -u ${login}:${password} \
                    -XPOST -H 'Content-type: text/xml' \
-                   -d '<style><name>$output</name><filename>${output}.sld</filename></style>' \
+                   -d '<style><name>$style</name><filename>${style}.sld</filename></style>' \
             $url/geoserver/rest/workspaces/${workspace}/styles 2>&1"
+  echo_ifverbose "INFO ${cmd}"
 
-  echo $cmd
-  statuscode=$(eval $cmd)
+  result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+  statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+  echo_ifverbose "INFO statuscode=${statuscode}"
   
   #-w %{http_code} pour récupérer le status code de la requête
-  
-  if  [ $verbose ]; then
-    echo "" #saut de ligne
-    echo "valeur du statuscode $statuscode"
+
+  if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+    echo "OK création du style ${style} réussie"
+  else
+    echoerror "ERROR création du style ${style} échouée... error http code : ${statuscode}"
+    echoerror "${cmd}"
+    echo "ERROR création du style ${style} échouée (${statuscode})"
   fi
 
-  # si le code de la réponse http est compris entre [200,300[
-  if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
-    if  [ $verbose ]; then
-      echo "ok $statuscode"
-    fi
-    echo "style $output créé vide à partir de $input"
-  else
-    echoerror "error http code : $statuscode for $output"
-  fi  
-
   ## Chargement des caractéristiques du style - création du sld dans /var/www/geoserver/data/styles
-  
-  cmd="curl $var_v -w %{http_code} \
+  echo_ifverbose "INFO chargement des caractéristiques du style : ${style}"
+  cmd="curl --silent -w %{http_code} \
                    -u ${login}:${password} \
                    -XPUT -H 'Content-type: application/vnd.ogc.sld+xml' \
                    -d @/home/$login/owncloudsync/$input \
-            $url/geoserver/rest/workspaces/${workspace}/styles/$output 2>&1"
-  
-  if [ $verbose ]; then
-    echo "curl $var_v -w %{http_code} \
-                      -u ${login}:############### \
-                      -XPUT -H 'Content-type: application/vnd.ogc.sld+xml' \
-                      -d @/home/$login/owncloudsync/$input \
-               $url/geoserver/rest/workspaces/${workspace}/styles/$output 2>&1"
-  fi
+            $url/geoserver/rest/workspaces/${workspace}/styles/$style 2>&1"
+  echo_ifverbose "INFO ${cmd}"
 
-  statuscode=$(eval $cmd)
+  result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+  statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+  echo_ifverbose "INFO statuscode=${statuscode}"
   
   #-w %{http_code} pour récupérer le status code de la requête
 
-  if [ $verbose ]; then
-    echo "" #saut de ligne
-    echo "valeur du statuscode $statuscode"
-  fi
-
-  # si le code de la réponse http est compris entre [200,300[
-  if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
-    if  [ $verbose ]; then
-      echo "ok $statuscode"
-    fi
-    echo "style $output chargé à partir de $input"
+  if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+    echo "OK assignation du style ${style} réussie"
   else
-    echoerror "error http code : $statuscode for $output"
+    echoerror "ERROR assignation du style ${style} échouée... error http code : ${statuscode}"
+    echoerror "${cmd}"
+    echo "ERROR assignation du style ${style} échouée (${statuscode})"
   fi
 
   ### Assignation du style à toutes les couches associées : nom_couche_sld_nom_style_sld.shp  <= nom_style.sld 
+  echo_ifverbose "INFO assignation du style à toutes les couches associées..."
 
-  # liste les vecteurs du datastore postgis_data et assigne le style à ceux concernés
-  cmd="curl --silent \
+  # 1 liste les vecteurs du datastore postgis_data et 2 assigne le style à ceux concernés
+  echo_ifverbose "INFO liste les vecteurs du datastore PostGIS ${pg_datastore}"
+  cmd="curl --silent -w %{http_code} \
              -u ${login}:${password} \
-             -XGET $url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes.xml"
+             -XGET ${url}/geoserver/rest/workspaces/${workspace}/datastores/${pg_datastore}/featuretypes.xml"
 
-  echo "récupére la liste des vecteurs de $pg_datastore"
-  echo $cmd
-  xml=$(eval $cmd)
+  echo_ifverbose "INFO ${cmd}"
+  
+  result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+  statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+  echo_ifverbose "INFO statuscode=${statuscode}"
 
-  if  [ $verbose ]; then
-    echo $xml
+  if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+    : # OK
+  else
+    echoerror "ERROR récupération de la liste des vecteurs du datastore PostGIS ${pg_datastore}, échouée... error http code : ${statuscode}"
+    echoerror "${cmd}"
+    echo "ERROR récupération de la liste des vecteurs du datastore PostGIS ${pg_datastore}, échouée (${statuscode})"
+    # TODO gérer erreur, ne pas essayer de traiter le xml
   fi
 
-  itemsCount=$(xmllint --xpath "count(//featureTypes/featureType)" - <<<"$xml" 2>/dev/null)
+  xml=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
+
+  itemsCount=$(xmllint --xpath "count(/featureTypes/featureType)" - <<<"$xml" 2>/dev/null)
   # redirige l'erreur standard vers null pour éviter d'être averti de chaque valeur manquante (XPath set is empty)
   # mais cela peut empêcher de détecter d'autres erreurs
   # TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
-  echo "itemsCount :  $itemsCount"
+  echo_ifverbose "INFO ${itemsCount} vecteur(s) (PostGIS) trouvé(s)"
 
   for (( i=1; i < $itemsCount + 1; i++ )); do
-    name=$(xmllint --xpath "/featureTypes/featureType[$i]/name/text()" - <<<"$xml")
-    if [[ "$output" == "$name" ]] ; then
-      cmd="curl --silent \
+    layer=$(xmllint --xpath "/featureTypes/featureType[$i]/name/text()" - <<<"$xml")
+    if [[ "${style}" == "${layer}" ]] ; then  # (intialement envisagé : le nom de la couche devait finir par celui du style; cas particulier : être identique) d'ou : "${layer}" == *$style
+      echo_ifverbose "INFO assigne le style ${style} à la couche ${layer}"
+      cmd="curl --silent -w %{http_code} \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
-                 -d \"<layer><defaultStyle><name>${output}</name></defaultStyle></layer>\" \
-                 $url/geoserver/rest/layers/$workspace:${name}"
-      echo $cmd
-      eval $cmd
+                 -d \"<layer><defaultStyle><name>${style}</name></defaultStyle></layer>\" \
+                 ${url}/geoserver/rest/layers/${workspace}:${layer}"
+      echo_ifverbose "INFO ${cmd}"
+
+      result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+      statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+      echo_ifverbose "INFO statuscode=${statuscode}"
+
+      if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+        echo "OK assignation du style ${style} réussie"
+      else
+        echoerror "ERROR assignation du style ${style} échouée... error http code : ${statuscode}"
+        echoerror "${cmd}"
+        echo "ERROR assignation du style ${style} échouée (${statuscode})"
+      fi
     fi
   done
   
-  # liste les vecteurs du datastore shpowncloud et assigne le style à ceux concernés
-  cmd="curl --silent \
+  # 1 liste les vecteurs du datastore shpowncloud et 2 assigne le style à ceux concernés
+  echo_ifverbose "INFO liste les vecteurs du datastore Directory ${datastore}"
+  cmd="curl --silent -w %{http_code} \
              -u ${login}:${password} \
-             -XGET $url/geoserver/rest/workspaces/$workspace/datastores/$datastore/featuretypes.xml"
+             -XGET ${url}/geoserver/rest/workspaces/${workspace}/datastores/$datastore/featuretypes.xml"
 
-  echo "récupére la liste des vecteurs de $datastore"
-  echo $cmd
-  xml=$(eval $cmd)
+  echo_ifverbose "INFO ${cmd}"
+  
+  result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+  statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+  echo_ifverbose "INFO statuscode=${statuscode}"
 
-  if  [ $verbose ]; then
-    echo $xml
+  if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+    : # OK
+  else
+    echoerror "ERROR récupération de la liste des vecteurs du datastore Directory ${datastore}, échouée... error http code : ${statuscode}"
+    echoerror "${cmd}"
+    echo "ERROR récupération de la liste des vecteurs du datastore Directory ${datastore}, échouée (${statuscode})"
+    # TODO gérer erreur, ne pas essayer de traiter le xml
   fi
 
-  itemsCount=$(xmllint --xpath "count(//featureTypes/featureType)" - <<<"$xml" 2>/dev/null)
+  xml=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
+
+  itemsCount=$(xmllint --xpath "count(/featureTypes/featureType)" - <<<"$xml" 2>/dev/null)
   # redirige l'erreur standard vers null pour éviter d'être averti de chaque valeur manquante (XPath set is empty)
   # mais cela peut empêcher de détecter d'autres erreurs
   # TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
-  echo "itemsCount :  $itemsCount"
+  echo_ifverbose "INFO ${itemsCount} vecteur(s) (Directory) trouvé(s)"
 
   for (( i=1; i < $itemsCount + 1; i++ )); do
-    name=$(xmllint --xpath "/featureTypes/featureType[$i]/name/text()" - <<<"$xml") 
-    if [[ "${output}" == "${name}" ]] ; then 
-      cmd="curl --silent \
+    layer=$(xmllint --xpath "/featureTypes/featureType[$i]/name/text()" - <<<"$xml")
+    if [[ "${style}" == "${layer}" ]] ; then
+      cmd="curl --silent -w %{http_code} \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
-                 -d \"<layer><defaultStyle><name>${output}</name></defaultStyle></layer>\" \
-                 $url/geoserver/rest/layers/$workspace:${name}"
-      echo $cmd
-      eval $cmd
+                 -d \"<layer><defaultStyle><name>${style}</name></defaultStyle></layer>\" \
+                 $url/geoserver/rest/layers/${workspace}:${layer}"
+
+      result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+      statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+      echo_ifverbose "INFO statuscode=${statuscode}"
+
+      if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+        echo "OK assignation du style ${style} réussie"
+      else
+        echoerror "ERROR assignation du style ${style} échouée... error http code : ${statuscode}"
+        echoerror "${cmd}"
+        echo "ERROR assignation du style ${style} échouée (${statuscode})"
+      fi
     fi
   done
 
-  # liste les coveragestores
-  cmd="curl --silent \
+  # 1 liste les coveragestores et 2 assigne le style à ceux concernés
+  echo_ifverbose "INFO liste les rasteurs"
+  cmd="curl --silent -w %{http_code} \
 	     -u '${login}:${password}' \
-             -XGET $url/geoserver/rest/workspaces/$workspace/coveragestores.xml"
+             -XGET ${url}/geoserver/rest/workspaces/${workspace}/coveragestores.xml"
 
-  echo "récupére la liste des rasters"
-  echo $cmd
-  xml=$(eval $cmd)
+  echo_ifverbose "INFO ${cmd}"
+  
+  result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+  statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+  echo_ifverbose "INFO statuscode=${statuscode}"
 
-  if  [ $verbose ]; then
-    echo $xml
+  if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+    : # OK
+  else
+    echoerror "ERROR récupération de la liste des rasteurs, échouée... error http code : ${statuscode}"
+    echoerror "${cmd}"
+    echo "ERROR récupération de la liste des rasteurs, échouée (${statuscode})"
+    # TODO gérer erreur, ne pas essayer de traiter le xml
   fi
 
-  itemsCount=$(xmllint --xpath "count(//coverageStores/coverageStore)" - <<<"$xml" 2>/dev/null)
+  xml=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
+
+  itemsCount=$(xmllint --xpath "count(/coverageStores/coverageStore)" - <<<"$xml" 2>/dev/null)
   # redirige l'erreur standard vers null pour éviter d'être averti de chaque valeur manquante (XPath set is empty)
   # mais cela peut empêcher de détecter d'autres erreurs
   # TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
-  echo "itemsCount :  $itemsCount"
+  echo_ifverbose "INFO ${itemsCount} rasteur(s) trouvé(s)"
 
   for (( i=1; i < $itemsCount + 1; i++ )); do
-    name=$(xmllint --xpath "/coverageStores/coverageStore[$i]/name/text()" - <<<"$xml")
-    if [[ "${output}" == "${name}" ]] ; then
-      cmd="curl --silent \
+    layer=$(xmllint --xpath "/coverageStores/coverageStore[$i]/name/text()" - <<<"$xml")
+    if [[ "${style}" == "${layer}" ]] ; then
+      cmd="curl --silent -w %{http_code} \
                  -u ${login}:${password} \
                  -XPUT -H \"Content-type: text/xml\" \
-                 -d \"<layer><defaultStyle><name>${output}</name></defaultStyle></layer>\" \
-                 $url/geoserver/rest/layers/$workspace:${name}"
-      echo $cmd
-      eval $cmd
+                 -d \"<layer><defaultStyle><name>${style}</name></defaultStyle></layer>\" \
+                 ${url}/geoserver/rest/layers/${workspace}:${layer}"
+
+      result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+      statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+      echo_ifverbose "INFO statuscode=${statuscode}"
+
+      if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+        echo "OK assignation du style ${style} réussie"
+      else
+        echoerror "ERROR assignation du style ${style} échouée... error http code : ${statuscode}"
+        echoerror "${cmd}"
+        echo "ERROR assignation du style ${style} échouée (${statuscode})"
+      fi
     fi
   done
 

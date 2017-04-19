@@ -45,9 +45,8 @@ Les attributs du style sont chargés dans l'interface web de Geoserver et le fic
 
 ***Pour qu'un style soit associé à une couche :***
 
-Nom du style : nom_style.sld
-Nom de la couche : nom_couche-**sld-nom_style-sld**.shp
-La présence de caractère après le nom du style ne pose pas de problème, de même que la séparation du nom du style par le caractère "_" au lieu de "-" (modification dans util::clean.sh). Néanmoins, afin d'homogénéiser les données, il est préférable d'éviter cette pratique.
+Nom du style : nom_couche.sld
+Nom de la couche : nom_couche.shp
 
 ***Publication du style***
 
