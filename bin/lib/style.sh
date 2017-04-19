@@ -34,6 +34,16 @@ style::publish() {
     if [ $verbose ]; then echo "$@"; fi
   }
 
+  xpath() {
+  local xp=$1
+  local xml=$2
+  echo $(xmllint --xpath "${xp}" "${xml}" - <<<"$xml" 2>/dev/null)
+  # redirige l'erreur standard vers null pour éviter d'être averti de chaque valeur manquante (XPath set is empty)
+  # mais cela peut empêcher de détecter d'autres erreurs
+  # TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
+  }
+
+
   local DIR
   # chemin du script (sourcé ou non) pour pouvoir appeler d'autres scripts dans le même dossier
   DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
@@ -196,14 +206,11 @@ if [ ! "$pg_datastore" ]; then
 
   xml=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
 
-  itemsCount=$(xmllint --xpath "count(/featureTypes/featureType)" - <<<"$xml" 2>/dev/null)
-  # redirige l'erreur standard vers null pour éviter d'être averti de chaque valeur manquante (XPath set is empty)
-  # mais cela peut empêcher de détecter d'autres erreurs
-  # TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
+  itemsCount=$(xpath 'count(/featureTypes/featureType)' "${xml}")
   echo_ifverbose "INFO ${itemsCount} vecteur(s) (PostGIS) trouvé(s)"
 
   for (( i=1; i < $itemsCount + 1; i++ )); do
-    layer=$(xmllint --xpath "/featureTypes/featureType[$i]/name/text()" - <<<"$xml")
+    layer=$(xpath "/featureTypes/featureType[$i]/name/text()" "${xml}")
     if [[ "${style}" == "${layer}" ]] ; then  # (intialement envisagé : le nom de la couche devait finir par celui du style; cas particulier : être identique) d'ou : "${layer}" == *$style
       echo_ifverbose "INFO assigne le style ${style} à la couche ${layer}"
       cmd="curl --silent -w %{http_code} \
@@ -250,14 +257,11 @@ if [ ! "$pg_datastore" ]; then
 
   xml=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
 
-  itemsCount=$(xmllint --xpath "count(/featureTypes/featureType)" - <<<"$xml" 2>/dev/null)
-  # redirige l'erreur standard vers null pour éviter d'être averti de chaque valeur manquante (XPath set is empty)
-  # mais cela peut empêcher de détecter d'autres erreurs
-  # TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
+  itemsCount=$(xpath 'count(/featureTypes/featureType)' "${xml}")
   echo_ifverbose "INFO ${itemsCount} vecteur(s) (Directory) trouvé(s)"
 
   for (( i=1; i < $itemsCount + 1; i++ )); do
-    layer=$(xmllint --xpath "/featureTypes/featureType[$i]/name/text()" - <<<"$xml")
+    layer=$(xpath "/featureTypes/featureType[$i]/name/text()" "${xml}")
     if [[ "${style}" == "${layer}" ]] ; then
       echo_ifverbose "INFO assigne le style ${style} à la couche ${layer}"
       cmd="curl --silent -w %{http_code} \
@@ -303,14 +307,11 @@ if [ ! "$pg_datastore" ]; then
 
   xml=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
 
-  itemsCount=$(xmllint --xpath "count(/coverageStores/coverageStore)" - <<<"$xml" 2>/dev/null)
-  # redirige l'erreur standard vers null pour éviter d'être averti de chaque valeur manquante (XPath set is empty)
-  # mais cela peut empêcher de détecter d'autres erreurs
-  # TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
+  itemsCount=$(xpath 'count(/coverageStores/coverageStore)' "${xml}")
   echo_ifverbose "INFO ${itemsCount} rasteur(s) trouvé(s)"
 
   for (( i=1; i < $itemsCount + 1; i++ )); do
-    layer=$(xmllint --xpath "/coverageStores/coverageStore[$i]/name/text()" - <<<"$xml")
+    layer=$(xpath "/coverageStores/coverageStore[$i]/name/text()" "${xml}")
     if [[ "${style}" == "${layer}" ]] ; then
       echo_ifverbose "INFO assigne le style ${style} à la couche ${layer}"
       cmd="curl --silent -w %{http_code} \
