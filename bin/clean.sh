@@ -15,7 +15,8 @@ usage() {
 
 xpath() { 
 local xp=$1 
-echo $(xmllint --xpath "$xp" "$input" 2>/dev/null )
+local xml=$2
+echo $(xmllint --xpath "${xp}" "${xml}" - <<<"$xml" 2>/dev/null)
 # redirige l'erreur standard vers null pour éviter d'être averti de chaque valeur manquante (XPath set is empty)
 # mais cela peut empêcher de détecter d'autres erreurs
 # TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
@@ -106,7 +107,6 @@ main() {
   # vecteurs : liste ceux publiés sur le geoserver
   ###################
   # ------------------------ Pour les vecteurs issus du datastore de type Directory $datastore
-  xml_path="${tmpdir}/vectors_featuretypes_directory.xml" 
   list_path="${tmpdir}/vectors_published_directory"
 
   echo_ifverbose "INFO liste les vecteurs du datastore de type Directory : ${datastore}"
@@ -114,22 +114,19 @@ main() {
   echo_ifverbose "INFO ${cmd}"
   
   xml=$(eval ${cmd})
-  echo "${xml}" > "${xml_path}"
   # extrait du contenu du xml :
   #<featureTypes> <featureType> <name>test_ids__chailluz_charbonniere</name> <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="https://georchestra-mshe.univ-fcomte.fr/geoserver/rest/workspaces/geosync-ouvert/featuretypes/test_ids__chailluz_charbonniere.xml" type="application/xml"/> </featureType> <featureType>...</featureType> ... </featureTypes>
-  input="${xml_path}"
-  itemsCount=$(xpath 'count(/featureTypes/featureType)')
+  itemsCount=$(xpath 'count(/featureTypes/featureType)' "${xml}")
   echo_ifverbose "INFO ${itemsCount} vecteur(s) publié(s)"
 
   > "${list_path}" # (re)créer le fichier vide
   for (( i=1; i < ${itemsCount} + 1; i++ )); do 
-    name=$(xpath '/featureTypes/featureType['${i}']/name/text()') 
+    name=$(xpath '/featureTypes/featureType['${i}']/name/text()' "${xml}")
     echo "${name}" >> "${list_path}"
   done
 
   # ------------------------ Pour les vecteurs issus du datastore de type PostGIS $pg_datastore
 
-  xml_path="${tmpdir}/vectors_featuretypes_postgis.xml" 
   list_path="${tmpdir}/vectors_published_postgis"
 
   echo_ifverbose "INFO liste les vecteurs du datastore de type PostGIS : ${pg_datastore}"
@@ -137,22 +134,20 @@ main() {
   echo_ifverbose "INFO ${cmd}"
   
   xml=$(eval ${cmd})
-  echo "${xml}" > "${xml_path}"
 
-  input="${xml_path}"
-  itemsCount=$(xpath 'count(/featureTypes/featureType)')
+
+  itemsCount=$(xpath 'count(/featureTypes/featureType)' "${xml}")
   echo_ifverbose "INFO ${itemsCount} vecteur(s) publié(s)"
 
   > "${list_path}" # (re)créer le fichier vide
   for (( i=1; i < ${itemsCount} + 1; i++ )); do 
-    name=$(xpath '/featureTypes/featureType['${i}']/name/text()') 
+    name=$(xpath '/featureTypes/featureType['${i}']/name/text()' "${xml}") 
     echo "${name}" >> "${list_path}"
   done
 
   ###################
   # rasteurs : liste ceux publiés sur le geoserver
   ###################
-  xml_path="${tmpdir}/rasters_coveragestores.xml" 
   list_path="${tmpdir}/rasters_published"
 
   echo_ifverbose "INFO liste les rasteurs (coveragestores)"
@@ -160,25 +155,20 @@ main() {
   echo_ifverbose "INFO ${cmd}"
 
   xml=$(eval ${cmd})
-  echo "${xml}" > "${xml_path}"
-
   # extrait du contenu du xml :
   #<coverageStores><coverageStore><name>mos</name><atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="https://georchestra-mshe.univ-fcomte.fr/geoserver/rest/workspaces/geosync-ouvert/coveragestores/mos.xml" type="application/xml"/></coverageStore><coverageStore>...</coverageStore> ... </coverageStores>
-  
-  input="${xml_path}"
-  itemsCount=$(xpath 'count(/coverageStores/coverageStore)')
+  itemsCount=$(xpath 'count(/coverageStores/coverageStore)' "${xml}")
   echo_ifverbose "INFO ${itemsCount} rasteur(s) publié(s)"
 
   > "${list_path}" # (re)créer le fichier vide
   for (( i=1; i < ${itemsCount} + 1; i++ )); do 
-    name=$(xpath '/coverageStores/coverageStore['${i}']/name/text()') 
+    name=$(xpath '/coverageStores/coverageStore['${i}']/name/text()' "${xml}") 
     echo "${name}" >> "${list_path}"
   done
 
   ###################
   # styles : liste ceux publiés sur le geoserver
   ###################
-  xml_path="${tmpdir}/styles.xml" 
   list_path="${tmpdir}/styles_published"
   
   echo_ifverbose "INFO liste les styles"
@@ -186,18 +176,14 @@ main() {
   echo_ifverbose "INFO ${cmd}"
 
   xml=$(eval ${cmd})
-  echo "${xml}" > "${xml_path}"
-
   # extrait du contenu du xml :
   #<styles> <style> <name>generic</name> <atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="alternate" href="https://georchestra-mshe.univ-fcomte.fr/geoserver/rest/styles/generic.xml" type="application/xml"/> </style> <style>...</style> ... </styles>
-
-  input="${xml_path}"
-  itemsCount=$(xpath 'count(/styles/style)')
+  itemsCount=$(xpath 'count(/styles/style)' "${xml}")
   echo_ifverbose "INFO ${itemsCount} style(s) publié(s)"
 
   > "${list_path}" # (re)créer le fichier vide
   for (( i=1; i < ${itemsCount} + 1; i++ )); do 
-    name=$(xpath '/styles/style['${i}']/name/text()')
+    name=$(xpath '/styles/style['${i}']/name/text()' "${xml}")
     echo "${name}" >> "${list_path}"
   done
 
