@@ -13,14 +13,6 @@ usage() {
   echo "   dans le geoserver accéssible à l'adresse donnée (-u url)"
 } 
 
-xpath() {
-local xp=$1
-echo $(xmllint --xpath "$xp" "$input" 2>/dev/null )
-# redirige l'erreur standard vers null pour éviter d'être averti de chaque valeur manquante (XPath set is empty)
-# mais cela peut empêcher de détecter d'autres erreurs
-# TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
-}
-
 vector::publish() {
 
   echoerror() {
@@ -34,6 +26,15 @@ vector::publish() {
   #echo if verbose=1
   echo_ifverbose() {
     if [ $verbose ]; then echo "$@"; fi
+  }
+
+  xpath() {
+  local xp=$1
+  local xml=$2
+  echo $(xmllint --xpath "${xp}" "${xml}" - <<<"$xml" 2>/dev/null)
+  # redirige l'erreur standard vers null pour éviter d'être averti de chaque valeur manquante (XPath set is empty)
+  # mais cela peut empêcher de détecter d'autres erreurs
+  # TODO: faire tout de même un test, une fois sur le fichier, de la validité du xml
   }
 
   local DIR
@@ -273,43 +274,33 @@ vector::publish() {
 	          -u ${login}:${password} \
 	          -XGET ${url}/geoserver/rest/styles.xml"
   echo_ifverbose "INFO ${cmd}"
-          
-  local tmpdir_styles=~/tmp/geosync_sld
-  rm -R "$tmpdir_styles"
-  mkdir -p "$tmpdir_styles"
-  output="styles.xml"
-  touch "$tmpdir_styles/$output"
-  
-  xml=$(eval $cmd)
-  echo $xml > "$tmpdir_styles/$output"
 
-  input="$tmpdir_styles/$output"
-  itemsCount=$(xpath 'count(/styles/style)')
+  result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+  statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+  echo_ifverbose "INFO statuscode=${statuscode}"
 
-  touch "$tmpdir_styles/styles_existants"
+  xml=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
+
+  itemsCount=$(xpath 'count(/styles/style)' "${xml}")
+
   for (( i=1; i < $itemsCount + 1; i++ )); do
-    name=$(xpath '//styles/style['${i}']/name/text()')
-    echo $name >> "$tmpdir_styles/styles_existants"
+    style=$(xpath '//styles/style['${i}']/name/text()' "${xml}")
+
+    if [[ "${layer}" == "${style}"* ]]; then
+      echo_ifverbose "INFO assigne le style ${style} à la couche ${layer}"
+      cmd="curl --silent -w %{http_code} \
+                 -u ${login}:${password} \
+                 -XPUT -H \"Content-type: text/xml\" \
+                 -d \"<layer><defaultStyle><name>${style}</name></defaultStyle></layer>\" \
+                 ${url}/geoserver/rest/layers/${workspace}:${layer}"
+      echo_ifverbose "INFO ${cmd}"
+
+      result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+      statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+      echo_ifverbose "INFO statuscode=${statuscode}"
+
+    fi
   done
-
-	  while read line 
-	  do
-	    style=$line
-	    if [[ "${layer}" == "${style}"* ]]; then
-        echo_ifverbose "INFO assigne le style ${style} à la couche ${layer}"
-	      cmd="curl --silent -w %{http_code} \
-	                 -u ${login}:${password} \
-	                 -XPUT -H \"Content-type: text/xml\" \
-	                 -d \"<layer><defaultStyle><name>${style}</name></defaultStyle></layer>\" \
-	                 ${url}/geoserver/rest/layers/${workspace}:${layer}"
-        echo_ifverbose "INFO ${cmd}"
-
-        result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
-        statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
-        echo_ifverbose "INFO statuscode=${statuscode}"
-
-	    fi
-	  done < "$tmpdir_styles/styles_existants"
 
 }
 
