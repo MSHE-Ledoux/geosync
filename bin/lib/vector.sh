@@ -216,14 +216,31 @@ vector::publish() {
   echo $cmd
   eval $cmd
 
-  # TODO le code de suppression ne semble jamais être exécuté pour une couche dans PostGIS
-  #si la table est déjà publiée sur geoserver, la dépublie
-  if [ -d "/var/www/geoserver/data/workspaces/$workspace/$pg_datastore/$layer" ]; then
-    echo "la couche est déjà publiée sur geoserver : elle va être dépubliée"
-    cmd="curl --silent -u '${login}:${password}' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes/$layer?recurse=true&purge=all'"
-    echo $cmd
-    eval $cmd
-  fi 
+  # récupére la couche si elle existe
+  echo_ifverbose "INFO vérifie l'existance du vecteur ${layer}"
+  cmd="curl --silent -w %{http_code} \
+            -u '${login}:${password}' \
+            -XGET '${url}/geoserver/rest/workspaces/${workspace}/datastores/${pg_datastore}/featuretypes/${layer}.xml'"
+  echo_ifverbose "INFO ${cmd}"
+
+  result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+  statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+  echo_ifverbose "INFO statuscode=${statuscode}"
+  content=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
+
+  if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+    echo "YES le vecteur ${layer} existe déjà"
+    return 0 # TODO envisager de mettre à jour si besoin, voire de supprimer et publier de nouveau
+  elif [[ "${statuscode}" == "404" ]]; then
+    echo_ifverbose "INFO le vecteur ${layer} n'existe pas encore"
+    # continue pour publier la couche
+  else
+    echoerror "ERROR vérification de l'existance du vecteur ${layer} échouée... error http code : ${statuscode}"
+    echoerror "      message : ${content}"
+    echoerror "${cmd}"
+    echo "ERROR vérification de l'existance du vecteur ${layer} échouée (${statuscode})"
+    return 1 #erreur
+  fi
 
   # publication des données sur geoserver
   # doc : http://docs.geoserver.org/stable/en/user/rest/api/featuretypes.html
