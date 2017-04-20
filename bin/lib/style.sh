@@ -132,53 +132,77 @@ if [ ! "$pg_datastore" ]; then
 
   local statuscode=0
 
-  ### publication du style dans le Geoserver 1- création du style vide 2- chargement du style
+  ### publication du style dans le Geoserver 1- création du style vide si besoin 2- mise à jour du style
+  # NB: comme l'API REST ne permet pas en une seule opération la mise à jour ou la création si besoin, alors on teste l'existence avant de créer si besoin et on met à jour dans tous les cas (pour simplifier/uniformiser le traitement) (donc fait 2 ou 3 requêtes quand on en aurait préféré 1 seule)
 
-  ## Création du style vide - création du xml dans /var/www/geoserver/data/styles
+  ## 1- création du style vide si besoin - création du xml dans /var/www/geoserver/data/styles
 
-  echo_ifverbose "INFO création du style vide : ${style}.sld"
+  ## 1.1 - vérifie existance du style
+
+  # doc : http://docs.geoserver.org/stable/en/user/rest/api/styles.html#workspaces-ws-styles-s-format
+  echo_ifverbose "INFO vérifie l'existance du style ${style}"
   cmd="curl --silent -w %{http_code} \
-                   -u ${login}:${password} \
-                   -XPOST -H 'Content-type: text/xml' \
-                   -d '<style><name>${style}</name><filename>${style}.sld</filename></style>' \
-            ${url}/geoserver/rest/workspaces/${workspace}/styles 2>&1"
+            -u '${login}:${password}' \
+            -XGET '${url}/geoserver/rest/workspaces/${workspace}/styles/${style}.xml'"
   echo_ifverbose "INFO ${cmd}"
 
   result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
   statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
   echo_ifverbose "INFO statuscode=${statuscode}"
-  
-  #-w %{http_code} pour récupérer le status code de la requête
+  content=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
 
   if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
-    echo "OK création du style ${style} réussie"
+    echo "YES le style existe déjà : ${style}"
+  elif [[ "${statuscode}" == "404" ]]; then
+    echo_ifverbose "INFO le style n'existe pas encore : ${style}"
+
+    ## 1.2 - création du style
+    echo_ifverbose "INFO création du style vide : ${style}"
+    cmd="curl --silent -w %{http_code} \
+              -u ${login}:${password} \
+              -H 'Content-type: text/xml' \
+              -d '<style><name>${style}</name><filename>${style}.sld</filename></style>' \
+              -XPOST ${url}/geoserver/rest/workspaces/${workspace}/styles 2>&1"
+    echo_ifverbose "INFO ${cmd}"
+
+    result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+    statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+    echo_ifverbose "INFO statuscode=${statuscode}"
+    
+    if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+      echo "OK création du style ${style} réussie"
+    else
+      echoerror "ERROR création du style ${style} échouée... error http code : ${statuscode}"
+      echoerror "${cmd}"
+      echo "ERROR création du style ${style} échouée (${statuscode})"
+    fi
+
   else
-    echoerror "ERROR création du style ${style} échouée... error http code : ${statuscode}"
+    echoerror "ERROR vérification de l'existance du style ${style} échouée... error http code : ${statuscode}"
+    echoerror "      message : ${content}"
     echoerror "${cmd}"
-    echo "ERROR création du style ${style} échouée (${statuscode})"
+    echo "ERROR vérification de l'existance du style ${style} échouée (${statuscode})"
   fi
 
-  ## Chargement des caractéristiques du style - création du sld dans /var/www/geoserver/data/styles
-  echo_ifverbose "INFO chargement des caractéristiques du style : ${style}"
+  ## mise à jour du style - création du sld dans /var/www/geoserver/data/styles
+  echo_ifverbose "INFO mise à jour du style : ${style}"
   cmd="curl --silent -w %{http_code} \
-                   -u ${login}:${password} \
-                   -XPUT -H 'Content-type: application/vnd.ogc.sld+xml' \
-                   -d @/home/$login/owncloudsync/$input \
-            $url/geoserver/rest/workspaces/${workspace}/styles/$style 2>&1"
+            -u ${login}:${password} \
+            -H 'Content-type: application/vnd.ogc.sld+xml' \
+            -d @/home/$login/owncloudsync/$input \
+            -XPUT ${url}/geoserver/rest/workspaces/${workspace}/styles/${style} 2>&1"
   echo_ifverbose "INFO ${cmd}"
 
   result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
   statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
   echo_ifverbose "INFO statuscode=${statuscode}"
   
-  #-w %{http_code} pour récupérer le status code de la requête
-
   if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
-    echo "OK assignation du style ${style} réussie"
+    echo "OK mise à jour du style ${style} réussie"
   else
-    echoerror "ERROR assignation du style ${style} échouée... error http code : ${statuscode}"
+    echoerror "ERROR mise à jour du style ${style} échouée... error http code : ${statuscode}"
     echoerror "${cmd}"
-    echo "ERROR assignation du style ${style} échouée (${statuscode})"
+    echo "ERROR mise à jour du style ${style} échouée (${statuscode})"
   fi
 
   ### Assignation du style à toutes les couches associées : nom_couche_sld_nom_style_sld.shp  <= nom_style.sld 
