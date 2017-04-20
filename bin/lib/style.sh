@@ -10,6 +10,9 @@
 # (le fait de ne pas modifier le style par défaut devrait faciliter le clean des styles mais compliquer l'assignation d'un style (-> car ajout à une couche si pas déjà le cas))
 # le lien entre les couches et les styles pourrait être fait au niveau des fichiers avec par exemple nom_couche.shp.nom_sytle_autonome.sld (et nom_sytle_autonome.sld) (en plus du nom_couche.sld)
 
+# Attention : il peut y avoir des incompatibilités entre le sld du geoserver et de qgis
+#             par exemple l'élément SvgParameter généré par QGIS 2.18.6 ne passe pas dans GeoServer 2.8.3, tandis que CssParameter passe
+
 usage() { 
   echo "==> usage : "
   echo "source /lib/style.sh"
@@ -196,11 +199,13 @@ if [ ! "$pg_datastore" ]; then
   result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
   statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
   echo_ifverbose "INFO statuscode=${statuscode}"
+  content=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
   
   if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
     echo "OK mise à jour du style ${style} réussie"
   else
     echoerror "ERROR mise à jour du style ${style} échouée... error http code : ${statuscode}"
+    echoerror "      message : ${content}"
     echoerror "${cmd}"
     echo "ERROR mise à jour du style ${style} échouée (${statuscode})"
   fi
