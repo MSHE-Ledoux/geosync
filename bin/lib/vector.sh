@@ -258,12 +258,12 @@ vector::publish() {
   content=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
 
   if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
-    echo "OK publication du vecteur ${style} réussie"
+    echo "OK publication du vecteur ${layer} réussie"
   else
-    echoerror "ERROR publication du vecteur ${style} échouée... error http code : ${statuscode}"
+    echoerror "ERROR publication du vecteur ${layer} échouée... error http code : ${statuscode}"
     echoerror "      message : ${content}"
     echoerror "${cmd}"
-    echo "ERROR publication du vecteur ${style} échouée (${statuscode})"
+    echo "ERROR publication du vecteur ${layer} échouée (${statuscode})"
   fi
 
   # ---------------------------- Recherche d'un style correspondant au nom de la couche envoyée
