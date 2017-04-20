@@ -122,15 +122,6 @@ vector::publish() {
     return 1 # erreur
   fi
 
-  if  [ $verbose ]; then
-    echo "shapefile en entrée : $input"
-    echo "shapefile en sortie : $output"
-    echo "système de coordonnées en sortie : $epsg"
-    echo "url du Geoserver : $url"
-    echo "workspace du Geoserver : $workspace"
-    echo "datastore du Geoserver : $datastore"
-  fi
-
   local statuscode=0
 
   # crée un dossier temporaire et stocke son chemin dans une variable
@@ -214,10 +205,10 @@ vector::publish() {
   # ----------------------------- PUBLICATION POSTGIS -------------
 
   # necessaire car le nom d'une table postgres ne peut avoir de .
-  output_pgsql=$(echo $output | cut -d. -f1) 
+  layer=$(echo $output | cut -d. -f1) # TODO envisager de supprimer les points et non de prendre avant un point pour diminuer le risque de colision avec une autre table
   
   # envoi du shapefile vers postgis
-  cmd="shp2pgsql -I -W ${encoding} -s 2154 -D -d //$tmpdir/$output $output_pgsql | sed -e 's/DROP TABLE/DROP TABLE IF EXISTS/' | psql -h $dbhost -d $db -U $dbuser -w 1>/dev/null"
+  cmd="shp2pgsql -I -W ${encoding} -s 2154 -D -d //$tmpdir/$output $layer | sed -e 's/DROP TABLE/DROP TABLE IF EXISTS/' | psql -h $dbhost -d $db -U $dbuser -w 1>/dev/null"
   # -D  Use  the PostgreSQL "dump" format for the output data. much faster to load than the default "insert" SQL format. Use this for very large data sets.
   # -d  Drops the table, then recreates it # attention : génére une erreur (à tord) si n'existe pas déjà 
   # ERREUR:  la table « ... » n'existe pas
@@ -225,88 +216,81 @@ vector::publish() {
   echo $cmd
   eval $cmd
 
-  # si la table est déjà publiée sur geoserver, la dépublie
-  if [ -d "/var/www/geoserver/data/workspaces/$workspace/$pg_datastore/$output_pgsql" ]; then
+  # TODO le code de suppression ne semble jamais être exécuté pour une couche dans PostGIS
+  #si la table est déjà publiée sur geoserver, la dépublie
+  if [ -d "/var/www/geoserver/data/workspaces/$workspace/$pg_datastore/$layer" ]; then
     echo "la couche est déjà publiée sur geoserver : elle va être dépubliée"
-    cmd="curl --silent -u '${login}:${password}' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes/$output_pgsql?recurse=true&purge=all'"
+    cmd="curl --silent -u '${login}:${password}' -XDELETE '$url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes/$layer?recurse=true&purge=all'"
     echo $cmd
     eval $cmd
   fi 
 
   # publication des données sur geoserver
+  # doc : http://docs.geoserver.org/stable/en/user/rest/api/featuretypes.html
+  echo_ifverbose "INFO publication du vecteur ${layer} dans le datastore (PostGIS) ${pg_datastore}"
+  cmd="curl --silent -w %{http_code} \
+            -u '${login}:${password}' \
+            -XPOST -H 'Content-type: text/xml' \
+            -d '<featureType><name>${layer}</name></featureType>' \
+            ${url}/geoserver/rest/workspaces/${workspace}/datastores/${pg_datastore}/featuretypes 2>&1"
+  echo_ifverbose "INFO ${cmd}"
 
-  if [ $verbose ]; then
-    var_v=$"-v"
-    echo "curl $var_v -w %{http_code} -u \"${login}:#########\" -XPOST -H \"Content-type: text/xml\"  -d \"<featureType><name>$output_pgsql</name></featureType>\" \
-    $url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes"
+  result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+  statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+  echo_ifverbose "INFO statuscode=${statuscode}"
+  content=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
+
+  if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+    echo "OK publication du vecteur ${style} réussie"
   else
-    var_v=$"--silent --output /dev/null"
+    echoerror "ERROR publication du vecteur ${style} échouée... error http code : ${statuscode}"
+    echoerror "      message : ${content}"
+    echoerror "${cmd}"
+    echo "ERROR publication du vecteur ${style} échouée (${statuscode})"
   fi
-
-  cmd="curl $var_v -w %{http_code} -u '${login}:${password}' -XPOST -H 'Content-type: text/xml'  -d '<featureType><name>$output_pgsql</name></featureType>' \
-  $url/geoserver/rest/workspaces/$workspace/datastores/$pg_datastore/featuretypes 2>&1"
-
-  statuscode=$(eval $cmd)
-
-  if  [ $verbose ]; then
-    echo "" #saut de ligne
-    echo "valeur du statuscode $statuscode"
-  fi
-
-  statuscode=$(echo $statuscode | tail -c 4)
-  echo "statuscode $statuscode"
-
-  # si le code de la réponse http est compris entre [200,300[
-  if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
-    if  [ $verbose ]; then
-      echo "ok vecteur publié depuis postgis $statuscode"
-    fi
-    echo "vecteur publié depuis postgis: $output_pgsql ($input)"
-  else
-    echoerror "error vecteur publié depuis postgis http code : $statuscode for $output"
-  fi
-
 
   # ---------------------------- Recherche d'un style correspondant au nom de la couche envoyée
-
-          cmd="curl --silent \
-	             -u ${login}:${password} \
-	             -XGET $url/geoserver/rest/styles.xml"
-	  if [ $verbose ]; then
-            echo $cmd
-          fi
+  # TODO devrait être géré par la lib style
+  echo_ifverbose "INFO recherche un style correspondant au nom de la couche ${layer}"
+  cmd="curl --silent -w %{http_code} \
+	          -u ${login}:${password} \
+	          -XGET ${url}/geoserver/rest/styles.xml"
+  echo_ifverbose "INFO ${cmd}"
           
-          local tmpdir_styles=~/tmp/geosync_sld
-          rm -R "$tmpdir_styles"
-          mkdir -p "$tmpdir_styles"
-          output="styles.xml"
-          touch "$tmpdir_styles/$output"
-          
-          xml=$(eval $cmd)
-          echo $xml
-          echo $xml > "$tmpdir_styles/$output"
+  local tmpdir_styles=~/tmp/geosync_sld
+  rm -R "$tmpdir_styles"
+  mkdir -p "$tmpdir_styles"
+  output="styles.xml"
+  touch "$tmpdir_styles/$output"
+  
+  xml=$(eval $cmd)
+  echo $xml > "$tmpdir_styles/$output"
 
-          input="$tmpdir_styles/$output"
-          itemsCount=$(xpath 'count(/styles/style)')
+  input="$tmpdir_styles/$output"
+  itemsCount=$(xpath 'count(/styles/style)')
 
-          touch "$tmpdir_styles/styles_existants"
-          for (( i=1; i < $itemsCount + 1; i++ )); do
-            name=$(xpath '//styles/style['${i}']/name/text()')
-            echo $name
-            echo $name >> "$tmpdir_styles/styles_existants"
-          done
+  touch "$tmpdir_styles/styles_existants"
+  for (( i=1; i < $itemsCount + 1; i++ )); do
+    name=$(xpath '//styles/style['${i}']/name/text()')
+    echo $name >> "$tmpdir_styles/styles_existants"
+  done
 
 	  while read line 
 	  do
-	    name=$line
-	    if [[ "$output_pgsql" == "${name}"* ]]; then
-	      cmd="curl --silent \
+	    style=$line
+	    if [[ "${layer}" == "${style}"* ]]; then
+        echo_ifverbose "INFO assigne le style ${style} à la couche ${layer}"
+	      cmd="curl --silent -w %{http_code} \
 	                 -u ${login}:${password} \
 	                 -XPUT -H \"Content-type: text/xml\" \
-	                 -d \"<layer><defaultStyle><name>${name}</name></defaultStyle></layer>\" \
-	                 $url/geoserver/rest/layers/${workspace}:${output_pgsql}"
-	      echo $cmd
-	      eval $cmd
+	                 -d \"<layer><defaultStyle><name>${style}</name></defaultStyle></layer>\" \
+	                 ${url}/geoserver/rest/layers/${workspace}:${layer}"
+        echo_ifverbose "INFO ${cmd}"
+
+        result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+        statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+        echo_ifverbose "INFO statuscode=${statuscode}"
+
 	    fi
 	  done < "$tmpdir_styles/styles_existants"
 
