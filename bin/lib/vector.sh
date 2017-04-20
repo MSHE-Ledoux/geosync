@@ -269,10 +269,11 @@ vector::publish() {
 
   # ---------------------------- Recherche d'un style correspondant au nom de la couche envoyée
   # TODO devrait être géré par la lib style
-  echo_ifverbose "INFO recherche un style correspondant au nom de la couche ${layer}"
+  echo_ifverbose "INFO recherche un style correspondant au nom de la couche ${layer}..."
+  echo_ifverbose "INFO liste les styles"
   cmd="curl --silent -w %{http_code} \
 	          -u ${login}:${password} \
-	          -XGET ${url}/geoserver/rest/styles.xml"
+	          -XGET ${url}/geoserver/rest/workspaces/${workspace}/styles.xml"
   echo_ifverbose "INFO ${cmd}"
 
   result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
