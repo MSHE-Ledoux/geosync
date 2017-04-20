@@ -207,14 +207,15 @@ vector::publish() {
 
   # necessaire car le nom d'une table postgres ne peut avoir de .
   layer=$(echo $output | cut -d. -f1) # TODO envisager de supprimer les points et non de prendre avant un point pour diminuer le risque de colision avec une autre table
-  
-  # envoi du shapefile vers postgis
-  cmd="shp2pgsql -I -W ${encoding} -s 2154 -D -d //$tmpdir/$output $layer | sed -e 's/DROP TABLE/DROP TABLE IF EXISTS/' | psql -h $dbhost -d $db -U $dbuser -w 1>/dev/null"
+
+  echo_ifverbose "INFO envoi du shapefile vers PostGIS"
+  cmd="shp2pgsql -I -W ${encoding} -s 2154 -D -d //${tmpdir}/${output} ${layer} | sed -e 's/DROP TABLE/DROP TABLE IF EXISTS/' | psql -h ${dbhost} -d ${db} -U ${dbuser} -w 1>/dev/null"
   # -D  Use  the PostgreSQL "dump" format for the output data. much faster to load than the default "insert" SQL format. Use this for very large data sets.
   # -d  Drops the table, then recreates it # attention : génére une erreur (à tord) si n'existe pas déjà 
   # ERREUR:  la table « ... » n'existe pas
   # pour éviter d'avoir une erreur, on substitue le DROP TABLE par un DROP TABLE IF EXISTS  # | sed -e "s/DROP TABLE/DROP TABLE IF EXISTS/" |
-  echo $cmd
+  echo_ifverbose "INFO ${cmd}"
+
   eval $cmd
 
   # récupére la couche si elle existe
