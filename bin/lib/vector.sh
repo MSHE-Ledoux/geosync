@@ -268,41 +268,7 @@ vector::publish() {
     echo "ERROR publication du vecteur ${layer} échouée (${statuscode})"
   fi
 
-  # ---------------------------- Recherche d'un style correspondant au nom de la couche envoyée
-  # TODO devrait être géré par la lib style
-  echo_ifverbose "INFO recherche un style correspondant au nom de la couche ${layer}..."
-  echo_ifverbose "INFO liste les styles"
-  cmd="curl --silent -w %{http_code} \
-	          -u ${login}:${password} \
-	          -XGET ${url}/geoserver/rest/workspaces/${workspace}/styles.xml"
-  echo_ifverbose "INFO ${cmd}"
-
-  result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
-  statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
-  echo_ifverbose "INFO statuscode=${statuscode}"
-
-  xml=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
-
-  itemsCount=$(xpath 'count(/styles/style)' "${xml}")
-
-  for (( i=1; i < $itemsCount + 1; i++ )); do
-    style=$(xpath '//styles/style['${i}']/name/text()' "${xml}")
-
-    if [[ "${layer}" == "${style}"* ]]; then
-      echo_ifverbose "INFO assigne le style ${style} à la couche ${layer}"
-      cmd="curl --silent -w %{http_code} \
-                 -u ${login}:${password} \
-                 -XPUT -H \"Content-type: text/xml\" \
-                 -d \"<layer><defaultStyle><name>${style}</name></defaultStyle></layer>\" \
-                 ${url}/geoserver/rest/layers/${workspace}:${layer}"
-      echo_ifverbose "INFO ${cmd}"
-
-      result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
-      statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
-      echo_ifverbose "INFO statuscode=${statuscode}"
-
-    fi
-  done
+  # l'assignation d'un style est faite ailleurs
 
 }
 
