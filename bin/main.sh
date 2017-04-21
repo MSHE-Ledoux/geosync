@@ -49,7 +49,7 @@ fi
 # synchronise les fichiers du montage webdav pour être plus performant
 # attention : si des photos sont présentes dans un répertoire Photos, elles pourraient être prises pour des rasters
 # pour dépublier des couches, les déplacer dans le répertoire _unpublished
-cmd="rsync --quiet -avr --delete --exclude 'lost+found' --exclude _unpublished '$INPUT_OUTPUT_PATH/' '$INPUT_COPY_PATH/'"
+cmd="rsync --quiet -avr --delete --exclude 'lost+found' --exclude __*/ --exclude _unpublished '$INPUT_OUTPUT_PATH/' '$INPUT_COPY_PATH/'"
 echo_ifverbose $cmd
 eval $cmd
 
