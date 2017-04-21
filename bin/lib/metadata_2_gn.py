@@ -74,7 +74,9 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
             saxon_output = "-o:" + tmpdir + "/sax_" +  output 
             print str(saxon_output)
             # saxonb-xslt requiert le package libsaxonb-java (apt install libsaxonb-java)
-            subprocess.call(["saxonb-xslt", "-ext:on", saxon_input, saxon_xsl, saxon_output])
+            cmd = "saxonb-xslt", "-ext:on", saxon_input, saxon_xsl, saxon_output
+            # subprocess.call(["saxonb-xslt", "-ext:on", saxon_input, saxon_xsl, saxon_output]) # semble poser problème selon l'environnement (docker, ansible...)
+            subprocess.call(cmd)
             input = tmpdir + "/sax_" +  output # input = /home/georchestra-ouvert/tmp/geosync_metadata/sax_cc_jura_nord.shp.xml
             print input
             break
