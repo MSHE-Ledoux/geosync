@@ -126,7 +126,7 @@ importfile() {
 
     # convertit et publie la couche pour postgis_data et shpowncloud
     cmd="vector::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' 
-                         -u '$host' -w '$workspace' -s '$datastore' -g '$pg_datastore' -b '$db' -d '$dbuser' -e '$epsg' $verbosestr"
+                         -u '$host' -w '$workspace' -s '$datastore' -g '$pg_datastore' -t '$dbhost' -b '$db' -d '$dbuser' -e '$epsg' $verbosestr"
     echo $cmd
     eval $cmd
 
@@ -143,7 +143,7 @@ importfile() {
     fi
 
     cmd="raster::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' 
-                         -u '$host' -w '$workspace' -c '$coveragestore' -e '$epsg' -b '$db' -d '$dbuser' $verbosestr"
+                         -u '$host' -w '$workspace' -c '$coveragestore' -e '$epsg' -t '$dbhost' -b '$db' -d '$dbuser' $verbosestr"
     echo $cmd
     eval $cmd
 
@@ -182,6 +182,7 @@ importfile() {
   elif [ $ext_file == "tif" ] && [ $ext_file2 == "aux" ]; then
     echo "fichier .aux.xml ignoré car il s'agit d'un fichier de projection/metadonnee"
   else
+    # Attention : l'utilisateur (login) doit être dans le même groupe que testadmin TODO
     cmd="python $BASEDIR/lib/metadata_2_gn.py -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd'
               -u '$host' -w '$workspace' -s '$datastore' --db_hostname '$dbhost' $verbosestr"
     echo $cmd
@@ -213,7 +214,7 @@ main() {
 
   #local input output epsg datapath paramfile workspace datastore coveragestore verbose help
   local OPTIND opt
-  while getopts "i:o:e:d:p:w:s:c:g:b:l:vh" opt; do
+  while getopts "i:o:e:d:p:w:s:c:g:t:b:l:vh" opt; do
     # le : signifie que l'option attend un argument
     case $opt in
       i) input=$OPTARG ;;
@@ -221,10 +222,11 @@ main() {
       e) epsg=$OPTARG ;;
       d) datapath=$OPTARG ;;
       p) paramfile=$OPTARG ;;
-      w) workspace=$OPTARG ;;
+      w) workspace=$OPTARG ;; # Attention : pour l'instant la config écrase les paramètres passés à ce script (pg_datastore, dbhost, db, dbuser...)
       s) datastore=$OPTARG ;;
       c) coveragestore=$OPTARG ;;
       g) pg_datastore=$OPTARG ;;
+      t) dbhost=$OPTARG ;;
       b) db=$OPTARG ;;
       l) dbuser=$OPTARG ;;
       v) verbose=1; verbosestr="-v" ;;
@@ -253,8 +255,9 @@ main() {
     error "le fichier geosync.conf n'existe pas; le spécifier avec l'option -p [paramfile]"
   fi
 
-  # récupère "host login passwd workspace datastore pg_datastore db logs" dans le fichier .geosync.conf situé dans le dossier de l'utilisateur
-  local host login passwd workspace datastore pg_datastore db dbuser logs
+  # récupère "host login passwd workspace datastore pg_datastore dbhost db logs" dans le fichier .geosync.conf situé dans le dossier de l'utilisateur
+  # Attention : pour l'instant la config écrase les paramètres passés à ce script (pg_datastore, dbhost, db, dbuser...)
+  local host login passwd workspace datastore pg_datastore dbhost db dbuser logs
   source "$paramfile"
 
   # attention le fichier .geosync.conf est interprété et fait donc confiance au code
@@ -277,7 +280,7 @@ main() {
   fi
 
   # vérification des paramètres passés (soit par argument, soit par le fichier .geosync.conf)
-  if [ -z $host ] || [ -z $login ] || [ -z $passwd ] || [ -z $workspace ] || [ -z $datastore ] || [ -z $pg_datastore ] || [ -z $db ] || [ -z $dbuser ] || [ -z $logs ]; then
+  if [ -z $host ] || [ -z $login ] || [ -z $passwd ] || [ -z $workspace ] || [ -z $datastore ] || [ -z $pg_datastore ] || [ -z $dbhost ] || [ -z $db ] || [ -z $dbuser ] || [ -z $logs ]; then
     echoerror "au moins un paramètre maquant !"
     usage
     exit

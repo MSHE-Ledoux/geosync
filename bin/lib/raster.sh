@@ -5,7 +5,7 @@
 usage() { 
   echo "==> usage : "
   echo "source /lib/raster.sh"
-  echo "raster::publish -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -c coveragestore -b db -d dbuser [-v]"
+  echo "raster::publish -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -c coveragestore -t db_host -b db_name -d db_user [-v]"
   echo ""
   echo "1. convertit (une copie du) raster (-i input) en tiff, dans le système de coordonnées désiré (-e epsg, ex: 4326 pour WGS84 )"
   echo "2. publie le raster converti sous le nom (-o output=input)"
@@ -35,7 +35,7 @@ raster::publish() {
 
   local input output epsg login password url workspace coveragestore verbose
   local OPTIND opt
-  while getopts "i:o:e:l:p:u:w:c:b:d:vh" opt; do
+  while getopts "i:o:e:l:p:u:w:c:t:b:d:vh" opt; do
     # le : signifie que l'option attend un argument
     case $opt in
       i) input=$OPTARG ;;
@@ -46,6 +46,7 @@ raster::publish() {
       u) url=$OPTARG ;;
       w) workspace=$OPTARG ;;
       c) coveragestore=$OPTARG ;;
+      t) dbhost=$OPTARG ;;
       b) db=$OPTARG ;;
       d) dbuser=$OPTARG ;;
       v) verbose=1 ;;

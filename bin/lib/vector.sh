@@ -5,7 +5,7 @@
 usage() { 
   echo "==> usage : "
   echo "source /lib/vector.sh"
-  echo "vector::publish -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -s datastore -g pg_datastore -b db -d dbuser [-v]"
+  echo "vector::publish -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -s datastore -g pg_datastore -t db_host -b db_name -d db_user [-v]"
   echo ""
   echo "1. convertit (une copie du) shapefile (-i input) dans le système de coordonnées désiré (-e epsg)"
   echo "2. publie le shapefile converti sous le nom (-o output=input)"
@@ -51,7 +51,7 @@ vector::publish() {
 
   local input output epsg login password url workspace datastore verbose
   local OPTIND opt
-  while getopts "i:o:e:l:p:u:w:s:g:b:d:v" opt; do
+  while getopts "i:o:e:l:p:u:w:s:g:t:b:d:vh" opt; do
     # le : signifie que l'option attend un argument
     case $opt in
       i) input=$OPTARG ;;
@@ -63,6 +63,7 @@ vector::publish() {
       w) workspace=$OPTARG ;;
       s) datastore=$OPTARG ;;
       g) pg_datastore=$OPTARG ;;
+      t) dbhost=$OPTARG ;;
       b) db=$OPTARG ;;
       d) dbuser=$OPTARG ;;
       v) verbose=1 ;;
