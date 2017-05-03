@@ -241,7 +241,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     sql_file = open(sql_file_name,"w")
     sql_file.write(sql_req)
     sql_file.close()
-    os.system("psql -h " + database_hostname + " -d georchestra -U geosync -a -f " + sql_file_name)
+    os.system("psql -h " + database_hostname + " -d georchestra -U geonetwork -w -a -f " + sql_file_name)
 
 # test de la fonction publish_2_gn
 if __name__ == "__main__":
