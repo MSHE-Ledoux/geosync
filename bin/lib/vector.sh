@@ -203,7 +203,7 @@ vector::publish() {
   # convertit le système de coordonnées du shapefile
   # attention : ne pas mettre le résultat directement dans le répertoire du datastore (data_dir) du Geoserver (l'appel à l'API rest s'en charge)
   echo_ifverbose "INFO convertit le shapefile (système de coordonnées) avec ogr2ogr"
-  cmd="ogr2ogr -t_srs EPSG:$epsg -overwrite -skipfailures $tmpdir/$output $input"
+  cmd="ogr2ogr -t_srs EPSG:${epsg} -overwrite -skipfailures \"${tmpdir}/${output}\" \"${input}\""
   echo_ifverbose "INFO ${cmd}"
 
   eval ${cmd}
