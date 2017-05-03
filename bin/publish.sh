@@ -182,7 +182,7 @@ importfile() {
   elif [ $ext_file == "tif" ] && [ $ext_file2 == "aux" ]; then
     echo "fichier .aux.xml ignoré car il s'agit d'un fichier de projection/metadonnee"
   else
-    # Attention : l'utilisateur (login) doit être dans le même groupe que testadmin TODO
+    # Attention : l'utilisateur (login) doit avoir le rôle GN_EDITOR (ou GN_ADMIN) (anciennement SV_EDITOR / SV_ADMIN) voir administration ldap
     cmd="python $BASEDIR/lib/metadata_2_gn.py -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd'
               -u '$host' -w '$workspace' -s '$datastore' --db_hostname '$dbhost' $verbosestr"
     echo $cmd
