@@ -12,24 +12,21 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     from cleanName import cleanName
     import owslib
 
-    print "dans metadata.publish_2_gn"
-
-    print "Travail de CleanName.py"
     output = cleanName(input, True)
-    print "Fin de CleanName.py"
     
-    if verbose:
-      print "input : ", input
-      print "output : ", output
-      print "url : ", url
-      print "login : ", login
-      print "password : ", password
-    
+    # if verbose:
+    #   print "input     : ", input
+    #   print "output    : ", output
+    #   print "url       : ", url
+    #   print "login     : ", login
+    #   print "password  : ", password
+    #   print "workspace : ", workspace
+    #   print "dbhost    : ", database_hostname
 
     reload(sys)  
     sys.setdefaultencoding('utf8')
 
-    # aide au diagnostique : vérifie l'existence du fichier input
+    # aide au diagnostic : vérifie l'existence du fichier input
     if not os.path.isfile(input):
         sys.stderr.write("ERROR input file not found : " + input + "\n")
         return
@@ -76,13 +73,13 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
             # saxonb-xslt requiert le package libsaxonb-java (apt install libsaxonb-java)
             cmd = "saxonb-xslt", "-ext:on", saxon_input, saxon_xsl, saxon_output
             # subprocess.call(["saxonb-xslt", "-ext:on", saxon_input, saxon_xsl, saxon_output]) # semble poser problème selon l'environnement (docker, ansible...)
+            if verbose:
+                print "saxonb cmd :", cmd
             subprocess.call(cmd)
             input = tmpdir + "/sax_" +  output # input = /home/georchestra-ouvert/tmp/geosync_metadata/sax_cc_jura_nord.shp.xml
             print input
             break
     file_input.close() 
-
-
 
     # Add Geoserver link to metadata and delete identifier
 
@@ -126,10 +123,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
             print element_MD_dist.appendChild(element_transfert)
             print element_transfert.appendChild(element_digital)
  
-        # AJOUT DES NOEUDS DANS L'ARBRE !!!!
-
-
-
+    # AJOUT DES NOEUDS DANS L'ARBRE !!!!
 
     b_online = gmd + 'onLine'				# creation balise online
     element_online = doc.createElement(b_online)
@@ -180,7 +174,6 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
 
     input_csw = tmpdir + "/csw_" +  output
     output_fic = open(input_csw,'w') 
-
     txt = doc.toxml().encode('utf-8','ignore')
     output_fic.write(txt)
     output_fic.close()
@@ -207,7 +200,6 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     #typename_csw = gmd + 'MD_Metadata' # FAIT PLUS HAUT, JUSTE APRES DETERMINATION GMD OU PAS
     #print typename_csw
     print input_csw
-
 
     #import unicodedata
     #acc = open(input_csw).read()
@@ -251,30 +243,27 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     sql_file.close()
     os.system("psql -h " + database_hostname + " -d georchestra -U geosync -a -f " + sql_file_name)
 
-
-
 # test de la fonction publish_2_gn
 if __name__ == "__main__":
 
     import argparse
 
     parser = argparse.ArgumentParser(add_help=True)
-    #parser.add_argument('-i', action="store",      dest="input",    required=True)
-    parser.add_argument('-i', action="store",      dest="input",    default="metadata_no_uid.xml")
-    #parser.add_argument('-l', action="store",      dest="login",    required=True)
-    parser.add_argument('-l', action="store",      dest="login",    default="admin")
-    parser.add_argument('-o', action="store",      dest="output"                 )
-    #parser.add_argument('-p', action="store",      dest="password", required=True)
-    parser.add_argument('-p', action="store",      dest="password", default="admin")
-    parser.add_argument('-s', action="store",      dest="datastore"              )
-    parser.add_argument('-u', action="store",      dest="url"     , default="http://geonetwork-mshe.univ-fcomte.fr:8080/geonetwork/srv/fre/csw-publication")
-    parser.add_argument('-v', action="store_true", dest="verbose",  default=False)
-    parser.add_argument('-w', action="store",      dest="workspace", default="geosync-ouvert")
-    parser.add_argument('--db_hostname',           action="store",      dest="database_hostname", default="localhost")
+    #parser.add_argument('-i',          action="store",      dest="input",              required=True)
+    parser.add_argument('-i',           action="store",      dest="input",              default="metadata_no_uid.xml")
+    #parser.add_argument('-l',          action="store",      dest="login",              required=True)
+    parser.add_argument('-l',           action="store",      dest="login",              default="admin")
+    parser.add_argument('-o',           action="store",      dest="output"                 )
+    #parser.add_argument('-p',          action="store",      dest="password",           required=True)
+    parser.add_argument('-p',           action="store",      dest="password",           default="admin")
+    parser.add_argument('-s',           action="store",      dest="datastore"              )
+    parser.add_argument('-u',           action="store",      dest="url",                default="http://geonetwork-mshe.univ-fcomte.fr:8080/geonetwork/srv/fre/csw-publication")
+    parser.add_argument('-v',           action="store_true", dest="verbose",            default=False)
+    parser.add_argument('-w',           action="store",      dest="workspace",          default="geosync-ouvert")
+    parser.add_argument('--db_hostname',action="store",      dest="database_hostname",  default="localhost")
 
     args = parser.parse_args()
     print parser.parse_args()
-
 
     if args.input:
         publish_2_gn(args.input, args.url, args.login, args.password, args.workspace, args.database_hostname, args.verbose)

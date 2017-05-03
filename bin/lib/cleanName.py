@@ -23,12 +23,12 @@ def cleanName(path, r=False):
     # par défaut, ne prend que le nom du fichier
     # avec l'option -d, prend tout le chemin
     if r == True:
-        print "head : ", head
-        print "tail : ", tail
+        # print "head : ", head
+        # print "tail : ", tail
         # ne conserve que le dernier répertoire
         head = re.sub(r"^.*/([^/]*)$", r"\1", head)
-        print "tail : ", tail
-        print "head :>", head, "<"
+        # print "tail : ", tail
+        # print "head :>", head, "<"
         result = head+"__"+tail
         result = re.sub(r"^__", r"", result)
         #result = re.sub(r"[^\s]*", r"", result)
@@ -36,8 +36,8 @@ def cleanName(path, r=False):
         result = tail
         result = re.sub(r"\s", r"", result)
 
-    print "result : <%s>" % result
-    print "result : <{}>".format(result)
+    # print "result : <%s>" % result
+    # print "result : <{}>".format(result)
 
     # Si le nom est trop long, on le tronque et avertit dans les logs
     result = result[-61:].lower()
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--path", action="store"  ,    dest="path", required=True)
     args = parser.parse_args()
 
-    print parser.parse_args()
+    # print parser.parse_args()
 
     if args.path:
         cleanName(args.path, args.dir)
