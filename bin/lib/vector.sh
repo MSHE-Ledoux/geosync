@@ -162,18 +162,30 @@ vector::publish() {
 
   encoding="UTF-8"
   
-  cpg_found=($(find "${filepath}" -maxdepth 1 -iname "${filename}.cpg"))
+  # retrouve le(s) fichier(s) cpg correspondant(s), indépendament de la casse, voir http://stackoverflow.com/questions/23356779/how-can-i-store-find-command-result-as-arrays-in-bash
+  cpg_found=()
+  while IFS=  read -r -d $'\0'; do
+      cpg_found+=("$REPLY")
+  done < <(find "${filepath}" -maxdepth 1 -iname "${filename}.cpg" -print0)
+  #cpg_found=($(find "${filepath}" -maxdepth 1 -iname "${filename}.cpg")) ## Attention : ne marche pas avec des espaces dans le chemin/nom
   if [ ${#cpg_found[@]} -gt 0 ]; then  # ne pas utiliser [ -n $cpg_found ] comme c'est un array
-    echo "cpg existe $cpg_found"
+    echo_ifverbose "INFO cpg existe : ${cpg_found[0]}"
   	encoding=$(cat "${cpg_found[0]}") # contenu du fichier .cpg, par exemple "UTF-8"
   else
-	echo "cpg n'existe PAS"
-    dbf_found=($(find "${filepath}" -maxdepth 1 -iname "${filename}.dbf"))
+	  echo_ifverbose "INFO cpg n'existe PAS"
+    # retrouve le(s) fichier(s) dbf correspondant(s), indépendament de la casse, voir http://stackoverflow.com/questions/23356779/how-can-i-store-find-command-result-as-arrays-in-bash
+    dbf_found=()
+    while IFS=  read -r -d $'\0'; do
+        dbf_found+=("$REPLY")
+    done < <(find "${filepath}" -maxdepth 1 -iname "${filename}.dbf" -print0)
+    #dbf_found=($(find "${filepath}" -maxdepth 1 -iname "${filename}.dbf")) ## Attention : ne marche pas avec des espaces dans le chemin/nom
     if [ ${#dbf_found[@]} -gt 0 ]; then # ne pas utiliser [ -n $dbf_found ] comme c'est un array
-      echo "dbf existe $dbf_found "
+      echo_ifverbose "INFO dbf existe : ${dbf_found[0]}"
       #exemple de sortie de dbview foo.dbf | file -i -
       #/dev/stdin: text/plain; charset=iso-8859-1
-      encoding=$(dbview "${dbf_found[0]}" | file -i - | cut -d= -f2)  # charset du fichier .dbf, par exemple "ISO-8859-1" ou encore "UTF-8"
+      cmd="dbview \"${dbf_found[0]}\" | file -i - | cut -d= -f2"  # charset du fichier .dbf, par exemple "ISO-8859-1" ou encore "UTF-8"
+      echo_ifverbose "INFO ${cmd}"
+      encoding=$(eval ${cmd})
 
       # avec encoding=unknown-8bit on obtient l'erreur suivante :
       # Unable to convert field name to UTF-8 (iconv reports "Argument invalide"). Current encoding is "unknown-8bit". Try "LATIN1" (Western European), or one of the values described at http://www.gnu.org/software/libiconv/
@@ -182,11 +194,11 @@ vector::publish() {
         encoding="LATIN1"
       fi
     else
-	  echo "dbf n'existe PAS"
+	  echo_ifverbose "INFO dbf n'existe PAS"
 	fi
   fi
    
-  echo "encoding $encoding"
+  echo_ifverbose "INFO encoding $encoding"
   
   # convertit le système de coordonnées du shapefile
   # attention : ne pas mettre le résultat directement dans le répertoire du datastore (data_dir) du Geoserver (l'appel à l'API rest s'en charge)
