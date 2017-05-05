@@ -124,6 +124,24 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
             print element_transfert.appendChild(element_digital)
  
     # AJOUT DES NOEUDS DANS L'ARBRE !!!!
+    # pour faire apparaître le bouton "Visualiser" dans geonetwork
+    # dans <gmd:MD_DigitalTransferOptions>
+    # <gmd:onLine>
+    #     <gmd:CI_OnlineResource>
+    #         <gmd:linkage>
+    #             <gmd:URL>https://georchestra-mshe.univ-fcomte.fr/geoserver/ows?SERVICE=WMS&amp;</gmd:URL>
+    #         </gmd:linkage>
+    #         <gmd:protocol>
+    #             <gco:CharacterString>OGC:WMS-1.3.0-http-get-map</gco:CharacterString>
+    #         </gmd:protocol>
+    #         <gmd:name>
+    #             <gco:CharacterString>geosync-restreint:NOM_DE_LA_COUCHE</gco:CharacterString>
+    #         </gmd:name>
+    #         <gmd:description>
+    #             <gco:CharacterString>NOM_DE_LA_COUCHE</gco:CharacterString>
+    #         </gmd:description>
+    #     </gmd:CI_OnlineResource>
+    # </gmd:onLine>
 
     b_online = gmd + 'onLine'				# creation balise online
     element_online = doc.createElement(b_online)
