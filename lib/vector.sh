@@ -198,6 +198,47 @@ vector::publish() {
   fi
 
 
+  # -----------------------------------------------------------------
+
+  # publication du shapefile dans le Geoserver
+  # doc : http://docs.geoserver.org/2.6.x/en/user/rest/api/datastores.html#workspaces-ws-datastores-ds-file-url-external-extension
+
+  if [ $verbose ]; then
+    var_v=$"-v"
+    echo "curl $var_v -w %{http_code} -u ${login}:######## -XPUT -H 'Content-type: text/plain' \
+    -d \"file://$tmpdir/$output\" \
+    $url/geoserver/rest/workspaces/$workspace/datastores/$datastore/external.shp?update=overwrite"
+  else
+    var_v=$"--silent --output /dev/null"
+  fi
+  
+  cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${password}' -XPUT -H 'Content-type: text/plain' \
+    -d 'file://$tmpdir/$output' \
+    $url/geoserver/rest/workspaces/$workspace/datastores/$datastore/external.shp?update=overwrite 2>&1"
+
+  statuscode=$(eval $cmd)
+  #--silent Silent or quiet mode. Don't show progress meter or error messages
+  #-w %{http_code} pour récupérer le status code de la requête
+  
+  statuscode=$(echo $statuscode | tail -c 4)
+  echo "valeur du statuscode $statuscode" 
+ 
+  if  [ $verbose ]; then
+    echo "" #saut de ligne
+  fi
+
+  # si le code de la réponse http est compris entre [200,300[
+  if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
+    if  [ $verbose ]; then
+      echo "ok $statuscode"
+    fi
+    echo "vecteur publié : $output ($input)"
+  else
+    echoerror "error http code : $statuscode for $output"
+  fi  
+
+  # NB: le dossier temporaire n'est pas supprimé : rm -R "$tmpdir"
+
   # ---------------------------- Recherche d'un style correspondant au nom de la couche envoyée
 
           cmd="curl --silent \
