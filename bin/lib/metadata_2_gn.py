@@ -48,7 +48,8 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
         os.mkdir(tmpdir) 
 
     # Translate Esri metadata to ISO19139
-    # ATTENTION ce code semble ne pas marcher (lxml.etree.XMLSyntaxError)
+
+    # cause de l'erreur lxml.etree.XMLSyntaxError : TODO
 
     # aide au diagnostique : vérifie la présence de ArcGIS2ISO19139.xsl
     script_path = os.path.dirname(os.path.abspath(__file__))
@@ -231,10 +232,11 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
 
     # Modification des privilèges d'une fiche de metadata pour pouvoir voir sa carte interactive / voir son lien de téléchargement des données :
     # doc : http://geonetwork-opensource.org/manuals/trunk/eng/users/user-guide/publishing/managing-privileges.html
-
+  
     # via l'interface web : https://georchestra-mshe.univ-fcomte.fr/geonetwork/srv/fre/catalog.edit#/board
 
     # via la base de données (schema geonetwork) :
+    # TODO il serait hautement préférable de passer par l'API REST que par la modification de la base de données de geonetwork
     # INSERT INTO geonetwork.operationallowed ( metadataid, groupid, operationid) VALUES ( '[METADATAID]', '1', '[OPERATIONID]');
     # (groupid=1 pour "Tous")
     # * Télécharger (operationid=1)
@@ -251,6 +253,9 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     # dans ce cas, produit l'erreur suivante :
     # psql:/tmp/geosync_metadata/update_privilege.sql:1: ERREUR:  la valeur d'une clé dupliquée rompt la contrainte unique « operationallowed_pkey »
     # DÉTAIL : La clé « (groupid, metadataid, operationid)=(1, 485713, 1) » existe déjà.
+
+    # l'erreur psql: fe_sendauth: no password supplied
+    # peut être due à une erreur dans le user de la base de données de geonetwork, voir aussi le .pgpass
 
     sql_req = "set schema 'geonetwork';  INSERT INTO operationallowed SELECT 1, metadata.id, 1 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; INSERT INTO operationallowed SELECT 1, metadata.id, 5 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; INSERT INTO operationallowed SELECT 1, metadata.id, 0 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' AND NOT EXISTS (SELECT * FROM operationallowed JOIN metadata ON operationallowed.metadataid = metadata.id WHERE data ILIKE '%" + name_layer_gs + "%' AND operationid = 0) ; "
 
