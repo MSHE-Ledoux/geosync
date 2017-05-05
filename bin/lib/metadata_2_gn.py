@@ -104,9 +104,9 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
         print 'fileIdentifier en cours de suppression'
         doc.documentElement.removeChild(element)
 
-    balise = gmd + 'MD_DigitalTransferOptions'
+    b_DigitalTransferOptions = gmd + 'MD_DigitalTransferOptions'
 
-    test_digital = doc.getElementsByTagName(balise)
+    test_digital = doc.getElementsByTagName(b_DigitalTransferOptions)
 
     if not test_digital :	# creation de l'arborescence nécessaire à la creation de la  balise MD_DigitalTransferOptions
         b_dist = gmd + 'distributionInfo'
@@ -179,9 +179,9 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     element_descr_txt = doc.createTextNode(output.split(".")[0])   #baies_metadata__baies_metadata      #u"baies_metadata__baies_metadataéééééééééé"
     element_descr_gco.appendChild(element_descr_txt)
 
-    print balise
+    print b_DigitalTransferOptions
  
-    for element in doc.getElementsByTagName(balise):
+    for element in doc.getElementsByTagName(b_DigitalTransferOptions):
         print element.appendChild(element_online)
         print element_online.appendChild(element_ressource)
         print element_ressource.appendChild(element_linkage)
