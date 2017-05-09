@@ -49,8 +49,6 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
 
     # Translate Esri metadata to ISO19139
 
-    # cause de l'erreur lxml.etree.XMLSyntaxError : TODO
-
     # aide au diagnostique : vérifie la présence de ArcGIS2ISO19139.xsl
     script_path = os.path.dirname(os.path.abspath(__file__))
     xsl_path = script_path + "/ArcGIS2ISO19139.xsl"
@@ -202,6 +200,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     #csw = CatalogueServiceWeb(url, skip_caps=True, username=login, password=password)
     url_csw = url + "/geonetwork/srv/fre/csw-publication"
     # Attention : l'utilisateur (login) doit avoir le rôle GN_EDITOR (ou GN_ADMIN) (anciennement SV_EDITOR / SV_ADMIN) voir administration ldap
+    ## sinon peut générer l'erreur : lxml.etree.XMLSyntaxError: Opening and ending tag mismatch
     csw = CatalogueServiceWeb(url_csw, skip_caps=True, username=login, password=password)
     #csw = CatalogueServiceWeb('https://georchestra-dev.umrthema.univ-fcomte.fr/geonetwork/srv/fre/csw-publication', skip_caps=True, username='testadmin', password='testadmin')
     
