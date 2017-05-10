@@ -52,6 +52,7 @@ Chaîne d'appel :
       * lit/écrit dans lastdate.txt
       * utilise des scripts dans lib
         * **lib/vector.sh**
+		* **lib/metadata_2_gs.sh**
         * **lib/metadata_2_gn.py**
         * **lib/raster.sh**
   * **clean_data.sh**

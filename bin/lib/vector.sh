@@ -20,7 +20,7 @@ vector::publish() {
   } 
 
   usage() {
-    echoerror "vector::publish: -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -s datastore -g pg_datastore -b db -d dbuser [-v]"
+    echoerror "vector::publish -i input [-o output=input] [-e epsg=2154] -l login -p password -u url -w workspace -s datastore -g pg_datastore -b db -d dbuser [-v]"
   }
 
   #echo if verbose=1
@@ -139,9 +139,9 @@ vector::publish() {
   #  alors prendre le contenu du fichier .cpg
   # sinon, si présence d'un .dbf
   #  détecter l'encoding du fichier .dbf
-  filenameext=$(basename "$input") # /path/t.o/file/vecteur.foo.shp -> vecteur.foo.shp
-  filename=${filenameext%%.*}  # vecteur.foo.shp -> vecteur  
-  filepath=$(dirname "$input") # relative/path/to/file/vecteur.shp -> relative/path/to/file
+  local filenameext=$(basename "$input") # /path/t.o/file/vecteur.foo.shp -> vecteur.foo.shp
+  local filename=${filenameext%%.*}  # vecteur.foo.shp -> vecteur  
+  local filepath=$(dirname "$input") # relative/path/to/file/vecteur.shp -> relative/path/to/file
    
   echo "filename $filename"
   echo "filepath $filepath"

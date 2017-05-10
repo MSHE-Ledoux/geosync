@@ -130,6 +130,11 @@ importfile() {
     echo $cmd
     eval $cmd
 
+    # publie un résumé de metadata même si le .xml n'existe pas (dans ce cas publie les données par défaut)
+    cmd="metadata_geoserver::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' -u '$host' -w '$workspace' -s '$datastore' -g '$pg_datastore' $verbosestr"
+    echo $cmd
+    eval $cmd
+
   }
 
   raster() {
@@ -293,6 +298,8 @@ main() {
   source "$BASEDIR/lib/vector.sh"
   # pour importer les rasteurs (couches .tif .adf .png .jpeg .ocw)
   source "$BASEDIR/lib/raster.sh"
+  # pour importer un résumé de metadonnées des vecteurs dans le geoserver (la partie geonetwork est faite ailleurs)
+  source "$BASEDIR/lib/metadata_2_gs.sh"
   # pour importer des fichiers de styles (fichiers .sld)
   source "$BASEDIR/lib/style.sh"
 
