@@ -187,13 +187,15 @@ if [ ! "$pg_datastore" ]; then
     echo "ERROR vérification de l'existance du style ${style} échouée (${statuscode})"
   fi
 
+  input_realpath=$(realpath "${input}")
+
   ## mise à jour du style - création du sld dans /var/www/geoserver/data/styles
   echo_ifverbose "INFO mise à jour du style : ${style}"
   cmd="curl --silent -w %{http_code} \
             -u ${login}:${password} \
             -H 'Content-type: application/vnd.ogc.sld+xml' \
-            -d @/home/$login/owncloudsync/$input \
-            -XPUT ${url}/geoserver/rest/workspaces/${workspace}/styles/${style} 2>&1"
+            -d '@${input_realpath}' \
+            -XPUT '${url}/geoserver/rest/workspaces/${workspace}/styles/${style}'"
   echo_ifverbose "INFO ${cmd}"
 
   result=$(eval ${cmd}) # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)

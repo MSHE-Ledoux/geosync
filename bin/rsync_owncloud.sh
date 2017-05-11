@@ -10,7 +10,7 @@ INPUT_OUTPUT_PATH="$HOME/owncloud"
 # avec autofs
 #INPUT_OUTPUT_PATH="$HOME/owncloud/owncloud"
 
-INPUT_COPY_PATH="$HOME/owncloudsync"
+INPUT_COPY_PATH="$HOME/owncloudsync" # ceci n'est pas nécessairement le même que le répertoire de couches à publier publishing_directory dans .geosync.conf
 
 # on a besoin ici uniquement des logs
 PARAMFILE="$HOME/.geosync.conf"

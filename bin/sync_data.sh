@@ -8,10 +8,9 @@ SCRIPT_PATH=`dirname "$SCRIPT_FULL_PATH"`  # /absolute/path
 
 # on a besoin ici uniquement des logs
 PARAMFILE="$HOME/.geosync.conf"
-#local host login passwd workspace datastore pg_datastore db logs
+#local host login passwd workspace datastore pg_datastore db logs publishing_directory
 source "$PARAMFILE"
 
-INPUT_COPY_PATH="$HOME/owncloudsync"
 DATA_PATH="$HOME/data"  # contient le fichier lastdate.txt avec la dernière date de changement de fichier traité
 LOG_PATH="/var/log/$logs"
 
@@ -32,6 +31,16 @@ fi
 
   date >> $LOG_PATH/publish.log
   date >> $LOG_PATH/publish_error.log
+
+  # vérifie que le chemin de l'arborescence à publier a bien été défini dans la conf
+  if [[ "${publishing_directory}" ]]; then 
+    INPUT_COPY_PATH="${publishing_directory}"
+  else
+    echo "WARNING aucun chemin d'arborescence à publier ('publishing_directory') défini dans .geosync.conf" >> $LOG_PATH/publish_error.log
+
+    INPUT_COPY_PATH="$HOME/owncloudsync" # le chemin par défaut est conservé temporairement pour rétro-compatibilité # TODO ne pas prendre de valeur pas défaut et faire une vraie erreur
+    echo "WARNING chemin d'arborescence par défaut : ${INPUT_COPY_PATH}"  >> $LOG_PATH/publish_error.log
+  fi
 
   cmd="bash '${SCRIPT_PATH}/publish.sh' -i '$INPUT_COPY_PATH' -d '$DATA_PATH' -p '$PARAMFILE' 1>>'$LOG_PATH/publish.log' 2>>'$LOG_PATH/publish_error.log'"
   #echo $cmd

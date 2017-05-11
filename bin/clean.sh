@@ -82,7 +82,7 @@ main() {
   paramfilepath="$HOME/.geosync.conf"
 
   # récupère les paramètres de connexion dans le fichier .geosync situé dans le même dossier que ce script
-  local host login passwd workspace datastore pg_datastore db logs
+  local host login passwd workspace datastore pg_datastore db logs publishing_directory
   source "$paramfilepath"
 
   # attention le fichier .geosync est interprété et fait donc confiance au code
@@ -190,12 +190,23 @@ main() {
   # TODO il faudrait aussi supprimer les fiches de metadata (qui peuvent être orphelines, sans couche associée)
 
   ######################
-    
+
+  # vérifie que le chemin de l'arborescence à publier a bien été défini dans la conf
+  if [[ ! "${publishing_directory}" ]]; then
+    echo "WARNING aucun chemin d'arborescence à publier ('publishing_directory') défini dans .geosync.conf"
+    echoerror "WARNING aucun chemin d'arborescence à publier ('publishing_directory') défini dans .geosync.conf"
+
+    publishing_directory="$HOME/owncloudsync" # le chemin par défaut est conservé temporairement pour rétro-compatibilité # TODO ne pas prendre de valeur pas défaut et faire une vraie erreur
+    echo "WARNING chemin d'arborescence par défaut : ${publishing_directory}"
+  fi
+
+
+
   # si on souhaite supprimer la différence entre les couches publiées et celles partagées
   # alors calcule la différence des listes et la stocke dans la liste des couches à supprimer
   if [ "$deletediff" ]; then
       
-    cd "$path"
+    cd "$publishing_directory"
       
 	  shopt -s globstar nocaseglob
 	  # set globstar, so that the pattern ** used in a pathname expansion context will 
