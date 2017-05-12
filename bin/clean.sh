@@ -188,6 +188,7 @@ main() {
   done
 
   # TODO il faudrait aussi supprimer les fiches de metadata (qui peuvent être orphelines, sans couche associée)
+  # http://geonetwork-opensource.org/manuals/2.10.4/eng/developer/xml_services/metadata_xml_insert_update_delete.html#delete-metadata-xml-metadata-delete
 
   ######################
 
