@@ -193,6 +193,10 @@ vector::publish() {
       if [[ $encoding == unknown* ]]; then
         encoding="LATIN1"
       fi
+      # us-ascii pose probleme. on le force en latin1
+      if [[ $encoding == us-ascii ]]; then
+        encoding="LATIN1"
+      fi
     else
 	  echo_ifverbose "INFO dbf n'existe PAS"
 	fi
