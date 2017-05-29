@@ -208,9 +208,9 @@ vector::publish() {
   # attention : ne pas mettre le résultat directement dans le répertoire du datastore (data_dir) du Geoserver (l'appel à l'API rest s'en charge)
   echo_ifverbose "INFO convertit le shapefile (système de coordonnées) avec ogr2ogr"
   cmd="ogr2ogr -t_srs 'EPSG:${epsg}' -overwrite -skipfailures '${tmpdir}/${output}' '${input}'"
-  echo_ifverbose "INFO ${cmd}"
+  echo_ifverbose "INFO commented ${cmd}"
+  # result=$(eval ${cmd})
 
-  result=$(eval ${cmd})
   # ogr2ogr -t_srs "EPSG:$epsg" -lco ENCODING=${encoding} -overwrite -skipfailures "$tmpdir/$output" "$input"
   #-lco ENCODING=ISO-8859-1  # correspond à LATIN1
   # attention : le datastore doit être en UTF-8
@@ -219,6 +219,11 @@ vector::publish() {
   # et poser problème au niveau de la table attibutaire
   # donc laisse la conversion à shp2pgsql (-W ${encoding})
 
+  # publication en utilisant directement ogr2ogr, avec le driver pgdump
+  layer=$(echo $output | cut -d. -f1)
+  cmd="ogr2ogr -f PGDump --config PG_USE_COPY YES -lco SRID='${epsg}' -lco create_schema=off -lco GEOMETRY_NAME=geom -lco DROP_TABLE=IF_EXISTS -nln '${layer}' -nlt PROMOTE_TO_MULTI /vsistdout/ '${input}' | psql -h '${dbhost}' -d '${db}' -U '${dbuser}' -w -f -"
+  echo_ifverbose "INFO ${cmd}"
+  result=$(eval ${cmd})
 
   # ----------------------------- PUBLICATION POSTGIS -------------
 
@@ -231,12 +236,11 @@ vector::publish() {
   # -d  Drops the table, then recreates it # attention : génére une erreur (à tord) si n'existe pas déjà 
   # ERREUR:  la table « ... » n'existe pas
   # pour éviter d'avoir une erreur, on substitue le DROP TABLE par un DROP TABLE IF EXISTS  # | sed -e "s/DROP TABLE/DROP TABLE IF EXISTS/" |
-  echo_ifverbose "INFO ${cmd}"
-
-  result=$(eval ${cmd})
+  echo_ifverbose "INFO commented ${cmd}"
+  #result=$(eval ${cmd})
 
   # récupére la couche si elle existe
-  echo_ifverbose "INFO vérifie l'existance du vecteur ${layer}"
+  echo_ifverbose "INFO vérifie l'existence du vecteur ${layer}"
   cmd="curl --silent -w %{http_code} \
             -u '${login}:${password}' \
             -XGET '${url}/geoserver/rest/workspaces/${workspace}/datastores/${pg_datastore}/featuretypes/${layer}.xml'"
@@ -254,10 +258,10 @@ vector::publish() {
     echo_ifverbose "INFO le vecteur ${layer} n'existe pas encore"
     # continue pour publier la couche
   else
-    echoerror "ERROR vérification de l'existance du vecteur ${layer} échouée... error http code : ${statuscode}"
+    echoerror "ERROR vérification de l'existence du vecteur ${layer} échouée... error http code : ${statuscode}"
     echoerror "      message : ${content}"
     echoerror "${cmd}"
-    echo "ERROR vérification de l'existance du vecteur ${layer} échouée (${statuscode})"
+    echo "ERROR vérification de l'existence du vecteur ${layer} échouée (${statuscode})"
     return 1 #erreur
   fi
 
