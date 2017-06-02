@@ -111,6 +111,7 @@ vector::publish() {
     # $(util::cleanName "./tic/tac toe.shp") -> tac_toe.shp
     output=$(util::cleanName "$input" -p)
   fi
+  echo_ifverbose "INFO $output"
 
   if [ ! "$epsg" ]; then
     # Lambert 93 par défaut
@@ -161,6 +162,7 @@ vector::publish() {
   fi
 
   encoding="UTF-8"
+  conv2utf8=""
   
   # retrouve le(s) fichier(s) cpg correspondant(s), indépendament de la casse, voir http://stackoverflow.com/questions/23356779/how-can-i-store-find-command-result-as-arrays-in-bash
   cpg_found=()
@@ -192,10 +194,17 @@ vector::publish() {
       # donc dans ce cas, cosidére encoding=LATIN1
       if [[ $encoding == unknown* ]]; then
         encoding="LATIN1"
+        conv2utf8="| iconv -f latin1 -t utf-8"
       fi
       # us-ascii pose probleme. on le force en latin1
       if [[ $encoding == us-ascii ]]; then
         encoding="LATIN1"
+        conv2utf8="| iconv -f us-ascii -t utf-8"
+      fi
+      # conversion systématique en utf-8
+      if [[ $encoding == iso-8859-1 ]]; then
+        encoding="LATIN1"
+        conv2utf8="| iconv -f iso-8859-1 -t utf-8"
       fi
     else
 	  echo_ifverbose "INFO dbf n'existe PAS"
@@ -221,7 +230,7 @@ vector::publish() {
 
   # publication en utilisant directement ogr2ogr, avec le driver pgdump
   layer=$(echo $output | cut -d. -f1)
-  cmd="ogr2ogr -f PGDump --config PG_USE_COPY YES -lco SRID='${epsg}' -lco create_schema=off -lco GEOMETRY_NAME=geom -lco DROP_TABLE=IF_EXISTS -nln '${layer}' -nlt PROMOTE_TO_MULTI /vsistdout/ '${input}' | psql -h '${dbhost}' -d '${db}' -U '${dbuser}' -w -f -"
+  cmd="ogr2ogr -f PGDump --config PG_USE_COPY YES -lco SRID='${epsg}' -lco create_schema=off -lco GEOMETRY_NAME=geom -lco DROP_TABLE=IF_EXISTS -nln '${layer}' -nlt PROMOTE_TO_MULTI /vsistdout/ '${input}' ${conv2utf8} | psql -h '${dbhost}' -d '${db}' -U '${dbuser}' -w -f -"
   echo_ifverbose "INFO ${cmd}"
   result=$(eval ${cmd})
 
