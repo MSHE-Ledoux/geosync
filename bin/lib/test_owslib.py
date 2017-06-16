@@ -12,7 +12,6 @@ csw.identification.type
 # Get supported resultType’s:
 csw.getdomain('GetRecords.resultType')
 csw.results
-{'values': ['results', 'validate', 'hits'], 'parameter': 'GetRecords.resultType', 'type': 'csw:DomainValuesType'}
 
 # Search for dublin data:
 from owslib.csw import CatalogueServiceWeb
