@@ -1,21 +1,17 @@
 Objectif de ge@sync :
 ---------------------
-Indexer dans geOrchestra les données déposées par les utilisateurs dans OwnCloud, et partagées :
+Publier sur geOrchestra les données déposées par les utilisateurs dans OwnCloud, et partagées :
 - soit avec l'utilisateur georchestra-ouvert, pour un accès public ; 
 - soit avec l'utilisateur georchestra-restreint, pour un accès limité aux personnes identifiées de l'IDS geOrchestra.
+
+Les données sont publiées sur le geoserver de geOrchestra ; les métadonnées sont publiées sur le geonetwork de geOrchestra.
 
 Comment installer ge@sync ?
 ---------------------------
 
-1. avec Ansible, en déployant le playbook geosync-ansible sur une machine sur laquelle geOrchestra a été installé, idéalement avec Ansible également.
+avec Docker, en déployant les conteneurs du projet geOrchestra et le conteneur geosync.
 
-https://github.com/MaxiReglisse/geosync-ansible
-
-CETTE METHODE EST DEPRECIEE ACTUELLEMENT ! Merci de patienter et utiliser Docker pour l'instant
-
-2. avec Docker, en déployant des conteneurs modifiés par rapport aux conteneurs d'origine de geOrchestra. 4 conteneurs sont modifiés.
-
-https://github.com/MSHE-Ledoux/geosync-docker
+https://github.com/MSHE-Ledoux/georchestra-geosync
 
 Vue d'ensemble de l'architecture :
 ----------------------------------
