@@ -1,17 +1,17 @@
 Objectif de ge@sync :
 ---------------------
-Publier sur geOrchestra les données déposées par les utilisateurs dans OwnCloud, et partagées :
+Publier sur geOrchestra les données cartographiques déposées par les utilisateurs dans OwnCloud, et partagées :
 - soit avec l'utilisateur georchestra-ouvert, pour un accès public ; 
 - soit avec l'utilisateur georchestra-restreint, pour un accès limité aux personnes identifiées de l'IDS geOrchestra.
 
 Les données sont publiées sur le geoserver de geOrchestra ; les métadonnées sont publiées sur le geonetwork de geOrchestra.
 
+
 Comment installer ge@sync ?
 ---------------------------
-
 avec Docker, en déployant les conteneurs du projet geOrchestra et le conteneur geosync.
-
 https://github.com/MSHE-Ledoux/georchestra-geosync
+
 
 Vue d'ensemble de l'architecture :
 ----------------------------------
