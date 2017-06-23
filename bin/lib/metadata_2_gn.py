@@ -71,7 +71,6 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
             print str(saxon_output)
             # saxonb-xslt requiert le package libsaxonb-java (apt install libsaxonb-java)
             cmd = "saxonb-xslt", "-ext:on", saxon_input, saxon_xsl, saxon_output
-            # subprocess.call(["saxonb-xslt", "-ext:on", saxon_input, saxon_xsl, saxon_output]) # semble poser problème selon l'environnement (docker, ansible...)
             if verbose:
                 print "saxonb cmd :", cmd
             subprocess.call(cmd)
@@ -122,7 +121,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
             print element_MD_dist.appendChild(element_transfert)
             print element_transfert.appendChild(element_digital)
  
-    # AJOUT DES NOEUDS DANS L'ARBRE !!!!
+    # AJOUT DES NOEUDS DANS L'ARBRE
     # pour faire apparaître le bouton "Visualiser" dans geonetwork
     # dans <gmd:MD_DigitalTransferOptions>
     # <gmd:onLine>
@@ -180,14 +179,14 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
 
     print b_DigitalTransferOptions
  
-    for element in doc.getElementsByTagName(b_DigitalTransferOptions):
-        print element.appendChild(element_online)
-        print element_online.appendChild(element_ressource)
-        print element_ressource.appendChild(element_linkage)
-        print element_linkage.appendChild(element_url)
-        print element_ressource.appendChild(element_protocol)
-        print element_ressource.appendChild(element_name)
-        print element_ressource.appendChild(element_descr)
+    #for element in doc.getElementsByTagName(b_DigitalTransferOptions):
+    #    print element.appendChild(element_online)
+    #    print element_online.appendChild(element_ressource)
+    #    print element_ressource.appendChild(element_linkage)
+    #    print element_linkage.appendChild(element_url)
+    #    print element_ressource.appendChild(element_protocol)
+    #    print element_ressource.appendChild(element_name)
+    #    print element_ressource.appendChild(element_descr)
 
     input_csw = tmpdir + "/csw_" +  output
     output_fic = open(input_csw,'w') 
@@ -205,6 +204,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     #csw = CatalogueServiceWeb('https://georchestra-dev.umrthema.univ-fcomte.fr/geonetwork/srv/fre/csw-publication', skip_caps=True, username='testadmin', password='testadmin')
     
     # suppression des métadonnées relatives à la même couche geoserver
+    print "suppression de" + name_layer_gs
     from owslib.fes import PropertyIsEqualTo, PropertyIsLike
     myquery = PropertyIsEqualTo('csw:AnyText',name_layer_gs)
     csw.getrecords2(constraints=[myquery], maxrecords=10)
