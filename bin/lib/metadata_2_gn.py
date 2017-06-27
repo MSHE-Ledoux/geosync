@@ -216,8 +216,8 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
    
     # Transaction: insert
     #typename_csw = gmd + 'MD_Metadata' # FAIT PLUS HAUT, JUSTE APRES DETERMINATION GMD OU PAS
-    #print typename_csw
-    print input_csw
+    print "typename_csw " + typename_csw
+    print "input_csw " + input_csw
 
     #import unicodedata
     #acc = open(input_csw).read()
