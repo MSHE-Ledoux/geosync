@@ -14,14 +14,14 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
 
     output = cleanName(input, True)
     
-    # if verbose:
-    #   print "input     : ", input
-    #   print "output    : ", output
-    #   print "url       : ", url
-    #   print "login     : ", login
-    #   print "password  : ", password
-    #   print "workspace : ", workspace
-    #   print "dbhost    : ", database_hostname
+    if verbose:
+        print "input     : ", input
+        print "output    : ", output
+        print "url       : ", url
+        print "login     : ", login
+        print "password  : ", password
+        print "workspace : ", workspace
+        print "dbhost    : ", database_hostname
 
     reload(sys)  
     sys.setdefaultencoding('utf8')
@@ -49,13 +49,13 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
 
     # Translate Esri metadata to ISO19139
 
-    # aide au diagnostique : vérifie la présence de ArcGIS2ISO19139.xsl
+    # aide au diagnostic : vérifie la présence de ArcGIS2ISO19139.xsl
     script_path = os.path.dirname(os.path.abspath(__file__))
     xsl_path = script_path + "/ArcGIS2ISO19139.xsl"
     if not os.path.isfile(xsl_path):
         sys.stderr.write("ERROR xsl file not found : " + xsl_path + "\n")
         return
-    
+
     #import codecs					
     #file_input = codecs.open(input,'r',encoding='utf-8') # Force la reconnaissance du fichier en utf-8
     file_input = open(input,'r')
@@ -81,9 +81,20 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
 
     # Add Geoserver link to metadata and delete identifier
 
+    # utilisation de lxml pour récupérer le contenu de la balise resTitle
+    from lxml import etree
+    tree = etree.parse(input)
+    root = tree.getroot()
+    resultat = root.xpath('//gmd:title/gco:CharacterString',
+                          namespaces={'gmd': 'http://www.isotc211.org/2005/gmd',
+                                      'gco': 'http://www.isotc211.org/2005/gco'})
+    titre = (resultat)[0]
+    print "titre"
+    print titre.text
+
+    # utilisation de minidom pour modifier l'arbre xlm. à refaire avec lxml !!
     from xml.dom import minidom
     doc = minidom.parse(input)
-   
     root = doc.documentElement
     
     line1 = root.firstChild				# Permet d'insérer des balises avec le namespace gmd
@@ -172,6 +183,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     b_descr = gmd +'description'				# creation et remplissage balise description
     element_descr = doc.createElement(b_descr)
     b_gco = 'gco:CharacterString'
+    print "b_gco " + b_gco
     element_descr_gco = doc.createElement(b_gco)
     element_descr.appendChild(element_descr_gco)
     element_descr_txt = doc.createTextNode(output.split(".")[0])   #baies_metadata__baies_metadata      #u"baies_metadata__baies_metadataéééééééééé"
@@ -179,14 +191,21 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
 
     print b_DigitalTransferOptions
  
-    #for element in doc.getElementsByTagName(b_DigitalTransferOptions):
-    #    print element.appendChild(element_online)
-    #    print element_online.appendChild(element_ressource)
-    #    print element_ressource.appendChild(element_linkage)
-    #    print element_linkage.appendChild(element_url)
-    #    print element_ressource.appendChild(element_protocol)
-    #    print element_ressource.appendChild(element_name)
-    #    print element_ressource.appendChild(element_descr)
+    for element in doc.getElementsByTagName(b_DigitalTransferOptions):
+        print element.appendChild(element_online)
+        print element.toxml()
+        print element_online.appendChild(element_ressource)
+        print element.toxml()
+        print element_ressource.appendChild(element_linkage)
+        print element.toxml()
+        print element_linkage.appendChild(element_url)
+        print element.toxml()
+        print element_ressource.appendChild(element_protocol)
+        print element.toxml()
+        print element_ressource.appendChild(element_name)
+        print element.toxml()
+        print element_ressource.appendChild(element_descr)
+        print element.toxml()
 
     input_csw = tmpdir + "/csw_" +  output
     output_fic = open(input_csw,'w') 
@@ -201,12 +220,11 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     # Attention : l'utilisateur (login) doit avoir le rôle GN_EDITOR (ou GN_ADMIN) (anciennement SV_EDITOR / SV_ADMIN) voir administration ldap
     ## sinon peut générer l'erreur : lxml.etree.XMLSyntaxError: Opening and ending tag mismatch
     csw = CatalogueServiceWeb(url_csw, skip_caps=True, username=login, password=password)
-    #csw = CatalogueServiceWeb('https://georchestra-dev.umrthema.univ-fcomte.fr/geonetwork/srv/fre/csw-publication', skip_caps=True, username='testadmin', password='testadmin')
     
     # suppression des métadonnées relatives à la même couche geoserver
-    print "suppression de" + name_layer_gs
+    print "suppression de " + titre.text + " " + name_layer_gs
     from owslib.fes import PropertyIsEqualTo, PropertyIsLike
-    myquery = PropertyIsEqualTo('csw:AnyText',name_layer_gs)
+    myquery = PropertyIsEqualTo('csw:AnyText', name_layer_gs)
     csw.getrecords2(constraints=[myquery], maxrecords=10)
     resultat = csw.results
     print "resultat : " , resultat 
