@@ -111,6 +111,7 @@ vector::publish() {
     # $(util::cleanName "./tic/tac toe.shp") -> tac_toe.shp
     output=$(util::cleanName "$input" -p)
   fi
+  echo_ifverbose "INFO $output"
 
   if [ ! "$epsg" ]; then
     # Lambert 93 par défaut
@@ -161,6 +162,7 @@ vector::publish() {
   fi
 
   encoding="UTF-8"
+  conv2utf8=""
   
   # retrouve le(s) fichier(s) cpg correspondant(s), indépendament de la casse, voir http://stackoverflow.com/questions/23356779/how-can-i-store-find-command-result-as-arrays-in-bash
   cpg_found=()
@@ -187,11 +189,17 @@ vector::publish() {
       echo_ifverbose "INFO ${cmd}"
       encoding=$(eval ${cmd})
 
-      # avec encoding=unknown-8bit on obtient l'erreur suivante :
-      # Unable to convert field name to UTF-8 (iconv reports "Argument invalide"). Current encoding is "unknown-8bit". Try "LATIN1" (Western European), or one of the values described at http://www.gnu.org/software/libiconv/
-      # donc dans ce cas, cosidére encoding=LATIN1
+      # conversion en utf-8 en considérant que unknown serait du latin1
       if [[ $encoding == unknown* ]]; then
-        encoding="LATIN1"
+        conv2utf8="| iconv -f latin1 -t utf-8"
+      fi
+      # us-ascii est convertit en utf-8
+      if [[ $encoding == us-ascii ]]; then
+        conv2utf8="| iconv -f us-ascii -t utf-8"
+      fi
+      # conversion systématique iso-8859-1 en utf-8
+      if [[ $encoding == iso-8859-1 ]]; then
+        conv2utf8="| iconv -f iso-8859-1 -t utf-8"
       fi
     else
 	  echo_ifverbose "INFO dbf n'existe PAS"
@@ -199,40 +207,18 @@ vector::publish() {
   fi
    
   echo_ifverbose "INFO encoding $encoding"
+  echo_ifverbose "INFO conversion : $conv2utf8"
   
-  # convertit le système de coordonnées du shapefile
-  # attention : ne pas mettre le résultat directement dans le répertoire du datastore (data_dir) du Geoserver (l'appel à l'API rest s'en charge)
-  echo_ifverbose "INFO convertit le shapefile (système de coordonnées) avec ogr2ogr"
-  cmd="ogr2ogr -t_srs 'EPSG:${epsg}' -overwrite -skipfailures '${tmpdir}/${output}' '${input}'"
-  echo_ifverbose "INFO ${cmd}"
-
-  result=$(eval ${cmd})
-  # ogr2ogr -t_srs "EPSG:$epsg" -lco ENCODING=${encoding} -overwrite -skipfailures "$tmpdir/$output" "$input"
-  #-lco ENCODING=ISO-8859-1  # correspond à LATIN1
-  # attention : le datastore doit être en UTF-8
-  # lorsque l'encodage, qui est connu, est définit à ce niveau par la Layer creation option (-lco ENCODING=${encoding})
-  # cela peut produire l'erreur suivante : ERROR 1: Failed to create field name 'Id' : cannot convert to iso-8859-1
-  # et poser problème au niveau de la table attibutaire
-  # donc laisse la conversion à shp2pgsql (-W ${encoding})
-
-
   # ----------------------------- PUBLICATION POSTGIS -------------
-
-  # necessaire car le nom d'une table postgres ne peut avoir de .
+  # publication en utilisant directement ogr2ogr, avec le driver pgdump
+  # nécessaire car le nom d'une table postgres ne peut avoir de .
   layer=$(echo $output | cut -d. -f1) # TODO envisager de supprimer les points et non de prendre avant un point pour diminuer le risque de colision avec une autre table
-
-  echo_ifverbose "INFO envoi du shapefile vers PostGIS"
-  cmd="shp2pgsql -I -W '${encoding}' -s 2154 -D -d '//${tmpdir}/${output}' '${layer}' | sed -e 's/DROP TABLE/DROP TABLE IF EXISTS/' | psql -h '${dbhost}' -d '${db}' -U '${dbuser}' -w"
-  # -D  Use  the PostgreSQL "dump" format for the output data. much faster to load than the default "insert" SQL format. Use this for very large data sets.
-  # -d  Drops the table, then recreates it # attention : génére une erreur (à tord) si n'existe pas déjà 
-  # ERREUR:  la table « ... » n'existe pas
-  # pour éviter d'avoir une erreur, on substitue le DROP TABLE par un DROP TABLE IF EXISTS  # | sed -e "s/DROP TABLE/DROP TABLE IF EXISTS/" |
+  cmd="ogr2ogr -f PGDump --config PG_USE_COPY YES -lco SRID='${epsg}' -lco create_schema=off -lco GEOMETRY_NAME=geom -lco DROP_TABLE=IF_EXISTS -nln '${layer}' -nlt PROMOTE_TO_MULTI /vsistdout/ '${input}' ${conv2utf8} | psql -h '${dbhost}' -d '${db}' -U '${dbuser}' -w -f -"
   echo_ifverbose "INFO ${cmd}"
-
   result=$(eval ${cmd})
 
   # récupére la couche si elle existe
-  echo_ifverbose "INFO vérifie l'existance du vecteur ${layer}"
+  echo_ifverbose "INFO vérifie l'existence du vecteur ${layer}"
   cmd="curl --silent -w %{http_code} \
             -u '${login}:${password}' \
             -XGET '${url}/geoserver/rest/workspaces/${workspace}/datastores/${pg_datastore}/featuretypes/${layer}.xml'"
@@ -250,10 +236,10 @@ vector::publish() {
     echo_ifverbose "INFO le vecteur ${layer} n'existe pas encore"
     # continue pour publier la couche
   else
-    echoerror "ERROR vérification de l'existance du vecteur ${layer} échouée... error http code : ${statuscode}"
+    echoerror "ERROR vérification de l'existence du vecteur ${layer} échouée... error http code : ${statuscode}"
     echoerror "      message : ${content}"
     echoerror "${cmd}"
-    echo "ERROR vérification de l'existance du vecteur ${layer} échouée (${statuscode})"
+    echo "ERROR vérification de l'existence du vecteur ${layer} échouée (${statuscode})"
     return 1 #erreur
   fi
 
