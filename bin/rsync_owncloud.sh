@@ -10,12 +10,22 @@ INPUT_OUTPUT_PATH="$HOME/owncloud"
 # avec autofs
 #INPUT_OUTPUT_PATH="$HOME/owncloud/owncloud"
 
-INPUT_COPY_PATH="$HOME/owncloudsync" # ceci n'est pas nécessairement le même que le répertoire de couches à publier publishing_directory dans .geosync.conf
+#INPUT_COPY_PATH="$HOME/owncloudsync" # ceci n'est pas nécessairement le même que le répertoire de couches à publier publishing_directory dans .geosync.conf
 
 # on a besoin ici uniquement des logs
 PARAMFILE="$HOME/.geosync.conf"
 #local host login passwd workspace datastore pg_datastore db logs
 source "$PARAMFILE"
+
+# vérifie que le chemin de l'arborescence à publier a bien été défini dans la conf
+if [[ "${publishing_directory}" ]]; then 
+    INPUT_COPY_PATH="${publishing_directory}"
+else
+    echo "WARNING aucun chemin d'arborescence à publier ('publishing_directory') défini dans .geosync.conf" >> $LOG_PATH/publish_error.log
+
+    INPUT_COPY_PATH="$HOME/owncloudsync" # le chemin par défaut est conservé temporairement pour rétro-compatibilité # TODO ne pas prendre de valeur pas défaut et faire une vraie erreur
+    echo "WARNING chemin d'arborescence par défaut : ${INPUT_COPY_PATH}"  >> $LOG_PATH/publish_error.log
+fi
 
 # verbose=1 # commenter pour diminuer les logs
 
