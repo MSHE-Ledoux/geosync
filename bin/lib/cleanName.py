@@ -39,8 +39,17 @@ def cleanName(path, r=False):
     # print "result : <%s>" % result
     # print "result : <{}>".format(result)
 
-    # Si le nom est trop long, on le tronque et avertit dans les logs
-    result = result[-61:].lower()
+    # si le nom est trop long, on le tronque indépendamment des extensions du type shp.xml
+    # voir https://stackoverflow.com/questions/541390/extracting-extension-from-filename-in-python
+    # le nom du fichier est du type base.ext, ext pouvant être du type shp.xml
+    base = result.split('.')[0]
+    ext = '.'.join(result.split('.')[1:])
+    ext = '.' + ext if ext else None
+
+    base = base[-57:].lower()
+
+    # le resultat est la concaténation de base et extension
+    result = base + ext
 
     return result
 

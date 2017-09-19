@@ -207,12 +207,12 @@ main() {
   # alors calcule la différence des listes et la stocke dans la liste des couches à supprimer
   if [ "$deletediff" ]; then
       
-    cd "$publishing_directory"
+      cd "$publishing_directory"
       
-	  shopt -s globstar nocaseglob
-	  # set globstar, so that the pattern ** used in a pathname expansion context will 
-	  # match a files and zero or more directories and subdirectories.
-	  # nocaseglob : case insensitive
+      shopt -s globstar nocaseglob
+      # set globstar, so that the pattern ** used in a pathname expansion context will 
+      # match a files and zero or more directories and subdirectories.
+      # nocaseglob : case insensitive
       #shopt -s extglob allow (.tif|.jpg) but does not work with globstar **
       
       ###################
@@ -292,7 +292,7 @@ main() {
       # prend uniquement les noms présents dans la première liste (arraydiff <- liste1 - liste2)
       comm -23 <(sort "$tmpdir/styles_published") <(sort "$tmpdir/styles_shared") > "$tmpdir/styles_tobedeleted_potentially"
 
-	shopt -u globstar nocaseglob
+      shopt -u globstar nocaseglob
 	  
   # --------------------------    
   
@@ -552,3 +552,4 @@ main() {
 if [ "${BASH_SOURCE[0]}" == "$0" ]; then
   main "$@"
 fi
+

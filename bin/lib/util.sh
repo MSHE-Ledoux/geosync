@@ -8,7 +8,9 @@ util::cleanName() {
   local path="$1"
   local option="$2"
   local result
-  local length_result 
+  local base
+  local extension
+  local length_base
   local match repl
 
   # par défaut, ne prend que le nom du fichier
@@ -40,12 +42,18 @@ util::cleanName() {
   # replaces all uppercases by lowercases
   result=${result,,}
 
-  ## Si le nom est trop long, le tronque
-  length_result=${#result}
-  if [ "$length_result" -ge "61" ]; then
-    result=${result: -61}
+  # si le nom est trop long, on tronque la partie sans extension
+  # voir https://math-linux.com/linux-2/bash/article/comment-extraire-le-nom-et-l-extension-d-un-fichier-en-bash
+  # le fichier est du type base.extension
+  base=${result%%.*}
+  extension=${result#*.}
+  length_base=${#base}
+  if [ "$length_base" -ge "57" ]; then
+    base=${base: -57}
   fi 
 
+  # le resultat est la concaténation de base et extension
+  result="${base}.${extension}"
   echo "$result"
 }
 

@@ -102,10 +102,12 @@ importallfiles() {
 # importfile ~/owncloud/Point.shp "2015-05-13 10:00:06.000000000 +0200"
 # beware : modify newlastdatemodif
 importfile() {
+
   local filepath="$1"
   shift #consomme l'argument du tableau des arguments, pour pouvoir récupérer le reste dans "$@"
   local outputlayername="$1"
   shift #consomme l'argument du tableau des arguments, pour pouvoir récupérer le reste dans "$@"
+  echo "outputlayername : $outputlayername"
 
   local layertype="unknown"
   layertype=$(util::typeoflayer "$filepath")
@@ -144,6 +146,7 @@ importfile() {
     # $(util::cleanName "./tic/tac toe.shp") -> tac_toe.shp
     # $(util::cleanName "./tic/tac toe.shp" -p) -> tic_tac_toe.shp
     if [ ! "$outputlayername" ]; then
+      echo "filepath : $filepath"
       outputlayername=$(util::cleanName "$filepath" -p)
     fi
 
@@ -155,44 +158,47 @@ importfile() {
   }
 
   style() {
-  if [ ! "$outputlayername" ]; then
-    outputlayername=$(util::cleanName "$filepath" -p)
-  fi 
 
-  cmd="style::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' 
-                      -u '$host' -w '$workspace' -s '$datastore' -g '$pg_datastore' $verbosestr"
-  echo $cmd
-  eval $cmd
+    if [ ! "$outputlayername" ]; then
+      echo "filepath : $filepath"
+      outputlayername=$(util::cleanName "$filepath" -p)
+    fi 
+
+    cmd="style::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' 
+                        -u '$host' -w '$workspace' -s '$datastore' -g '$pg_datastore' $verbosestr"
+    echo $cmd
+    eval $cmd
   }
 
   # TODO prendre en compte les fichiers peut importe leur casse -> requiert de trouver les fichiers au lieu de tester leur existence
  
   metadata() {
 
-  if [ ! "$outputlayername" ]; then
+    if [ ! "$outputlayername" ]; then
+      echo "filepath : $filepath"
       outputlayername=$(util::cleanName "$filepath" -p)
-  fi
+    fi
 
-  base_file=$(echo $filepath | cut -f1 -d.) # metadata.shp.xml => metadata / metadata.xml => metadata
-  ext_file=$(echo $filepath | cut -f2 -d.)  # metadata.shp.xml => shp / metadata.xml => xml
-  ext_file2=$(echo $filepath | cut -f3 -d.) # raster.tif.aux.xml => aux 
-  test_xml_file="${path}/${base_file}.xml"
+    base_file=$(echo $filepath | cut -f1 -d.) # metadata.shp.xml => metadata / metadata.xml => metadata
+    ext_file=$(echo $filepath | cut -f2 -d.)  # metadata.shp.xml => shp / metadata.xml => xml
+    ext_file2=$(echo $filepath | cut -f3 -d.) # raster.tif.aux.xml => aux 
+    test_xml_file="${path}/${base_file}.xml"
 
-  echo "ext_file $ext_file"
-  echo "ext_file2 $ext_file2"
-  echo "test_xml_file $test_xml_file"
+    echo "ext_file $ext_file"
+    echo "ext_file2 $ext_file2"
+    echo "test_xml_file $test_xml_file"
 
-  if [ $ext_file == "shp" ] && [ -e $test_xml_file ]; then
-    echo "fichier .shp.xml ignoré car un fichier .xml existe"
-  elif [ $ext_file == "tif" ] && [ $ext_file2 == "aux" ]; then
-    echo "fichier .aux.xml ignoré car il s'agit d'un fichier de projection/metadonnee"
-  else
-    # Attention : l'utilisateur (login) doit avoir le rôle GN_EDITOR (ou GN_ADMIN) (anciennement SV_EDITOR / SV_ADMIN) voir administration ldap
-    cmd="python $BASEDIR/lib/metadata_2_gn.py -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd'
-              -u '$host' -w '$workspace' -s '$datastore' --db_hostname '$dbhost' $verbosestr"
-    echo $cmd
-    eval $cmd
-  fi  
+    if [ $ext_file == "shp" ] && [ -e $test_xml_file ]; then
+      echo "fichier .shp.xml ignoré car un fichier .xml existe"
+    elif [ $ext_file == "tif" ] && [ $ext_file2 == "aux" ]; then
+      echo "fichier .aux.xml ignoré car il s'agit d'un fichier de projection/metadonnee"
+    else
+      # Attention : l'utilisateur (login) doit avoir le rôle GN_EDITOR (ou GN_ADMIN) (anciennement SV_EDITOR / SV_ADMIN) voir administration ldap
+      cmd="python $BASEDIR/lib/metadata_2_gn.py -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd'
+                -u '$host' -w '$workspace' -s '$datastore' --db_hostname '$dbhost' $verbosestr"
+      echo $cmd
+      eval $cmd
+    fi  
 
   }
 
