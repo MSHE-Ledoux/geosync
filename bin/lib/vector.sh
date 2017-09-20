@@ -213,7 +213,7 @@ vector::publish() {
   # publication en utilisant directement ogr2ogr, avec le driver pgdump
   # nécessaire car le nom d'une table postgres ne peut avoir de .
   layer=$(echo $output | cut -d. -f1) # TODO envisager de supprimer les points et non de prendre avant un point pour diminuer le risque de colision avec une autre table
-  cmd="ogr2ogr -f PGDump --config PG_USE_COPY YES -lco SRID='${epsg}' -lco create_schema=off -lco GEOMETRY_NAME=geom -lco DROP_TABLE=IF_EXISTS -nln '${layer}' -nlt PROMOTE_TO_MULTI /vsistdout/ '${input}' ${conv2utf8} | psql -h '${dbhost}' -d '${db}' -U '${dbuser}' -w -f -"
+  cmd="ogr2ogr -f PGDump --config PG_USE_COPY YES -lco SRID='${epsg}' -lco create_schema=off -lco GEOMETRY_NAME=geom -lco DROP_TABLE=IF_EXISTS -nln '${layer}' -nlt PROMOTE_TO_MULTI /vsistdout/ '${input}' ${conv2utf8} | perl -p -e 's/VARCHAR\(\d+\)/VARCHAR/' - | psql -h '${dbhost}' -d '${db}' -U '${dbuser}' -w -f -"
   echo_ifverbose "INFO ${cmd}"
   result=$(eval ${cmd})
 
