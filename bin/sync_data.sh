@@ -24,10 +24,10 @@ fi
   flock -x -w 10 201 || exit 1
 
   # date dans les logs
-  date >> $LOG_PATH/rsync.log
-  date >> $LOG_PATH/rsync_error.log
+  date >> $LOG_PATH/sync.log
+  date >> $LOG_PATH/sync_error.log
   
-  bash "${SCRIPT_PATH}/rsync_owncloud.sh" 1>>$LOG_PATH/rsync.log 2>>$LOG_PATH/rsync_error.log
+  bash "${SCRIPT_PATH}/sync_owncloud_data.sh" 1>>$LOG_PATH/sync.log 2>>$LOG_PATH/sync_error.log
 
   date >> $LOG_PATH/publish.log
   date >> $LOG_PATH/publish_error.log

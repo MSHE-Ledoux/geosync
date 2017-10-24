@@ -274,7 +274,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     # l'erreur psql: fe_sendauth: no password supplied
     # peut être due à une erreur dans le user de la base de données de geonetwork, voir aussi le .pgpass
 
-    sql_req = "set schema 'geonetwork';  INSERT INTO operationallowed SELECT 1, metadata.id, 1 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; INSERT INTO operationallowed SELECT 1, metadata.id, 5 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; INSERT INTO operationallowed SELECT 1, metadata.id, 0 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' AND NOT EXISTS (SELECT * FROM operationallowed JOIN metadata ON operationallowed.metadataid = metadata.id WHERE data ILIKE '%" + name_layer_gs + "%' AND operationid = 0) ; "
+    sql_req = "set schema 'geonetwork';  INSERT INTO operationallowed SELECT 1, metadata.id, 5 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; INSERT INTO operationallowed SELECT 1, metadata.id, 0 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' AND NOT EXISTS (SELECT * FROM operationallowed JOIN metadata ON operationallowed.metadataid = metadata.id WHERE data ILIKE '%" + name_layer_gs + "%' AND operationid = 0) ; INSERT INTO operationallowed SELECT 1, metadata.id, 1 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; "
 
     print sql_req 
     sql_file_name = tmpdir + "/update_privilege.sql"
@@ -282,6 +282,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     sql_file.write(sql_req)
     sql_file.close()
     os.system("psql -h " + database_hostname + " -d georchestra -U geonetwork -w -a -f " + sql_file_name)
+
 
 # test de la fonction publish_2_gn
 if __name__ == "__main__":
