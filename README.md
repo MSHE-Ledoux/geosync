@@ -39,9 +39,9 @@ Chaîne d'appel :
 * **crontab**
   * **sync_data.sh**
     * erreurs --> cron_error.log
-    * **rsync_owncloud.sh**
-      * erreurs --> rsync_error.log
-      * log --> rsync.log
+    * **sync_owncloud_data.sh**
+      * erreurs --> sync_error.log
+      * log --> sync.log
     * **publish.sh**
       * erreurs --> publish_error.log
       * log --> publish.log
