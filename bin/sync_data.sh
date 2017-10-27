@@ -42,8 +42,8 @@ fi
     echo "WARNING chemin d'arborescence par défaut : ${INPUT_COPY_PATH}"  >> $LOG_PATH/publish_error.log
   fi
 
-  cmd="bash '${SCRIPT_PATH}/publish.sh' -i '$INPUT_COPY_PATH' -d '$DATA_PATH' -p '$PARAMFILE' 1>>'$LOG_PATH/publish.log' 2>>'$LOG_PATH/publish_error.log'"
-  #echo $cmd
+  cmd="bash '${SCRIPT_PATH}/publish.sh' -v -i '$INPUT_COPY_PATH' -d '$DATA_PATH' -p '$PARAMFILE' 1>>'$LOG_PATH/publish.log' 2>>'$LOG_PATH/publish_error.log'"
+  echo $cmd
   eval $cmd
 
 
