@@ -17,15 +17,15 @@ Vue d'ensemble de l'architecture :
 ----------------------------------
 
 Description des fichiers de l'utilisateur georchestra-ouvert sur la machine georchestra :
-* **~/owncloud** : montage webdav des fichiers de georchestra-ouvert sur OwnCloud
-* **~/owncloud/*** : toutes les couches qui ont été partagées à georchestra-ouvert
-* **~/owncloudsync** : synchronisation par rsync des fichiers du montage webdav
+* **~/owncloudsync** : répertoire de synchronisation par la commande owncloudcmd des données partagées avec georchestra-ouvert ou georchestra-restreint.
+                       à noter que les données rangées dans le dossier nommé __unpublished ne sont pas publiées sur geOrchestra.
 * **~/data** : entrées/sorties de l'outil de synchronisation
 * **~/data/lastdate.txt** : stocke la dernière date des couches synchronisées ; pour resynchroniser toutes les couches, alors supprimer ce fichier
-* **~/bin/** : les scripts
+* **~/bin/** : les scripts d'appel
 * **~/bin/sync_data.sh** : synchronisation des données et publication sur le geoserver
 * **~/bin/clean_data.sh** : dépublication des couches qui ne sont plus partagées
 * **~/bin/ad2ldap_sync.py** : transfert des utilisateurs AD dans l'annuaire LDAP de geOrchestra
+* **~/bin/lib : les scripts d'envoi de données en fonction de leur type
 
 
 Chaîne d'appel :
