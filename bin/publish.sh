@@ -44,8 +44,11 @@ importallfiles() {
 
   # teste si le fichier  temporaire stockant la date de modif la plus récente existe
   # si tel est le cas, alors la récupère
+  # attention à bien écrire cette donnée dans un volume pérenne quand on utilise des conteneurs Docker
+  # sinon, le système trouve une date et republie toutes les données
   if [ -f "$configfile" ]; then 
     lastdatemodif=$(cat "$configfile")
+    echo "lastdatemodif : $lastdatemodif"
   fi
   # newlastdatemodif est la valeur qui sera stockée à la place de lastdatemodif
   newlastdatemodif=$lastdatemodif
@@ -77,9 +80,11 @@ importallfiles() {
         # attention cela différe de la date de modification
         # le rsync la modifie à l'heure locale lorsque le fichier est a été modifié
         datemodif=$(util::getlastchangedate "$filepath")
+        echo "datemodif : $datemodif"
     
         if [[ "$datemodif" > "$lastdatemodif" ]]; then  # [[ .. ]] nécessaire pour comparer les chaines avec >
-    
+
+          echo "$datemodif supérieure à $lastdatemodif, je lance l'import..."
           importfile "$filepath" ""
     
           # TODO: ne modifier la date que si l'import du fichier a été un succés
@@ -93,6 +98,7 @@ importallfiles() {
 
   shopt -u globstar nocaseglob  # unset globstar
   
+  echo "je positionne une nouvelle de date : $newlastdatemodif"
   echo "$newlastdatemodif" > "$configfile"
 
 }
