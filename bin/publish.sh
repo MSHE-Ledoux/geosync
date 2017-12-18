@@ -76,30 +76,32 @@ importallfiles() {
       # teste si le fichier existe bien car (dans certaines conditions encore inconnues selon qu'on le lance par le terminal ou le cron)
       # **/*.shp retourne aussi un fichier nommé "**/*.shp"
       if [ -f "$filepath" ]; then 
-        # récupère la date de changement la plus récente des fichiers (de même nom) de la couche, exemple .shp.xml
-        # attention cela différe de la date de modification
-        # le rsync la modifie à l'heure locale lorsque le fichier est a été modifié
-        datemodif=$(util::getlastchangedate "$filepath")
-        echo "datemodif : $datemodif"
+         # récupère la date de changement la plus récente des fichiers (de même nom) de la couche, exemple .shp.xml
+         # attention cela différe de la date de modification
+         # le rsync la modifie à l'heure locale lorsque le fichier est a été modifié
+         datemodif=$(util::getlastchangedate "$filepath")
+         echo "datemodif : $datemodif"
     
-        if [[ "$datemodif" > "$lastdatemodif" ]]; then  # [[ .. ]] nécessaire pour comparer les chaines avec >
+         if [[ "$datemodif" > "$lastdatemodif" ]]; then  # [[ .. ]] nécessaire pour comparer les chaines avec >
 
-          echo "$datemodif supérieure à $lastdatemodif, je lance l'import..."
-          importfile "$filepath" ""
+            echo "$datemodif supérieure à $lastdatemodif, je lance l'import..."
+            importfile "$filepath" ""
     
-          # TODO: ne modifier la date que si l'import du fichier a été un succés
-          if [[ "$datemodif" > "$newlastdatemodif" ]]; then # [[ .. ]] nécessaire pour comparer les chaines avec >
-            newlastdatemodif=$datemodif
-          fi
-        fi
+            # TODO: ne modifier la date que si l'import du fichier a été un succés
+            if [[ "$datemodif" > "$newlastdatemodif" ]]; then # [[ .. ]] nécessaire pour comparer les chaines avec >
+               newlastdatemodif=$datemodif
+               echo "je positionne une nouvelle de date : $newlastdatemodif"
+               echo "$newlastdatemodif" > "$configfile"
+            fi
+         fi
     
       fi
   done
 
   shopt -u globstar nocaseglob  # unset globstar
   
-  echo "je positionne une nouvelle de date : $newlastdatemodif"
-  echo "$newlastdatemodif" > "$configfile"
+  #echo "je positionne une nouvelle de date : $newlastdatemodif"
+  #echo "$newlastdatemodif" > "$configfile"
 
 }
 
