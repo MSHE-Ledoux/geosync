@@ -11,10 +11,10 @@ paramfile="$HOME/.geosync.conf"
 source "$paramfile"
 
 # vérifie que le chemin de l'arborescence à publier a bien été défini dans la conf
-if [[ "${publishing_directory}" ]]; then 
-    INPUT_COPY_PATH="${publishing_directory}"
+if [[ "${share_directory}" ]]; then 
+    INPUT_COPY_PATH="${share_directory}"
 else
-    echo "WARNING aucun chemin d'arborescence à publier ('publishing_directory') défini dans .geosync.conf" >> $LOG_PATH/publish_error.log
+    echo "WARNING aucun chemin d'arborescence à publier ('share_directory') défini dans .geosync.conf" >> $LOG_PATH/publish_error.log
 
     INPUT_COPY_PATH="$HOME/owncloudsync" # le chemin par défaut est conservé temporairement pour rétro-compatibilité # TODO ne pas prendre de valeur pas défaut et faire une vraie erreur
     echo "WARNING chemin d'arborescence par défaut : ${INPUT_COPY_PATH}"  >> $LOG_PATH/publish_error.log
