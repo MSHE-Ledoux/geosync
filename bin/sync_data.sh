@@ -7,9 +7,9 @@ SCRIPT_PATH=`dirname "$SCRIPT_FULL_PATH"`  # /absolute/path
 # attention : ne pas faire précéder ce code par le flock (ci-dessous) car sinon semble ne pas supprimer le verrou
 
 # on a besoin ici uniquement des logs
-PARAMFILE="$HOME/.geosync.conf"
+paramfile="$HOME/.geosync.conf"
 #local host login passwd workspace datastore pg_datastore db logs publishing_directory
-source "$PARAMFILE"
+source "$paramfile"
 
 DATA_PATH="$HOME/data"  # contient le fichier lastdate.txt avec la dernière date de changement de fichier traité
 LOG_PATH="/var/log/$logs"
@@ -44,7 +44,7 @@ fi
     echo "WARNING chemin d'arborescence par défaut : ${INPUT_COPY_PATH}"  >> $LOG_PATH/publish_error.log
   fi
 
-  cmd="bash '${SCRIPT_PATH}/publish.sh' -v -i '$INPUT_COPY_PATH' -d '$DATA_PATH' -p '$PARAMFILE' 1>>'$LOG_PATH/publish.log' 2>>'$LOG_PATH/publish_error.log'"
+  cmd="bash '${SCRIPT_PATH}/publish.sh' -v -i '$INPUT_COPY_PATH' -d '$DATA_PATH' -p '$paramfile' 1>>'$LOG_PATH/publish.log' 2>>'$LOG_PATH/publish_error.log'"
   echo $cmd
   eval $cmd
 

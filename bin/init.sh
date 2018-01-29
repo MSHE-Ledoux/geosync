@@ -54,16 +54,16 @@ main() {
   echo_ifverbose "teste la disponibilité du geoserver"
 
   # récupère les paramètres de connexion dans le fichier .geosync situé dans le même dossier utilisateur
-  paramfilepath="$HOME/.geosync.conf"
+  paramfile="$HOME/.geosync.conf"
   local host login passwd workspace workspace_roles datastore pg_datastore db 
-  source "$paramfilepath"
+  source "$paramfile"
 
   # attention les fichiers .geosync est interprété et fait donc confiance au code
   # pour une solution plus sûre, envisager quelque chose comme : #while read -r line; do declare $line; done < "$HOME/.pass"
 
   # vérification du host/login/mot de passe
   if [ ! "$login" ] || [ ! "$passwd" ] || [ ! "$host" ]; then
-    error "url du georserver, login ou mot de passe non définit; le fichier spécifié avec l'option -p [paramfilepath] doit contenir la définition des variables suivantes sur 3 lignes : login=[login] passwd=[password] host=[geoserver's url]"
+    error "url du georserver, login ou mot de passe non définit; le fichier spécifié avec l'option -p [paramfile] doit contenir la définition des variables suivantes sur 3 lignes : login=[login] passwd=[password] host=[geoserver's url]"
   fi
 
   # récupère les paramètres d'authentification dans le fichier .pgpass (attendu dans le $HOME)
@@ -146,7 +146,7 @@ main() {
   if [[ $roles ]]; then # roles (accédant au worskpace) définits
     auths="${workspace}.*.r"
 
-    echo_ifverbose "tentative de création des régles d'accés"
+    echo_ifverbose "tentative de création des régles d'accès"
     cmd="curl --silent --output /dev/null -w %{http_code} -u '${login}:${password}' -XPOST -H 'Content-type: text/xml' \
               -d '<?xml version=\"1.0\" encoding=\"UTF-8\"?> \
                   <rules> \
@@ -159,9 +159,9 @@ main() {
     echo_ifverbose "statuscode $statuscode"
     
     if [ "$statuscode" -ge "200" ] && [ "$statuscode" -lt "300" ]; then
-       echo "OK création des régles d'accés réussie"
+       echo "OK création des régles d'accès réussie"
     else
-      echoerror "ERROR lors de la création des régles d'accés ... error http code : $statuscode"
+      echoerror "ERROR lors de la création des régles d'accès ... error http code : $statuscode"
     fi 
   else  # aucun role accédant au worskpace de définit
     echo "WARNING aucun rôle définit dans .geosync.conf pouvant accéder au worskpace $workspace"
