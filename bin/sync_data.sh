@@ -27,7 +27,9 @@ fi
   date >> $LOG_PATH/sync.log
   date >> $LOG_PATH/sync_error.log
   
-  bash "${SCRIPT_PATH}/sync_owncloud_data.sh" 1>>$LOG_PATH/sync.log 2>>$LOG_PATH/sync_error.log
+  cmd="bash '${SCRIPT_PATH}/sync_owncloud_data.sh' 1>>$LOG_PATH/sync.log 2>>$LOG_PATH/sync_error.log"
+  echo $cmd
+  eval $cmd
 
   date >> $LOG_PATH/publish.log
   date >> $LOG_PATH/publish_error.log
