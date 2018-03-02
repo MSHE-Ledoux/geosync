@@ -1,16 +1,20 @@
 #!/usr/bin/python
 # -*-coding:Utf-8 -*
 
-# pré-requis : apt install python-owslib
+# pré-requis : 
+# apt install python-owslib python-lxml python-dev libxml2-utils libsaxonb-java
 
 """"""
 import os
-import sys 
+import sys
+import owslib
+import requests
+from requests.auth import HTTPBasicAuth
+from httplib import HTTPConnection
 
 def publish_2_gn(input, url, login, password, workspace, database_hostname, verbose):
 
     from cleanName import cleanName
-    import owslib
 
     output = cleanName(input, True)
     
@@ -26,7 +30,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     reload(sys)  
     sys.setdefaultencoding('utf8')
 
-    # aide au diagnostic : vérifie l'existence du fichier input
+    # vérifie l'existence du fichier input
     if not os.path.isfile(input):
         sys.stderr.write("ERROR input file not found : " + input + "\n")
         return
@@ -49,7 +53,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
 
     # Translate Esri metadata to ISO19139
 
-    # aide au diagnostic : vérifie la présence de ArcGIS2ISO19139.xsl
+    # vérifie la présence de ArcGIS2ISO19139.xsl
     script_path = os.path.dirname(os.path.abspath(__file__))
     xsl_path = script_path + "/ArcGIS2ISO19139.xsl"
     if not os.path.isfile(xsl_path):
@@ -89,8 +93,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
                           namespaces={'gmd': 'http://www.isotc211.org/2005/gmd',
                                       'gco': 'http://www.isotc211.org/2005/gco'})
     titre = (resultat)[0]
-    print "titre"
-    print titre.text
+    print 'titre : ' + titre.text
 
     # utilisation de minidom pour modifier l'arbre xlm. à refaire avec lxml !!
     from xml.dom import minidom
@@ -101,7 +104,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     line2 = line1.nextSibling.toprettyxml()		# si le document xml original en contient
     line1 = line1.toprettyxml()				# geonetwork gère bien l'import avec ou sans gmd, du moment
     if ('gmd:' in line1) or ('gmd:' in line2) :		# que le fichier soit cohérent
-        print "Fichier avec gmd"  # GMD : Geographic MetaData extensible markup language
+        #print "Fichier avec gmd"  # GMD : Geographic MetaData extensible markup language
         gmd = 'gmd:'
     else :
         gmd = ''
@@ -110,7 +113,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
 
     balise = gmd + 'fileIdentifier'
     for element in doc.getElementsByTagName(balise):
-        print 'fileIdentifier en cours de suppression'
+        #print 'fileIdentifier en cours de suppression'
         doc.documentElement.removeChild(element)
 
     b_DigitalTransferOptions = gmd + 'MD_DigitalTransferOptions'
@@ -161,7 +164,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     b_url = gmd + 'URL'					# creation et remplissage balise url  
     element_url = doc.createElement(b_url)
     url_wms = url + "/geoserver/ows?SERVICE=WMS&"	# url_wms = https://georchestra-dev.umrthema.univ-fcomte.fr/geoserver/ows?SERVICE=WMS&
-    print url_wms
+    #print url_wms
     element_url_txt = doc.createTextNode(url_wms)
     element_url.appendChild(element_url_txt)
     b_protocol = gmd + 'protocol'				# creation et remplissage balise protocole
@@ -183,29 +186,30 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     b_descr = gmd +'description'				# creation et remplissage balise description
     element_descr = doc.createElement(b_descr)
     b_gco = 'gco:CharacterString'
-    print "b_gco " + b_gco
+    #print "b_gco " + b_gco
     element_descr_gco = doc.createElement(b_gco)
     element_descr.appendChild(element_descr_gco)
     element_descr_txt = doc.createTextNode(output.split(".")[0])   #baies_metadata__baies_metadata      #u"baies_metadata__baies_metadataéééééééééé"
     element_descr_gco.appendChild(element_descr_txt)
 
-    print b_DigitalTransferOptions
- 
-    for element in doc.getElementsByTagName(b_DigitalTransferOptions):
-        print element.appendChild(element_online)
-        print element.toxml()
-        print element_online.appendChild(element_ressource)
-        print element.toxml()
-        print element_ressource.appendChild(element_linkage)
-        print element.toxml()
-        print element_linkage.appendChild(element_url)
-        print element.toxml()
-        print element_ressource.appendChild(element_protocol)
-        print element.toxml()
-        print element_ressource.appendChild(element_name)
-        print element.toxml()
-        print element_ressource.appendChild(element_descr)
-        print element.toxml()
+    #print b_DigitalTransferOptions
+
+#   # affichage du fichier de metadonnées 
+#    for element in doc.getElementsByTagName(b_DigitalTransferOptions):
+#        print element.appendChild(element_online)
+#        print element.toxml()
+#        print element_online.appendChild(element_ressource)
+#        print element.toxml()
+#        print element_ressource.appendChild(element_linkage)
+#        print element.toxml()
+#        print element_linkage.appendChild(element_url)
+#        print element.toxml()
+#        print element_ressource.appendChild(element_protocol)
+#        print element.toxml()
+#        print element_ressource.appendChild(element_name)
+#        print element.toxml()
+#        print element_ressource.appendChild(element_descr)
+#        print element.toxml()
 
     input_csw = tmpdir + "/csw_" +  output
     output_fic = open(input_csw,'w') 
@@ -213,9 +217,8 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     output_fic.write(txt)
     output_fic.close()
 
-    # Connect to a CSW, and inspect its properties:
+    # connexion à geonetwork avec la librairie owslib
     from owslib.csw import CatalogueServiceWeb
-    #csw = CatalogueServiceWeb(url, skip_caps=True, username=login, password=password)
     url_csw = url + "/geonetwork/srv/fre/csw-publication"
     # Attention : l'utilisateur (login) doit avoir le rôle GN_EDITOR (ou GN_ADMIN) (anciennement SV_EDITOR / SV_ADMIN) voir administration ldap
     ## sinon peut générer l'erreur : lxml.etree.XMLSyntaxError: Opening and ending tag mismatch
@@ -227,62 +230,66 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     myquery = PropertyIsEqualTo('csw:AnyText', name_layer_gs)
     csw.getrecords2(constraints=[myquery], maxrecords=10)
     resultat = csw.results
-    print "resultat : " , resultat 
+    #print "resultat : " , resultat 
     for rec in csw.records:
         print "suppression de " + csw.records[rec].title + csw.records[rec].identifier
         csw.transaction(ttype='delete', typename=typename_csw, identifier=csw.records[rec].identifier)
    
     # Transaction: insert
-    #typename_csw = gmd + 'MD_Metadata' # FAIT PLUS HAUT, JUSTE APRES DETERMINATION GMD OU PAS
-    print "typename_csw " + typename_csw
-    print "input_csw " + input_csw
+    #print "typename_csw " + typename_csw
+    print "input_csw : " + input_csw
 
-    #import unicodedata
-    #acc = open(input_csw).read()
-    #acc_8 = acc.decode('utf-8').encode('ascii', 'ignore')	# supprime les caractères avec accents
-    #acc_d = acc.decode('utf-8')
-    #acc_8 = unicodedata.normalize('NFKD',acc_d).encode('ascii', 'ignore')	# nécessite unicodedata, supprime les accents
+    # le fichier de métadonnées est envoyé avec la librairie owslib
+    #csw.transaction(ttype='insert', typename=typename_csw, record=open(input_csw).read())
+    # problème : les données ne sont alors pas publiques
+    # on utilise donc l'API de genonetwork
+    # https://georchestra-mshe.univ-fcomte.fr/geonetwork/doc/api/
 
-    csw.transaction(ttype='insert', typename=typename_csw, record=open(input_csw).read())
-    #csw.transaction(ttype='insert', typename=typename_csw, record=acc_8)
-    #csw.transaction(ttype='insert', typename='gmd:MD_Metadata', record=open('haies_sans_lien_geoserver.xml').read())
+    HTTPConnection.debuglevel = 0
 
-    # Modification des privilèges d'une fiche de metadata pour pouvoir voir sa carte interactive / voir son lien de téléchargement des données :
-    # doc : http://geonetwork-opensource.org/manuals/trunk/eng/users/user-guide/publishing/managing-privileges.html
-  
-    # via l'interface web : https://georchestra-mshe.univ-fcomte.fr/geonetwork/srv/fre/catalog.edit#/board
+    # ouverture de session
+    geonetwork_session = requests.Session()
+    geonetwork_session.auth = HTTPBasicAuth(login, password)
+    geonetwork_session.headers.update({"Accept" : "application/xml"})
 
-    # via la base de données (schema geonetwork) :
-    # TODO il serait hautement préférable de passer par l'API REST que par la modification de la base de données de geonetwork
-    # INSERT INTO geonetwork.operationallowed ( metadataid, groupid, operationid) VALUES ( '[METADATAID]', '1', '[OPERATIONID]');
-    # (groupid=1 pour "Tous")
-    # * Télécharger (operationid=1)
-    # * Carte interactive (operationid=5)
+    # 1er POST, pour récupérer le token xsrf
+    geonetwork_url = url + '/geonetwork/srv/eng/info?type=me'
+    r_post = geonetwork_session.post(geonetwork_url)
 
-    # Update metadata privilege
-    #    sql_req = """set schema 'geonetwork'; 
-    #               INSERT INTO operationallowed SELECT 1, metadata.id, 1 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; 
-    #               INSERT INTO operationallowed SELECT 1, metadata.id, 5 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; 
-    #               INSERT INTO operationallowed SELECT 1, metadata.id, 0 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' AND NOT EXISTS (SELECT * FROM operationallowed JOIN metadata ON operationallowed.metadataid = metadata.id WHERE data ILIKE '%" + name_layer_gs + "%' AND operationid = 0) ; """ # """ permette l'écriture sur plusieurs lignes"
+    # prise en compte du token xsrf
+    # https://geonetwork-opensource.org/manuals/trunk/eng/users/customizing-application/misc.html
+    token = geonetwork_session.cookies.get('XSRF-TOKEN')
+    geonetwork_session.headers.update({"X-XSRF-TOKEN" : geonetwork_session.cookies.get('XSRF-TOKEN')})
 
-    # -- attention --
-    # la recherche via "data ILIKE '%fouilles_chailluz__pt_limsit_sra%'" peut occasionner des doublons (par exemple avec un nom plus large qui inclut la chaîne cherchée, ou si la fiche de metadata a été duppliquée d'une autre sans être bien modifiée)
-    # dans ce cas, produit l'erreur suivante :
-    # psql:/tmp/geosync_metadata/update_privilege.sql:1: ERREUR:  la valeur d'une clé dupliquée rompt la contrainte unique « operationallowed_pkey »
-    # DÉTAIL : La clé « (groupid, metadataid, operationid)=(1, 485713, 1) » existe déjà.
+    # envoi du fichier de métadonnées
+    geonetwork_post_url = url + '/geonetwork/srv/api/0.1/records?uuidProcessing=OVERWRITE'
+    files = {'file': (input_csw, open(input_csw,'rb'), 'application/xml', {'Expires': '0'})}
+    geonetwork_session.headers.update({"Accept" : "application/json"})
+    r_post = geonetwork_session.post(geonetwork_post_url, files=files)
+    #print r_post.text
+    #print r_post.json()
+    content = r_post.json()
+    #print(content.keys())
+    #print(content[u'metadataInfos'])
+    #print(content[u'metadataInfos'].keys())
+    identifiant = content[u'metadataInfos'].keys()
+    #print identifiant
+    #print type(identifiant)
+    #print identifiant[0]
+    identifiant = identifiant[0]
+    #print 'identifiant : ' + identifiant
+    print "métadonnées envoyées : " + input_csw
 
-    # l'erreur psql: fe_sendauth: no password supplied
-    # peut être due à une erreur dans le user de la base de données de geonetwork, voir aussi le .pgpass
-
-    sql_req = "set schema 'geonetwork';  INSERT INTO operationallowed SELECT 1, metadata.id, 5 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; INSERT INTO operationallowed SELECT 1, metadata.id, 0 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' AND NOT EXISTS (SELECT * FROM operationallowed JOIN metadata ON operationallowed.metadataid = metadata.id WHERE data ILIKE '%" + name_layer_gs + "%' AND operationid = 0) ; INSERT INTO operationallowed SELECT 1, metadata.id, 1 FROM metadata WHERE data ILIKE '%" + name_layer_gs + "%' ; "
-
-    print sql_req 
-    sql_file_name = tmpdir + "/update_privilege.sql"
-    sql_file = open(sql_file_name,"w")
-    sql_file.write(sql_req)
-    sql_file.close()
-    os.system("psql -h " + database_hostname + " -d georchestra -U geonetwork -w -a -f " + sql_file_name)
-
+    # modification des privilèges
+    data_privilege = '{ "clear": true, "privileges": [ {"operations":{"view":true,"download":false,"dynamic":false,"featured":false,"notify":false,"editing":false},"group":-1}, {"operations":{"view":true,"download":false,"dynamic":false,"featured":false,"notify":false,"editing":false},"group":0}, {"operations":{"view":true,"download":false,"dynamic":false,"featured":false,"notify":false,"editing":false},"group":1} ] }'
+    geonetwork_session.headers.update({"Accept" : "*/*"})
+    geonetwork_session.headers.update({"Content-Type" : "application/json"})
+    geonetwork_session.headers.update({"X-XSRF-TOKEN" : token})
+    geonetwork_put_url = url + '/geonetwork/srv/api/0.1/records/' + identifiant + '/sharing'
+    print geonetwork_put_url
+    r_put = geonetwork_session.put(geonetwork_put_url, data=data_privilege)
+    print r_put.text
+    print "métadonnées rendues publiques"
 
 # test de la fonction publish_2_gn
 if __name__ == "__main__":
@@ -291,14 +298,15 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(add_help=True)
     #parser.add_argument('-i',          action="store",      dest="input",              required=True)
-    parser.add_argument('-i',           action="store",      dest="input",              default="metadata_no_uid.xml")
+    parser.add_argument('-i',           action="store",      dest="input",              default="geonetwork-record.xml")
     #parser.add_argument('-l',          action="store",      dest="login",              required=True)
-    parser.add_argument('-l',           action="store",      dest="login",              default="admin")
-    parser.add_argument('-o',           action="store",      dest="output"                 )
+    parser.add_argument('-l',           action="store",      dest="login",              default="testadmin")
+    #parser.add_argument('-o',           action="store",      dest="output"                 )
+    parser.add_argument('-o',           action="store",      dest="output",             default="geonetwork-record.xml")
     #parser.add_argument('-p',          action="store",      dest="password",           required=True)
-    parser.add_argument('-p',           action="store",      dest="password",           default="admin")
+    parser.add_argument('-p',           action="store",      dest="password",           default="testadmin")
     parser.add_argument('-s',           action="store",      dest="datastore"              )
-    parser.add_argument('-u',           action="store",      dest="url",                default="http://geonetwork-mshe.univ-fcomte.fr:8080/geonetwork/srv/fre/csw-publication")
+    parser.add_argument('-u',           action="store",      dest="url",                default="https://georchestra-docker.umrthema.univ-fcomte.fr")
     parser.add_argument('-v',           action="store_true", dest="verbose",            default=False)
     parser.add_argument('-w',           action="store",      dest="workspace",          default="geosync-ouvert")
     parser.add_argument('--db_hostname',action="store",      dest="database_hostname",  default="localhost")

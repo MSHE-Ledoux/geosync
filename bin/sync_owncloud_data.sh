@@ -6,15 +6,15 @@
 BASEDIR=$(dirname "$0")
 
 # lecture des variables d'environnement de l'utilisateur (.geosync.conf)
-PARAMFILE="$HOME/.geosync.conf"
-# on a besoin ici de : ocl_host login passwd
-source "$PARAMFILE"
+paramfile="$HOME/.geosync.conf"
+# on a besoin ici de : ocl_host ocl_login ocl_passwd
+source "$paramfile"
 
 # vérifie que le chemin de l'arborescence à publier a bien été défini dans la conf
-if [[ "${publishing_directory}" ]]; then 
-    INPUT_COPY_PATH="${publishing_directory}"
+if [[ "${share_directory}" ]]; then 
+    INPUT_COPY_PATH="${share_directory}"
 else
-    echo "WARNING aucun chemin d'arborescence à publier ('publishing_directory') défini dans .geosync.conf" >> $LOG_PATH/publish_error.log
+    echo "WARNING aucun chemin d'arborescence à publier ('share_directory') défini dans .geosync.conf" >> $LOG_PATH/publish_error.log
 
     INPUT_COPY_PATH="$HOME/owncloudsync" # le chemin par défaut est conservé temporairement pour rétro-compatibilité # TODO ne pas prendre de valeur pas défaut et faire une vraie erreur
     echo "WARNING chemin d'arborescence par défaut : ${INPUT_COPY_PATH}"  >> $LOG_PATH/publish_error.log
@@ -31,7 +31,7 @@ echo_ifverbose() {
 # attention : si des photos sont présentes dans un répertoire Photos, elles pourraient être prises pour des rasters
 # pour dépublier des couches, les déplacer dans le répertoire _unpublished
 #cmd="rsync --quiet -avr --delete --exclude 'lost+found' --exclude __*/ --exclude _unpublished '$INPUT_OUTPUT_PATH/' '$INPUT_COPY_PATH/'"
-cmd="owncloudcmd --silent --unsyncedfolders $HOME/folder-to-exclude.lst --user $login --password $passwd $INPUT_COPY_PATH $ocl_host"
+cmd="owncloudcmd --silent --unsyncedfolders $HOME/folder-to-exclude.lst --user $ocl_login --password $ocl_passwd $INPUT_COPY_PATH $ocl_host"
 echo_ifverbose $cmd
 eval $cmd
 
