@@ -1,5 +1,5 @@
-publishing_directory=$HOME/owncloudsync
-#publishing_directory=$HOME/owncloudsync/public # pour pouvoir modérer les couches avant qu'elles ne soient publiées (en les déplaçant manuellement dans le répertoire de publication)
+share_directory=$HOME/owncloudsync
+#share_directory=$HOME/owncloudsync/public # pour pouvoir modérer les couches avant qu'elles ne soient publiées (en les déplaçant manuellement dans le répertoire de publication)
 host=https://georchestra-dev.umrthema.univ-fcomte.fr
 dbhost=database
 dbuser=geosync
