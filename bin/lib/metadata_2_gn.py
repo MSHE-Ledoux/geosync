@@ -4,7 +4,6 @@
 # pré-requis : 
 # apt install python-owslib python-lxml python-dev libxml2-utils libsaxonb-java
 
-""""""
 import os
 import sys
 import owslib
@@ -85,42 +84,84 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
 
     # Add Geoserver link to metadata and delete identifier
 
-    # utilisation de lxml pour récupérer le contenu de la balise resTitle
+    # utilisation de lxml pour récupérer le contenu de la balise gmd:title
     from lxml import etree
     tree = etree.parse(input)
     root = tree.getroot()
     resultat = root.xpath('//gmd:title/gco:CharacterString',
                           namespaces={'gmd': 'http://www.isotc211.org/2005/gmd',
                                       'gco': 'http://www.isotc211.org/2005/gco'})
-    titre = (resultat)[0]
-    print 'titre : ' + titre.text
+    if len(resultat) :
+        print("balise gmd:title trouvée")
+        titre = (resultat)[0]
+        print 'titre : ' + titre.text
+    else :
+       print("balise gmd:title non trouvée")
+       titre = 'sans titre'
 
-    # utilisation de minidom pour modifier l'arbre xlm. à refaire avec lxml !!
+    # utilisation de minidom pour lire et modifier l'arbre xlm. à refaire avec lxml !!
     from xml.dom import minidom
     doc = minidom.parse(input)
-    root = doc.documentElement
-    
-    line1 = root.firstChild				# Permet d'insérer des balises avec le namespace gmd
-    line2 = line1.nextSibling.toprettyxml()		# si le document xml original en contient
-    line1 = line1.toprettyxml()				# geonetwork gère bien l'import avec ou sans gmd, du moment
-    if ('gmd:' in line1) or ('gmd:' in line2) :		# que le fichier soit cohérent
-        #print "Fichier avec gmd"  # GMD : Geographic MetaData extensible markup language
+    element = doc.documentElement
+    print "doc.nodeName: " + doc.nodeName
+    print "doc.firstChild.tagName: " + doc.firstChild.tagName
+
+    # type de fichier. typiquement on a une balise principale
+    # metadata
+    # MD_Metadata
+    # gmd:MD_Metadata
+    typename_csw = doc.firstChild.tagName
+    print "typename_csw : " + typename_csw
+    if ('gmd:' in typename_csw) :
         gmd = 'gmd:'
     else :
         gmd = ''
- 
-    typename_csw = gmd + 'MD_Metadata'
+    print "gmd : " + gmd
 
-    balise = gmd + 'fileIdentifier'
-    for element in doc.getElementsByTagName(balise):
+    xpath_digital = root.xpath('//gmd:distributionInfo/gmd:MD_Distribution/gmd:transferOptions/gmd:MD_DigitalTransferOptions',
+                               namespaces={'gmd': 'http://www.isotc211.org/2005/gmd',
+                                           'gco': 'http://www.isotc211.org/2005/gco'})
+    if len(xpath_digital) :
+        print("balise MD_DigitalTransferOptions trouvée")
+        xpath_url = root.xpath('//gmd:distributionInfo/gmd:MD_Distribution/gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:onLine/gmd:CI_OnlineResource/gmd:linkage/gmd:URL',
+                               namespaces={'gmd': 'http://www.isotc211.org/2005/gmd',
+                                           'gco': 'http://www.isotc211.org/2005/gco'})
+        if len(xpath_url) :
+            print "longueur : " + str(len(xpath_url))
+            balise_url = (xpath_url)[0]
+            print 'balise_url : ' + balise_url.text
+
+    tree = etree.parse(input) 
+    for xpath_url in tree.xpath('//gmd:distributionInfo/gmd:MD_Distribution/gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:onLine/gmd:CI_OnlineResource/gmd:linkage/gmd:URL',
+                               namespaces={'gmd': 'http://www.isotc211.org/2005/gmd',
+                                           'gco': 'http://www.isotc211.org/2005/gco'}):
+        if len(xpath_url) :
+            print "longueur boucle : " + str(len(xpath_url))
+            balise_url = (xpath_url)[0]
+            print 'boucle for balise_url : ' + balise_url.text
+
+    # objectif : insérer des balises avec le namespace gmd si le document xml original en contient
+    # geonetwork gère bien l'import avec ou sans gmd, dès lors que le fichier est cohérent
+    # GMD : Geographic MetaData extensible markup language
+
+    # suppression de la balise fileIdentifier si elle existe
+    # c'est certainement une mauvaise idée... !!!
+    b_fileIdentifier = gmd + 'fileIdentifier'
+    print "b_fileIdentifier : " + b_fileIdentifier
+    for element in doc.getElementsByTagName(b_fileIdentifier):
         #print 'fileIdentifier en cours de suppression'
         doc.documentElement.removeChild(element)
 
+    # recherche de la balise MD_DigitalTransferOptions avec minidom
     b_DigitalTransferOptions = gmd + 'MD_DigitalTransferOptions'
-
     test_digital = doc.getElementsByTagName(b_DigitalTransferOptions)
 
-    if not test_digital :	# creation de l'arborescence nécessaire à la creation de la  balise MD_DigitalTransferOptions
+    # création de l'arborescence nécessaire à la création de la balise MD_DigitalTransferOptions
+    if not test_digital :
+        print "pas de balise MD_DigitalTransferOptions"
+        print "donc création des 4 balises xml imbriquées"
+        print "gmd:distributionInfo / gmd:MD_Distribution / gmd:transferOptions / gmd:MD_DigitalTransferOptions"
+
         b_dist = gmd + 'distributionInfo'
         element_dist = doc.createElement(b_dist)
         b_MD_dist = gmd + 'MD_Distribution'
@@ -129,45 +170,53 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
         element_transfert = doc.createElement(b_transfert)
         b_digital = gmd + 'MD_DigitalTransferOptions'
         element_digital = doc.createElement(b_digital)
+
+        print "insertion des balises dans l'arbre"
         for element in doc.getElementsByTagName(typename_csw) : 
-            print element.appendChild(element_dist)
-            print element_dist.appendChild(element_MD_dist)
-            print element_MD_dist.appendChild(element_transfert)
-            print element_transfert.appendChild(element_digital)
+            element.appendChild(element_dist)
+            element_dist.appendChild(element_MD_dist)
+            element_MD_dist.appendChild(element_transfert)
+            element_transfert.appendChild(element_digital)
  
     # AJOUT DES NOEUDS DANS L'ARBRE
-    # pour faire apparaître le bouton "Visualiser" dans geonetwork
-    # dans <gmd:MD_DigitalTransferOptions>
-    # <gmd:onLine>
-    #     <gmd:CI_OnlineResource>
-    #         <gmd:linkage>
-    #             <gmd:URL>https://georchestra-mshe.univ-fcomte.fr/geoserver/ows?SERVICE=WMS&amp;</gmd:URL>
-    #         </gmd:linkage>
-    #         <gmd:protocol>
-    #             <gco:CharacterString>OGC:WMS-1.3.0-http-get-map</gco:CharacterString>
-    #         </gmd:protocol>
-    #         <gmd:name>
-    #             <gco:CharacterString>geosync-restreint:NOM_DE_LA_COUCHE</gco:CharacterString>
-    #         </gmd:name>
-    #         <gmd:description>
-    #             <gco:CharacterString>NOM_DE_LA_COUCHE</gco:CharacterString>
-    #         </gmd:description>
-    #     </gmd:CI_OnlineResource>
-    # </gmd:onLine>
+    # pour faire apparaître le bouton "Visualiser" dans geonetwork, ajouter dans <gmd:MD_DigitalTransferOptions>
+    #
+    #  <gmd:distributionInfo>
+    #    <gmd:MD_Distribution>
+    #      <gmd:transferOptions>
+    #        <gmd:MD_DigitalTransferOptions>
+    #          <gmd:onLine>
+    #            <gmd:CI_OnlineResource>
+    #              <gmd:linkage>
+    #                <gmd:URL>https://georchestra-mshe.univ-fcomte.fr/geoserver/ows?SERVICE=WMS&amp;</gmd:URL>
+    #              </gmd:linkage>
+    #              <gmd:protocol>
+    #                <gco:CharacterString>OGC:WMS-1.3.0-http-get-map</gco:CharacterString>
+    #              </gmd:protocol>
+    #              <gmd:name>
+    #                <gco:CharacterString>geosync-restreint:NOM_DE_LA_COUCHE</gco:CharacterString>
+    #              </gmd:name>
+    #              <gmd:description>
+    #                <gco:CharacterString>NOM_DE_LA_COUCHE</gco:CharacterString>
+    #              </gmd:description>
+    #            </gmd:CI_OnlineResource>
+    #          </gmd:onLine>
+    #        </gmd:MD_DigitalTransferOptions>
 
-    b_online = gmd + 'onLine'				# creation balise online
+    # dans tous les cas, une fois la balise gmd:MD_DigitalTransferOptions cpmplétée,
+    # on crée les élements
+    b_online = gmd + 'onLine'					# création balise online
     element_online = doc.createElement(b_online)
-    b_ressource = gmd + 'CI_OnlineResource'		# creation balise ressource
+    b_ressource = gmd + 'CI_OnlineResource'			# création balise ressource
     element_ressource = doc.createElement(b_ressource)	
-    b_linkage = gmd + 'linkage'				# creation balise linkage
+    b_linkage = gmd + 'linkage'					# création balise linkage
     element_linkage = doc.createElement(b_linkage)
-    b_url = gmd + 'URL'					# creation et remplissage balise url  
+    b_url = gmd + 'URL'						# création et remplissage balise url  
     element_url = doc.createElement(b_url)
-    url_wms = url + "/geoserver/ows?SERVICE=WMS&"	# url_wms = https://georchestra-dev.umrthema.univ-fcomte.fr/geoserver/ows?SERVICE=WMS&
-    #print url_wms
+    url_wms = url + "/geoserver/ows?SERVICE=WMS&"		# url_wms = https://georchestra-dev.umrthema.univ-fcomte.fr/geoserver/ows?SERVICE=WMS&
     element_url_txt = doc.createTextNode(url_wms)
     element_url.appendChild(element_url_txt)
-    b_protocol = gmd + 'protocol'				# creation et remplissage balise protocole
+    b_protocol = gmd + 'protocol'				# création et remplissage balise protocole
     element_protocol = doc.createElement(b_protocol)	
     b_gco = 'gco:CharacterString'
     element_protocol_gco = doc.createElement(b_gco)
@@ -175,42 +224,41 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     #element_protocol_txt = doc.createTextNode(u"OGC:WMS-1.3.0-http-get-capabilities")
     element_protocol_txt = doc.createTextNode(u"OGC:WMS-1.3.0-http-get-map")
     element_protocol_gco.appendChild(element_protocol_txt)    
-    b_name = gmd + u'name'					# creation et remplissage balise name
+    b_name = gmd + u'name'					# création et remplissage balise name
     element_name = doc.createElement(b_name)
     b_gco = 'gco:CharacterString'
     element_name_gco = doc.createElement(b_gco)
     element_name.appendChild(element_name_gco)
-    name_layer_gs = workspace + ":" + output.split(".")[0]		# name_layer_gs = geosync-restreint:baies_metadata__baies_metadata
+    name_layer_gs = workspace + ":" + output.split(".")[0]	# name_layer_gs = geosync-restreint:baies_metadata__baies_metadata
     element_name_txt = doc.createTextNode(name_layer_gs)
     element_name_gco.appendChild(element_name_txt)
-    b_descr = gmd +'description'				# creation et remplissage balise description
+    b_descr = gmd +'description'				# création et remplissage balise description
     element_descr = doc.createElement(b_descr)
     b_gco = 'gco:CharacterString'
-    #print "b_gco " + b_gco
     element_descr_gco = doc.createElement(b_gco)
     element_descr.appendChild(element_descr_gco)
     element_descr_txt = doc.createTextNode(output.split(".")[0])   #baies_metadata__baies_metadata      #u"baies_metadata__baies_metadataéééééééééé"
     element_descr_gco.appendChild(element_descr_txt)
 
-    #print b_DigitalTransferOptions
+    # une fois créé, chaque élément est inséré dans l'arbre
+    # la fonction print sert à l'affichage à la console
+    for element in doc.getElementsByTagName(b_DigitalTransferOptions):
+        element.appendChild(element_online)
+        #print element.toxml()
+        element_online.appendChild(element_ressource)
+        #print element.toxml()
+        element_ressource.appendChild(element_linkage)
+        #print element.toxml()
+        element_linkage.appendChild(element_url)
+        #print element.toxml()
+        element_ressource.appendChild(element_protocol)
+        #print element.toxml()
+        element_ressource.appendChild(element_name)
+        #print element.toxml()
+        element_ressource.appendChild(element_descr)
+        #print element.toxml()
 
-#   # affichage du fichier de metadonnées 
-#    for element in doc.getElementsByTagName(b_DigitalTransferOptions):
-#        print element.appendChild(element_online)
-#        print element.toxml()
-#        print element_online.appendChild(element_ressource)
-#        print element.toxml()
-#        print element_ressource.appendChild(element_linkage)
-#        print element.toxml()
-#        print element_linkage.appendChild(element_url)
-#        print element.toxml()
-#        print element_ressource.appendChild(element_protocol)
-#        print element.toxml()
-#        print element_ressource.appendChild(element_name)
-#        print element.toxml()
-#        print element_ressource.appendChild(element_descr)
-#        print element.toxml()
-
+    # enfin, le fichier est écrit dans le répertoire temporaire
     input_csw = tmpdir + "/csw_" +  output
     output_fic = open(input_csw,'w') 
     txt = doc.toxml().encode('utf-8','ignore')
@@ -220,12 +268,12 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     # connexion à geonetwork avec la librairie owslib
     from owslib.csw import CatalogueServiceWeb
     url_csw = url + "/geonetwork/srv/fre/csw-publication"
-    # Attention : l'utilisateur (login) doit avoir le rôle GN_EDITOR (ou GN_ADMIN) (anciennement SV_EDITOR / SV_ADMIN) voir administration ldap
+    # Attention : l'utilisateur (login) doit avoir le rôle GN_EDITOR (ou GN_ADMIN) voir administration ldap
     ## sinon peut générer l'erreur : lxml.etree.XMLSyntaxError: Opening and ending tag mismatch
     csw = CatalogueServiceWeb(url_csw, skip_caps=True, username=login, password=password)
     
     # suppression des métadonnées relatives à la même couche geoserver
-    print "suppression de " + titre.text + " " + name_layer_gs
+    #print "suppression de " + titre.text + " " + name_layer_gs
     from owslib.fes import PropertyIsEqualTo, PropertyIsLike
     myquery = PropertyIsEqualTo('csw:AnyText', name_layer_gs)
     csw.getrecords2(constraints=[myquery], maxrecords=10)
@@ -281,6 +329,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     print "métadonnées envoyées : " + input_csw
 
     # modification des privilèges
+    # Attention : l'utilisateur (login) doit avoir le rôle GN_ADMIN. voir administration ldap
     data_privilege = '{ "clear": true, "privileges": [ {"operations":{"view":true,"download":false,"dynamic":false,"featured":false,"notify":false,"editing":false},"group":-1}, {"operations":{"view":true,"download":false,"dynamic":false,"featured":false,"notify":false,"editing":false},"group":0}, {"operations":{"view":true,"download":false,"dynamic":false,"featured":false,"notify":false,"editing":false},"group":1} ] }'
     geonetwork_session.headers.update({"Accept" : "*/*"})
     geonetwork_session.headers.update({"Content-Type" : "application/json"})
@@ -298,15 +347,23 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(add_help=True)
     #parser.add_argument('-i',          action="store",      dest="input",              required=True)
-    parser.add_argument('-i',           action="store",      dest="input",              default="geonetwork-record.xml")
+    #parser.add_argument('-i',           action="store",      dest="input",              default="metadata.xml")
+    #parser.add_argument('-i',           action="store",      dest="input",              default="200_metadata_xml_QGIS_gmd.xml")
+    parser.add_argument('-i',           action="store",      dest="input",              default="haies_avec_lien_geoserver.xml")
+    #parser.add_argument('-i',           action="store",      dest="input",              default="haies_sans_lien_geoserver.xml")
+    #parser.add_argument('-i',           action="store",      dest="input",              default="geonetwork-record.xml")
     #parser.add_argument('-l',          action="store",      dest="login",              required=True)
     parser.add_argument('-l',           action="store",      dest="login",              default="testadmin")
     #parser.add_argument('-o',           action="store",      dest="output"                 )
-    parser.add_argument('-o',           action="store",      dest="output",             default="geonetwork-record.xml")
+    #parser.add_argument('-o',           action="store",      dest="output",             default="metadata.xml")
+    #parser.add_argument('-o',           action="store",      dest="output",             default="200_metadata_xml_QGIS_gmd.xml")
+    #parser.add_argument('-o',           action="store",      dest="output",             default="haies_sans_lien_geoserver.xml")
+    parser.add_argument('-o',           action="store",      dest="output",             default="haies_avec_lien_geoserver.xml")
+    #parser.add_argument('-o',           action="store",      dest="output",             default="geonetwork-record.xml")
     #parser.add_argument('-p',          action="store",      dest="password",           required=True)
     parser.add_argument('-p',           action="store",      dest="password",           default="testadmin")
     parser.add_argument('-s',           action="store",      dest="datastore"              )
-    parser.add_argument('-u',           action="store",      dest="url",                default="https://georchestra-docker.umrthema.univ-fcomte.fr")
+    parser.add_argument('-u',           action="store",      dest="url",                default="https://georchestra-mshe.univ-fcomte.fr")
     parser.add_argument('-v',           action="store_true", dest="verbose",            default=False)
     parser.add_argument('-w',           action="store",      dest="workspace",          default="geosync-ouvert")
     parser.add_argument('--db_hostname',action="store",      dest="database_hostname",  default="localhost")
