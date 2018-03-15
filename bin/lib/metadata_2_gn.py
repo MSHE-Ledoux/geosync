@@ -76,6 +76,10 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
 
     home = os.environ["HOME"] 
 
+    # on affiche dans les commentaires le nom de la couche associée à la métadonnée
+    # name_layer_gs = geosync-restreint:baies_metadata__baies_metadata
+    name_layer_gs = workspace + ":" + output.split(".")[0]
+
     # création d'un répertoire temporaire pour y enregistrer le fichier de travail
     tmpdir = home + "/tmp/geosync_metadata"
     if os.path.exists(tmpdir):
@@ -167,7 +171,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     # - <MD_Metadata...>
     # - <gmd:MD_Metadata...
     # objectif : insérer des balises avec le namespace gmd si le document xml original en contient
-    # geonetwork gère bien l'import avec ou sans gmd, dès lors que le fichier est cohérent
+    # GeoNetwork gère bien l'import avec ou sans gmd, dès lors que le fichier est cohérent
     # GMD : Geographic MetaData extensible markup language
     type_csw = doc.firstChild.tagName
     print "type_csw : " + type_csw
@@ -298,8 +302,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
         element_name.appendChild(element_name_gco)
 
         # création et remplissage balise name_layer_gs qui contient le nom de la couche geoserver
-        # name_layer_gs = geosync-restreint:baies_metadata__baies_metadata
-        name_layer_gs = workspace + ":" + output.split(".")[0]
+        # name_layer_gs est initialisée en début de procédure
         element_name_txt = doc.createTextNode(name_layer_gs)
         element_name_gco.appendChild(element_name_txt)
 
@@ -353,7 +356,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     if not no_change :
         shutil.copyfile(input_csw, initial_file_name)
 
-    # connexion à geonetwork avec la librairie owslib
+    # connexion à GeoNetwork avec la librairie owslib
     from owslib.csw import CatalogueServiceWeb
     url_csw = url + "/geonetwork/srv/fre/csw-publication"
     # Attention : l'utilisateur (login) doit avoir le rôle GN_EDITOR (ou GN_ADMIN) voir administration ldap
@@ -361,8 +364,6 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     csw = CatalogueServiceWeb(url_csw, skip_caps=True, username=login, password=password)
     
     # suppression des métadonnées relatives à la même couche geoserver
-    # name_layer_gs est indéfini ???
-    name_layer_gs = "toto"
     print "suppression de " + titre + " " + name_layer_gs
     from owslib.fes import PropertyIsEqualTo, PropertyIsLike
     myquery = PropertyIsEqualTo('csw:AnyText', name_layer_gs)
@@ -380,7 +381,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     # le fichier de métadonnées pourrait être envoyé avec la librairie owslib, si ça marchait bien.
     # csw.transaction(ttype='insert', typename=type_csw, record=open(input_csw).read())
     # mais problème : les données ne sont pas publiques qiand elles sont envoyées avec owslib
-    # on utilise donc l'API de genonetwork
+    # on utilise donc l'API de GeoNetwork
     # https://georchestra-mshe.univ-fcomte.fr/geonetwork/doc/api/
 
     HTTPConnection.debuglevel = 0
