@@ -9,15 +9,16 @@ BASEDIR=$(dirname "$0")
 paramfile="$HOME/.geosync.conf"
 # on a besoin ici de : ocl_host ocl_login ocl_passwd
 source "$paramfile"
+PATH_LOG="/var/log/$logs"
 
 # vérifie que le chemin de l'arborescence à publier a bien été défini dans la conf
 if [[ "${share_directory}" ]]; then 
     INPUT_COPY_PATH="${share_directory}"
 else
-    echo "WARNING aucun chemin d'arborescence à publier ('share_directory') défini dans .geosync.conf" >> $LOG_PATH/publish_error.log
+    echo "WARNING aucun chemin d'arborescence à publier ('share_directory') défini dans .geosync.conf" >> $PATH_LOG/publish_error.log
 
     INPUT_COPY_PATH="$HOME/owncloudsync" # le chemin par défaut est conservé temporairement pour rétro-compatibilité # TODO ne pas prendre de valeur pas défaut et faire une vraie erreur
-    echo "WARNING chemin d'arborescence par défaut : ${INPUT_COPY_PATH}"  >> $LOG_PATH/publish_error.log
+    echo "WARNING chemin d'arborescence par défaut : ${INPUT_COPY_PATH}"  >> $PATH_LOG/publish_error.log
 fi
 
 verbose=1 # commenter pour diminuer les logs

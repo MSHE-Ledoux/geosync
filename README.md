@@ -1,31 +1,31 @@
 Objectif de ge@sync :
 ---------------------
-Publier sur geOrchestra les données cartographiques déposées par les utilisateurs dans OwnCloud, et partagées :
+Indexer dans geOrchestra les données déposées par les utilisateurs dans OwnCloud, et partagées :
 - soit avec l'utilisateur georchestra-ouvert, pour un accès public ; 
 - soit avec l'utilisateur georchestra-restreint, pour un accès limité aux personnes identifiées de l'IDS geOrchestra.
 
-Les données sont publiées sur le geoserver de geOrchestra ; les métadonnées sont publiées sur le geonetwork de geOrchestra.
-
-
 Comment installer ge@sync ?
 ---------------------------
-avec Docker, en déployant les conteneurs du projet geOrchestra et le conteneur geosync.
-https://github.com/MSHE-Ledoux/georchestra-geosync
 
+1. avec Ansible, en déployant le playbook geosync-ansible sur une machine sur laquelle geOrchestra a été installé, idéalement avec Ansible également.
+
+https://github.com/MaxiReglisse/geosync-ansible
+
+CETTE METHODE EST DEPRECIEE ACTUELLEMENT ! Merci de patienter et utiliser Docker pour l'instant
+
+2. avec Docker, en déployant des conteneurs modifiés par rapport aux conteneurs d'origine de geOrchestra. 4 conteneurs sont modifiés.
+
+https://github.com/MSHE-Ledoux/geosync-docker
 
 Vue d'ensemble de l'architecture :
 ----------------------------------
 
-Description des fichiers de l'utilisateur georchestra-ouvert sur la machine georchestra :
-* **~/owncloudsync** : répertoire de synchronisation par la commande owncloudcmd des données partagées avec georchestra-ouvert ou georchestra-restreint.
-                       à noter que les données rangées dans le dossier nommé __unpublished ne sont pas publiées sur geOrchestra.
-* **~/data** : entrées/sorties de l'outil de synchronisation
-* **~/data/lastdate.txt** : stocke la dernière date des couches synchronisées ; pour resynchroniser toutes les couches, alors supprimer ce fichier
-* **~/bin/** : les scripts d'appel
-* **~/bin/sync_data.sh** : synchronisation des données et publication sur le geoserver
-* **~/bin/clean_data.sh** : dépublication des couches qui ne sont plus partagées
-* **~/bin/ad2ldap_sync.py** : transfert des utilisateurs AD dans l'annuaire LDAP de geOrchestra
-* **~/bin/lib : les scripts d'envoi de données en fonction de leur type
+* **/mnt/geosync_ouvert/owncloudsync**     : synchronisation par owncloudcmd des fichiers partagés par OwnCloud
+* **/usr/local/geosync/bin/**              : les scripts
+* **/usr/local/geosync/bin/sync_data.sh**  : synchronisation des données et publication sur le geoserver
+* **/usr/local/geosync/bin/clean_data.sh** : dépublication des couches qui ne sont plus partagées
+* **/home/georchestra-ouvert/data** : entrées/sorties de l'outil de synchronisation
+* **/home/georchestra-ouvert/data/lastdate.txt** : stocke la dernière date des couches synchronisées ; pour resynchroniser toutes les couches, alors supprimer ce fichier
 
 
 Chaîne d'appel :
@@ -39,16 +39,15 @@ Chaîne d'appel :
 * **crontab**
   * **sync_data.sh**
     * erreurs --> cron_error.log
-    * **sync_owncloud_data.sh**
-      * erreurs --> sync_error.log
-      * log --> sync.log
+    * **rsync_owncloud.sh**
+      * erreurs --> rsync_error.log
+      * log --> rsync.log
     * **publish.sh**
       * erreurs --> publish_error.log
       * log --> publish.log
       * lit/écrit dans lastdate.txt
       * utilise des scripts dans lib
         * **lib/vector.sh**
-		* **lib/metadata_2_gs.sh**
         * **lib/metadata_2_gn.py**
         * **lib/raster.sh**
   * **clean_data.sh**
