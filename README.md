@@ -47,9 +47,11 @@ Chaîne d'appel :
       * log --> publish.log
       * lit/écrit dans lastdate.txt
       * utilise des scripts dans lib
-        * **lib/vector.sh**
         * **lib/metadata_2_gn.py**
         * **lib/raster.sh**
+        * **lib/style.sh**
+        * **lib/util.sh**
+        * **lib/vector.sh**
   * **clean_data.sh**
     * **clean.sh**
       * erreurs --> clean_error.log
