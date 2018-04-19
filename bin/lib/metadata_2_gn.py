@@ -49,20 +49,20 @@ from   httplib       import HTTPConnection
 from   lxml          import etree
 from   xml.dom       import minidom
 
-def publish_2_gn(input, url, login, password, workspace, database_hostname, verbose):
+def publish_2_gn(xml_filename, url, login, password, workspace, database_hostname, verbose):
 
     from cleanName import cleanName
 
-    output = cleanName(input, True)
+    output = cleanName(xml_filename, True)
     
     if verbose:
-        print "input     : ", input
-        print "output    : ", output
-        print "url       : ", url
-        print "login     : ", login
-        print "password  : ", password
-        print "workspace : ", workspace
-        print "dbhost    : ", database_hostname
+        print "xml_filename : ", xml_filename
+        print "output       : ", output
+        print "url          : ", url
+        print "login        : ", login
+        print "password     : ", password
+        print "workspace    : ", workspace
+        print "dbhost       : ", database_hostname
 
     # https://stackoverflow.com/questions/3828723/why-should-we-not-use-sys-setdefaultencodingutf-8-in-a-py-script/34378962
     # il serait préférable de positionner correctement la variable d'environnement PYTHONIOENCODING="UTF-8"
@@ -70,17 +70,27 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     sys.setdefaultencoding('utf8')
 
     # vérifie l'existence du fichier d'entrée, au format xml, qui contient les métadonnées à envoyer à GeoNetwork
-    if not os.path.isfile(input):
-        sys.stderr.write("ERROR input file not found : " + input + "\n")
+    if not os.path.isfile(xml_filename):
+        sys.stderr.write("ERROR xml_filename file not found : " + xml_filename + "\n")
         return
 
-    home = os.environ["HOME"] 
+    # teste l'existence d'un fichier avec l'extension uid associé au fichier xml, qui contient un uuid déjà défini par geosync
+    uuid_filename = xml_filename + ".uuid"
+    if os.path.isfile(uuid_filename):
+        print "fichier .xml.uuid trouvé"
+        # Ouverture du fichier .uuid en lecture
+        file_uuid = open(uuid_filename, "r")
+        # Lit la première ligne, sans caractère de fin de ligne
+        # http://www.chicoree.fr/w/Lire_et_%C3%A9crire_un_fichier_texte_avec_Python
+        old_geosync_uuid = file_uuid.readline().rstrip('\n\r')
+        print "old_geosync_uuid : " + old_geosync_uuid
 
     # on affiche dans les commentaires le nom de la couche associée à la métadonnée
     # name_layer_gs = geosync-restreint:baies_metadata__baies_metadata
     name_layer_gs = workspace + ":" + output.split(".")[0]
 
     # création d'un répertoire temporaire pour y enregistrer le fichier de travail
+    home = os.environ["HOME"] 
     tmpdir = home + "/tmp/geosync_metadata"
     if os.path.exists(tmpdir):
         import shutil
@@ -104,30 +114,58 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
         return
 
     # import des codecs pour les fichiers ArcGIS
-    # à améliorer : le nom du fichier input est renommé dans la boucle de lecture du fichier
-    initial_file_name = input
-    no_change = True
+    # à améliorer : le nom du fichier xml_filename est renommé dans la boucle de lecture du fichier
+    initial_file_name = xml_filename
+    new_uuid = False
     # recherche de la base Esri
-    tree = etree.parse(input)
+    tree = etree.parse(xml_filename)
     xpath_esri = tree.xpath('Esri')
     if xpath_esri :
-        print "Métadonnée de type ArcGIS à convertir en ISO 19139"
-        # utilisation de saxonb pour traduire ArcGIS metadata => iso 19139
-        import subprocess
-        saxon_input  = "-s:" + input
-        print str(saxon_input) 
-        saxon_xsl    = "-xsl:" + xsl_path 
-        saxon_output = "-o:" + tmpdir + "/sax_" +  output 
-        print str(saxon_output)
-        cmd = "saxonb-xslt", "-ext:on", saxon_input, saxon_xsl, saxon_output
-        if verbose:
-            print "saxonb cmd :", cmd
-        subprocess.call(cmd)
-        input = tmpdir + "/sax_" +  output
-        print "input : " + input
-        no_change = False
-    else :
-        print "pas de conversion saxonb-xslt"
+        print "Métadonnée Esri"
+
+        # recherche de la balise ArcGISProfile
+        # <ArcGISProfile>ISO19139</ArcGISProfile>
+        balise_ArcGISProfile = 'ArcGISProfile'
+        doc = minidom.parse(xml_filename)
+        test_agsprofile = doc.getElementsByTagName(balise_ArcGISProfile)
+
+        # si le fichier contient une balise ArcGISProfile
+        if test_agsprofile :
+            esri_type = test_agsprofile[0].firstChild.data
+            print "balise ArcGISProfile : " + esri_type
+
+            # s'il est dans le format ISO19139
+            if (esri_type == "ISO19139") : 
+                print "Métadonnée Esri iso 19139"
+                # <mdFileID>73D12C5D-A5F7-4217-A781-A7042E94476E</mdFileID>
+                balise_mdFileID = 'mdFileID'
+                test_mdfileid = doc.getElementsByTagName(balise_mdFileID)
+
+                # le fichier a un identifiant
+                if test_mdfileid :
+                    mdfileid = test_mdfileid[0].firstChild.data
+                    print "balise mdFileID : " + mdfileid
+                else :
+                    print "Métadonnée Esri iso 19139 sans identifiant"
+
+            #else :
+            # tous les fichiers ArcGISProfile doivent être convertis avec saxonb-xslt
+            # utilisation de saxonb-xslt pour traduire ArcGIS metadata => iso 19139
+            # <ArcGISProfile>ItemDescription</ArcGISProfile>
+            print "Métadonnée Esri propriétaire"
+            print "Métadonnée de type ArcGIS à convertir en ISO 19139"
+            import subprocess
+            saxon_xml_filename  = "-s:" + xml_filename
+            print str(saxon_xml_filename) 
+            saxon_xsl    = "-xsl:" + xsl_path 
+            saxon_output = "-o:" + tmpdir + "/sax_" +  output 
+            print str(saxon_output)
+            cmd = "saxonb-xslt", "-ext:on", saxon_xml_filename, saxon_xsl, saxon_output
+            if verbose:
+                print "saxonb cmd :", cmd
+            subprocess.call(cmd)
+            xml_filename = tmpdir + "/sax_" +  output
+            print "xml_filename : " + xml_filename
 
     # Add Geoserver link to metadata and generate UUID
 
@@ -143,7 +181,8 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     #      </title>
 
     # recherche de la balise title
-    tree = etree.parse(input)
+    # à améliorer : tous les fichiers ont-ils un title ?
+    tree = etree.parse(xml_filename)
     xpath_title = tree.xpath('//gmd:title/gco:CharacterString',
                              namespaces={'gmd': 'http://www.isotc211.org/2005/gmd',
                                          'gco': 'http://www.isotc211.org/2005/gco'})
@@ -162,7 +201,7 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     # utilisation de minidom pour lire et modifier l'arbre xlm
     # tutoriel minidom : http://www.fil.univ-lille1.fr/~marvie/python/chapitre4.html
     # à refaire éventuellement avec lxml
-    doc = minidom.parse(input)
+    doc = minidom.parse(xml_filename)
     element = doc.documentElement
 
     # à quel type de fichier de métadonnées avons-nous à faire ? 
@@ -188,28 +227,34 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
     fileIdentifier = False
     for element in doc.getElementsByTagName(balise):
         # si la balise gmd:fileIdentifier existe déjà
-        b_file = gmd + "fileIdentifier"
-	if b_file in str(element.parentNode):
+        balise_file = gmd + "fileIdentifier"
+	if balise_file in str(element.parentNode):
 	    fileIdentifier = True
 	    print "fileIdentifier trouvé : " + element.firstChild.nodeValue
 
     # si la balise gmd:fileIdentifier n'existe pas, alors on la créée, avec un nouvel uuid
     if not fileIdentifier :
-        print "création à la volée d'un identifiant"
-        b_file = gmd + 'fileIdentifier'
-        element_file = doc.createElement(b_file)
-        b_gco = 'gco:CharacterString'
-        element_file_gco = doc.createElement(b_gco)
+        balise_file = gmd + 'fileIdentifier'
+        element_file = doc.createElement(balise_file)
+        balise_gco = 'gco:CharacterString'
+        element_file_gco = doc.createElement(balise_gco)
         element_file.appendChild(element_file_gco)
-	# https://stackoverflow.com/questions/534839/how-to-create-a-guid-uuid-in-python
-        file_txt = str(uuid.uuid4())
-        element_file_txt = doc.createTextNode(file_txt)
-        element_file_gco.appendChild(element_file_txt)
+
+        # si un uuid a été trouvé dans le fichier.xml.uid, on le récupère
+        if old_geosync_uuid :
+            print "réutilisation de l'ancien identifiant"
+            geosync_uuid = old_geosync_uuid
+        else :
+            print "création à la volée d'un identifiant"
+	    # https://stackoverflow.com/questions/534839/how-to-create-a-guid-uuid-in-python
+            geosync_uuid = str(uuid.uuid4())
+            new_uuid = True
+
+        element_geosync_uuid = doc.createTextNode(geosync_uuid)
+        element_file_gco.appendChild(element_geosync_uuid)
         print "insertion de la balise fileIdentifier dans l'arbre"
         for element in doc.getElementsByTagName(type_csw) :
             element.appendChild(element_file)
-        if no_change :
-            no_change = False
 
     # recherche de la balise gmd:URL avec lxml
     # tutoriel : http://lxml.de/tutorial.html
@@ -235,8 +280,8 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
         # si elle n'existe pas, alors on la créée
 
         # recherche de la balise MD_DigitalTransferOptions avec minidom
-        b_DigitalTransferOptions = gmd + 'MD_DigitalTransferOptions'
-        test_digital = doc.getElementsByTagName(b_DigitalTransferOptions)
+        balise_DigitalTransferOptions = gmd + 'MD_DigitalTransferOptions'
+        test_digital = doc.getElementsByTagName(balise_DigitalTransferOptions)
 
         # création de l'arborescence nécessaire à la création de la balise MD_DigitalTransferOptions
         if test_digital :
@@ -246,14 +291,14 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
             # donc création des 4 balises xml imbriquées :
             # gmd:distributionInfo / gmd:MD_Distribution / gmd:transferOptions / gmd:MD_DigitalTransferOptions"
 
-            b_dist = gmd + 'distributionInfo'
-            element_dist = doc.createElement(b_dist)
-            b_MD_dist = gmd + 'MD_Distribution'
-            element_MD_dist = doc.createElement(b_MD_dist)
-            b_transfert = gmd + 'transferOptions'
-            element_transfert = doc.createElement(b_transfert)
-            b_digital = gmd + 'MD_DigitalTransferOptions'
-            element_digital = doc.createElement(b_digital)
+            balise_dist = gmd + 'distributionInfo'
+            element_dist = doc.createElement(balise_dist)
+            balise_MD_dist = gmd + 'MD_Distribution'
+            element_MD_dist = doc.createElement(balise_MD_dist)
+            balise_transfert = gmd + 'transferOptions'
+            element_transfert = doc.createElement(balise_transfert)
+            balise_digital = gmd + 'MD_DigitalTransferOptions'
+            element_digital = doc.createElement(balise_digital)
 
             print "insertion des balises dans l'arbre des 4 balises"
             for element in doc.getElementsByTagName(type_csw) : 
@@ -266,39 +311,39 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
         # on lui rajoute un lien vers notre geoserver
 
         # création balise online
-        b_online = gmd + 'onLine'
-        element_online = doc.createElement(b_online)
+        balise_online = gmd + 'onLine'
+        element_online = doc.createElement(balise_online)
 
         # création balise ressource
-        b_ressource = gmd + 'CI_OnlineResource'
-        element_ressource = doc.createElement(b_ressource)	
+        balise_ressource = gmd + 'CI_OnlineResource'
+        element_ressource = doc.createElement(balise_ressource)	
 
         # création balise linkage
-        b_linkage = gmd + 'linkage'
-        element_linkage = doc.createElement(b_linkage)
+        balise_linkage = gmd + 'linkage'
+        element_linkage = doc.createElement(balise_linkage)
 
         # création et remplissage balise url
-        b_url = gmd + 'URL' 
-        element_url = doc.createElement(b_url)
+        balise_url = gmd + 'URL' 
+        element_url = doc.createElement(balise_url)
         url_wms = url + "/geoserver/ows?SERVICE=WMS&"
         element_url_txt = doc.createTextNode(url_wms)
         element_url.appendChild(element_url_txt)
 
         # création et remplissage balise protocole
-        b_protocol = gmd + 'protocol'	
-        element_protocol = doc.createElement(b_protocol)	
-        b_gco = 'gco:CharacterString'
-        element_protocol_gco = doc.createElement(b_gco)
+        balise_protocol = gmd + 'protocol'	
+        element_protocol = doc.createElement(balise_protocol)	
+        balise_gco = 'gco:CharacterString'
+        element_protocol_gco = doc.createElement(balise_gco)
         element_protocol.appendChild(element_protocol_gco)
         #element_protocol_txt = doc.createTextNode(u"OGC:WMS-1.3.0-http-get-capabilities")
         element_protocol_txt = doc.createTextNode(u"OGC:WMS-1.3.0-http-get-map")
         element_protocol_gco.appendChild(element_protocol_txt)        
 
         # création et remplissage balise name
-        b_name = gmd + u'name'
-        element_name = doc.createElement(b_name)
-        b_gco = 'gco:CharacterString'
-        element_name_gco = doc.createElement(b_gco)
+        balise_name = gmd + u'name'
+        element_name = doc.createElement(balise_name)
+        balise_gco = 'gco:CharacterString'
+        element_name_gco = doc.createElement(balise_gco)
         element_name.appendChild(element_name_gco)
 
         # création et remplissage balise name_layer_gs qui contient le nom de la couche geoserver
@@ -307,17 +352,17 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
         element_name_gco.appendChild(element_name_txt)
 
         # création et remplissage balise description
-        b_descr = gmd +'description'
-        element_descr = doc.createElement(b_descr)
-        b_gco = 'gco:CharacterString'
-        element_descr_gco = doc.createElement(b_gco)
+        balise_descr = gmd +'description'
+        element_descr = doc.createElement(balise_descr)
+        balise_gco = 'gco:CharacterString'
+        element_descr_gco = doc.createElement(balise_gco)
         element_descr.appendChild(element_descr_gco)
         element_descr_txt = doc.createTextNode(output.split(".")[0])
         element_descr_gco.appendChild(element_descr_txt)
 
         # une fois créé, chaque élément est inséré dans l'arbre
         # la fonction print sert à l'affichage à la console
-        for element in doc.getElementsByTagName(b_DigitalTransferOptions):
+        for element in doc.getElementsByTagName(balise_DigitalTransferOptions):
             element.appendChild(element_online)
             #print element.toxml()
             element_online.appendChild(element_ressource)
@@ -333,28 +378,27 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
             element_ressource.appendChild(element_descr)
             #print element.toxml()
 
-        if no_change :
-            no_change = False
-
-    # le fichier est écrit dans le répertoire temporaire
-    input_csw = tmpdir + "/csw_" +  output
-    input_csw_fic = open(input_csw,'w') 
+    # le fichier qui sera envoyé à geonetwork est d'abord écrit dans le répertoire temporaire
+    xml_filename_csw = tmpdir + "/csw_" +  output
+    xml_filename_csw_fic = open(xml_filename_csw,'w') 
     txt = doc.toxml().encode('utf-8','ignore')
-    input_csw_fic.write(txt)
-    input_csw_fic.close()
+    xml_filename_csw_fic.write(txt)
+    xml_filename_csw_fic.close()
 
-    # le fichier transformé est copié dans le répertoire de partage owncloud, à son emplacement initial, 
-    # de manière à retourner vers l'utilisateur... 
-    # attention aux boucles qui consisteraient à modifier systématiquement le fichier
-    rep = os.path.dirname(initial_file_name)
-    fic = os.path.basename(initial_file_name)
-    #print "rep : " + rep + " fic : " + fic
-    #output_csw = rep + "/csw_" +  output
-    print "input_csw         : " + input_csw 
-    print "initial_file_name : " + initial_file_name
-    # s'il n'y a eu aucune modification, on ne copie pas le fichier
-    if not no_change :
-        shutil.copyfile(input_csw, initial_file_name)
+    # on crée à la volée un fichier contenant l'identifiant s'il a été généré
+    if new_uuid :
+        output_uid = tmpdir + "/uid_" +  output
+        print "écriture de l'identifiant dans " + output_uid
+        output_uid_fic = open(output_uid,'w')
+        output_uid_fic.write(geosync_uuid)
+        output_uid_fic.close()
+
+        # ce fichier est retourné à l'utilisateur via le partage OwnCloud
+        rep = os.path.dirname(initial_file_name)
+        fic = os.path.basename(initial_file_name)
+        retour_output_uid = rep + output + ".uuid"
+        print "le fichier est retourné à l'utilisateur " + retour_output_uid
+        shutil.copyfile(output_uid, retour_output_uid)
 
     # connexion à GeoNetwork avec la librairie owslib
     from owslib.csw import CatalogueServiceWeb
@@ -376,10 +420,10 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
    
     # Transaction: insert
     #print "type_csw " + type_csw
-    print "input_csw : " + input_csw
+    print "xml_filename_csw : " + xml_filename_csw
 
     # le fichier de métadonnées pourrait être envoyé avec la librairie owslib, si ça marchait bien.
-    # csw.transaction(ttype='insert', typename=type_csw, record=open(input_csw).read())
+    # csw.transaction(ttype='insert', typename=type_csw, record=open(xml_filename_csw).read())
     # mais problème : les données ne sont pas publiques qiand elles sont envoyées avec owslib
     # on utilise donc l'API de GeoNetwork
     # https://georchestra-mshe.univ-fcomte.fr/geonetwork/doc/api/
@@ -402,13 +446,13 @@ def publish_2_gn(input, url, login, password, workspace, database_hostname, verb
 
     # envoi du fichier de métadonnées
     geonetwork_post_url = url + '/geonetwork/srv/api/0.1/records?uuidProcessing=OVERWRITE'
-    files = {'file': (input_csw, open(input_csw,'rb'), 'application/xml', {'Expires': '0'})}
+    files = {'file': (xml_filename_csw, open(xml_filename_csw,'rb'), 'application/xml', {'Expires': '0'})}
     geonetwork_session.headers.update({"Accept" : "application/json"})
     r_post = geonetwork_session.post(geonetwork_post_url, files=files)
     content = r_post.json()
     identifiant = content[u'metadataInfos'].keys()
     identifiant = identifiant[0]
-    print "métadonnées envoyées : " + input_csw
+    print "métadonnées envoyées : " + xml_filename_csw
 
     # modification des privilèges de la métadonnée qu'on vient d'insérer dans GeoNetwork
     # Attention : l'utilisateur (login) doit avoir le rôle GN_ADMIN. voir administration ldap
@@ -428,25 +472,31 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(add_help=True)
-    #parser.add_argument('-i',          action="store",      dest="input",              required=True)
-    #parser.add_argument('-i',           action="store",      dest="input",              default="metadata.xml")
-    #parser.add_argument('-i',           action="store",      dest="input",              default="200_metadata_xml_QGIS_gmd.xml")
-    #parser.add_argument('-i',           action="store",      dest="input",              default="haies_sans_lien_geoserver.xml")
-    parser.add_argument('-i',           action="store",      dest="input",              default="Haies_Besancon_ouest.shp.xml")
-    #parser.add_argument('-i',           action="store",      dest="input",              default="haies_avec_lien_geoserver.xml")
-    #parser.add_argument('-i',           action="store",      dest="input",              default="haies_avec_deux_liens_geoserver.xml")
-    #parser.add_argument('-i',           action="store",      dest="input",              default="geonetwork-record.xml")
-    #parser.add_argument('-l',          action="store",      dest="login",              required=True)
+    #parser.add_argument('-i',           action="store",      dest="xml_filename",       required=True)
+    #parser.add_argument('-i',           action="store",      dest="xml_filename",       default="metadata.xml")
+    parser.add_argument('-i',           action="store",      dest="xml_filename",       default="meta_esri_natif.shp.xml")
+    #parser.add_argument('-i',           action="store",      dest="xml_filename",       default="meta_esri_19139_sans_uid.shp.xml")
+    #parser.add_argument('-i',           action="store",      dest="xml_filename",       default="meta_esri_19139_avec_uid.shp.xml")
+    #parser.add_argument('-i',           action="store",      dest="xml_filename",       default="200_metadata_xml_QGIS_gmd.xml")
+    #parser.add_argument('-i',           action="store",      dest="xml_filename",       default="haies_sans_lien_geoserver.xml")
+    #parser.add_argument('-i',           action="store",      dest="xml_filename",       default="Haies_Besancon_ouest.shp.xml")
+    #parser.add_argument('-i',           action="store",      dest="xml_filename",       default="haies_avec_lien_geoserver.xml")
+    #parser.add_argument('-i',           action="store",      dest="xml_filename",       default="haies_avec_deux_liens_geoserver.xml")
+    #parser.add_argument('-i',           action="store",      dest="xml_filename",       default="geonetwork-record.xml")
+    #parser.add_argument('-l',           action="store",      dest="login",              required=True)
     parser.add_argument('-l',           action="store",      dest="login",              default="testadmin")
     #parser.add_argument('-o',           action="store",      dest="output"                 )
     #parser.add_argument('-o',           action="store",      dest="output",             default="metadata.xml")
+    parser.add_argument('-o',           action="store",      dest="output",             default="meta_esri_natif.shp.xml")
+    #parser.add_argument('-o',           action="store",      dest="output",             default="meta_esri_19139_sans_uid.shp.xml")
+    #parser.add_argument('-o',           action="store",      dest="output",             default="meta_esri_19139_avec_uid.shp.xml")
     #parser.add_argument('-o',           action="store",      dest="output",             default="200_metadata_xml_QGIS_gmd.xml")
     #parser.add_argument('-o',           action="store",      dest="output",             default="haies_sans_lien_geoserver.xml")
-    parser.add_argument('-o',           action="store",      dest="output",             default="Haies_Besancon_ouest.shp.xml")
+    #parser.add_argument('-o',           action="store",      dest="output",             default="Haies_Besancon_ouest.shp.xml")
     #parser.add_argument('-o',           action="store",      dest="output",             default="haies_avec_lien_geoserver.xml")
     #parser.add_argument('-o',           action="store",      dest="output",             default="haies_avec_deux_liens_geoserver.xml")
     #parser.add_argument('-o',           action="store",      dest="output",             default="geonetwork-record.xml")
-    #parser.add_argument('-p',          action="store",      dest="password",           required=True)
+    #parser.add_argument('-p',           action="store",      dest="password",           required=True)
     parser.add_argument('-p',           action="store",      dest="password",           default="testadmin")
     parser.add_argument('-s',           action="store",      dest="datastore"              )
     parser.add_argument('-u',           action="store",      dest="url",                default="https://georchestra-docker.umrthema.univ-fcomte.fr")
@@ -457,6 +507,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print parser.parse_args()
 
-    if args.input:
-        publish_2_gn(args.input, args.url, args.login, args.password, args.workspace, args.database_hostname, args.verbose)
+    if args.xml_filename:
+        publish_2_gn(args.xml_filename, args.url, args.login, args.password, args.workspace, args.database_hostname, args.verbose)
 
