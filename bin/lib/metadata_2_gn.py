@@ -76,6 +76,7 @@ def publish_2_gn(xml_filename, url, login, password, workspace, database_hostnam
 
     # teste l'existence d'un fichier avec l'extension uid associé au fichier xml, qui contient un uuid déjà défini par geosync
     uuid_filename = xml_filename + ".uuid"
+    old_geosync_uuid = ""
     if os.path.isfile(uuid_filename):
         print "fichier .xml.uuid trouvé"
         # Ouverture du fichier .uuid en lecture
@@ -396,7 +397,7 @@ def publish_2_gn(xml_filename, url, login, password, workspace, database_hostnam
         # ce fichier est retourné à l'utilisateur via le partage OwnCloud
         rep = os.path.dirname(initial_file_name)
         fic = os.path.basename(initial_file_name)
-        retour_output_uid = rep + output + ".uuid"
+        retour_output_uid = rep + "/" + output + ".uuid"
         print "le fichier est retourné à l'utilisateur " + retour_output_uid
         shutil.copyfile(output_uid, retour_output_uid)
 
