@@ -397,7 +397,7 @@ def publish_2_gn(xml_filename, url, login, password, workspace, database_hostnam
         # ce fichier est retourné à l'utilisateur via le partage OwnCloud
         rep = os.path.dirname(initial_file_name)
         fic = os.path.basename(initial_file_name)
-        retour_output_uid = rep + "/" + output + ".uuid"
+        retour_output_uid = rep + "/" + fic + ".uuid"
         print "le fichier est retourné à l'utilisateur " + retour_output_uid
         shutil.copyfile(output_uid, retour_output_uid)
 

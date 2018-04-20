@@ -190,10 +190,11 @@ if [ ! "$pg_datastore" ]; then
   input_realpath=$(realpath "${input}")
 
   ## mise à jour du style - création du sld dans /var/www/geoserver/data/styles
+  # http://docs.geoserver.org/latest/en/user/rest/api/styles.html
   echo_ifverbose "INFO mise à jour du style : ${style}"
   cmd="curl --silent -w %{http_code} \
             -u ${login}:${password} \
-            -H 'Content-type: application/vnd.ogc.sld+xml' \
+            -H 'Content-type: application/vnd.ogc.se+xml' \
             -d '@${input_realpath}' \
             -XPUT '${url}/geoserver/rest/workspaces/${workspace}/styles/${style}'"
   echo_ifverbose "INFO ${cmd}"
