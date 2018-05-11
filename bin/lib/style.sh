@@ -192,9 +192,21 @@ if [ ! "$pg_datastore" ]; then
   ## mise à jour du style - création du sld dans /var/www/geoserver/data/styles
   # http://docs.geoserver.org/latest/en/user/rest/api/styles.html
   echo_ifverbose "INFO mise à jour du style : ${style}"
+  # il faut tenir compte de la version du fichier de style : 1.0.0 ou 1.1.0
+  # https://stackoverflow.com/questions/50237821/extracting-the-value-of-the-attribute-version-in-a-geoserver-sld-file-with-xmlli/50238343#50238343
+  sld_file_version=$(xmllint --xpath "string(/*/@version)" $input)
+  echo "sld_file_version : $sld_file_version"
+  if [[ ${sld_file_version} == "1.0.0" ]]; then
+      content_type="Content-type: application/vnd.ogc.sld+xml"
+  elif [[ ${sld_file_version} == "1.1.0" ]]; then
+      content_type="Content-type: application/vnd.ogc.se+xml"
+  else
+      print "la version du fichier de style est inconnue, le fichier ne peut pas être reconnu par geoserver"
+      exit
+  fi
   cmd="curl --silent -w %{http_code} \
             -u ${login}:${password} \
-            -H 'Content-type: application/vnd.ogc.se+xml' \
+            -H '${content_type}' \
             -d '@${input_realpath}' \
             -XPUT '${url}/geoserver/rest/workspaces/${workspace}/styles/${style}'"
   echo_ifverbose "INFO ${cmd}"
