@@ -131,7 +131,7 @@ importfile() {
     # $(util::cleanName "./tic/tac toe.shp" -p) -> tic_tac_toe.shp
     if [ ! "$outputlayername" ]; then
       echo "filepath : $filepath"
-      outputlayername=$(util::cleanName "$filepath" -p)
+      outputlayername=$(util::cleanName "$filepath")
     fi
 
     # convertit et publie la couche pour postgis_data et shpowncloud
