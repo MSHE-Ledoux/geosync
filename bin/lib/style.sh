@@ -194,6 +194,8 @@ if [ ! "$pg_datastore" ]; then
   echo_ifverbose "INFO mise à jour du style : ${style}"
   # il faut tenir compte de la version du fichier de style : 1.0.0 ou 1.1.0
   # https://stackoverflow.com/questions/50237821/extracting-the-value-of-the-attribute-version-in-a-geoserver-sld-file-with-xmlli/50238343#50238343
+  # content_type en dur : -H 'Content-type: application/vnd.ogc.se+xml'
+  # à étudier........
   sld_file_version=$(xmllint --xpath "string(/*/@version)" $input)
   echo "sld_file_version : $sld_file_version"
   if [[ ${sld_file_version} == "1.0.0" ]]; then
@@ -206,7 +208,7 @@ if [ ! "$pg_datastore" ]; then
   fi
   cmd="curl --silent -w %{http_code} \
             -u ${login}:${password} \
-            -H '${content_type}' \
+            -H 'Content-type: application/vnd.ogc.se+xml' \
             -d '@${input_realpath}' \
             -XPUT '${url}/geoserver/rest/workspaces/${workspace}/styles/${style}'"
   echo_ifverbose "INFO ${cmd}"
