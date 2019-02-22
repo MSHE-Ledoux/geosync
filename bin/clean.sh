@@ -221,7 +221,7 @@ main() {
       echo_ifverbose "INFO liste les vecteurs partagés"
       echo_ifverbose "INFO for filepath in **/*.shp; do...done"
       for filepath in **/*.shp; do
-        outputlayername=$(util::cleanName "$filepath" -p)
+        outputlayername=$(util::cleanName "$filepath")
         outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
         #echo "{$outputlayernamesansext}"
         echo "$outputlayernamesansext" >> "${list_path}"
@@ -255,7 +255,7 @@ main() {
       echo_ifverbose "INFO liste les rasteurs partagés"
       echo_ifverbose "INFO for filepath in **/*.{tif,png,jpg,ecw} **/w001001.adf; do...done"
       for filepath in **/*.{tif,png,jpg,ecw} **/w001001.adf; do
-        outputlayername=$(util::cleanName "$filepath" -p)
+        outputlayername=$(util::cleanName "$filepath")
         outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
         #echo "{$outputlayernamesansext}"
         echo "$outputlayernamesansext" >> "${list_path}"
@@ -277,7 +277,7 @@ main() {
       echo_ifverbose "INFO liste les styles partagés"
       echo_ifverbose "INFO for filepath in **/*.sld ; do...done"
       for filepath in **/*.sld ; do
-        outputlayername=$(util::cleanName "$filepath" -p)
+        outputlayername=$(util::cleanName "$filepath")
         outputlayernamesansext=${outputlayername%%.*} #sans extension : toe.shp.xml -> toe
         echo "$outputlayernamesansext" >> "${list_path}"
       done

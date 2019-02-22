@@ -155,7 +155,7 @@ importfile() {
     # $(util::cleanName "./tic/tac toe.shp" -p) -> tic_tac_toe.shp
     if [ ! "$outputlayername" ]; then
       echo "filepath : $filepath"
-      outputlayername=$(util::cleanName "$filepath" -p)
+      outputlayername=$(util::cleanName "$filepath")
     fi
 
     cmd="raster::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' 
@@ -169,7 +169,7 @@ importfile() {
 
     if [ ! "$outputlayername" ]; then
       echo "filepath : $filepath"
-      outputlayername=$(util::cleanName "$filepath" -p)
+      outputlayername=$(util::cleanName "$filepath")
     fi 
 
     cmd="style::publish -i '$filepath' -o '$outputlayername' -l '$login' -p '$passwd' 
@@ -184,7 +184,7 @@ importfile() {
 
     if [ ! "$outputlayername" ]; then
       echo "filepath : $filepath"
-      outputlayername=$(util::cleanName "$filepath" -p)
+      outputlayername=$(util::cleanName "$filepath")
     fi
 
     base_file=$(echo $filepath | cut -f1 -d.) # metadata.shp.xml => metadata / metadata.xml => metadata
