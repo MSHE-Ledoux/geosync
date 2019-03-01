@@ -7,11 +7,11 @@ import re
 import sys
 
 
-def deleteMetadata(name, login, password, url, workspace, verbose=False):
+def deleteMetadata(name, login, password, url, verbose=False):
     #takes a keyword and delete metadata associated
 
     url_csw = url + "/geonetwork/srv/fre/csw-publication"    
-    keyword = workspace + ":" + name              # keyword = geosync-restreint:baies_metadata__baies_metadata
+    keyword = name              # keyword = geosync-restreint:baies_metadata__baies_metadata
 
     # Connect to a CSW, and inspect its properties:
     from owslib.csw import CatalogueServiceWeb
