@@ -65,12 +65,11 @@ if __name__ == "__main__":
     parser.add_argument('-l',                   action="store",         dest="login",       required=True)
     parser.add_argument('-p',                   action="store",         dest="password",    required=True)
     parser.add_argument("-u", "--url",          action="store",         dest="url" ,        required=True)
-    parser.add_argument("-w", "--workspace",    action="store",         dest="workspace",   required=True)
     parser.add_argument('-v', "--verbose",      action="store_true",    dest="verbose",                     default=False)
     args = parser.parse_args()
 
     #print "INFO ",parser.parse_args()
 
     if args.url:
-        deleteMetadata(args.name, args.login, args.password, args.url, args.workspace, args.verbose)
+        deleteMetadata(args.name, args.login, args.password, args.url, args.verbose)
 
