@@ -1,5 +1,5 @@
 *.conf
 **/*.conf
-
 *.pyc
 **/*.pyc
+.idea/
