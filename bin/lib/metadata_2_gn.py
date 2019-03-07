@@ -250,6 +250,8 @@ def publish_2_gn(xml_filename, url, login, password, workspace, database_hostnam
 	    # https://stackoverflow.com/questions/534839/how-to-create-a-guid-uuid-in-python
             geosync_uuid = str(uuid.uuid4())
             new_uuid = True
+            with open(uuid_filename, "w") as fichier:
+                fichier.write(geosync_uuid)
 
         element_geosync_uuid = doc.createTextNode(geosync_uuid)
         element_file_gco.appendChild(element_geosync_uuid)
