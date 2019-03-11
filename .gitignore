@@ -3,3 +3,6 @@
 *.pyc
 **/*.pyc
 .idea/
+.idea/geosync.iml
+.idea/modules.xml
+.idea/workspace.xml
