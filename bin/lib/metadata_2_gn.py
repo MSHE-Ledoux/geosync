@@ -232,6 +232,10 @@ def publish_2_gn(xml_filename, url, login, password, workspace, database_hostnam
 	if balise_file in str(element.parentNode):
 		fileIdentifier = True
 		print "fileIdentifier trouvé : " + element.firstChild.nodeValue
+		f_uuid = open(uuid_filename, "w")
+		f_uuid.write(geosync_uuid)
+		f_uuid.close()
+		print("Génération d'un fichier d'uuid")
 
 	# si la balise gmd:fileIdentifier n'existe pas, alors on la créée, avec un nouvel uuid
 	if not fileIdentifier :
