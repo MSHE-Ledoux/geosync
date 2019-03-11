@@ -233,7 +233,7 @@ def publish_2_gn(xml_filename, url, login, password, workspace, database_hostnam
 		fileIdentifier = True
 		print "fileIdentifier trouvé : " + element.firstChild.nodeValue
 		f_uuid = open(uuid_filename, "w")
-		f_uuid.write(geosync_uuid)
+		f_uuid.write(element.firstChild.nodeValue)
 		f_uuid.close()
 		print("Génération d'un fichier d'uuid")
 
