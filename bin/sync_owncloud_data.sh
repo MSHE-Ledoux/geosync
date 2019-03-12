@@ -32,7 +32,8 @@ echo_ifverbose() {
 # attention : si des photos sont présentes dans un répertoire Photos, elles pourraient être prises pour des rasters
 # pour dépublier des couches, les déplacer dans le répertoire _unpublished
 #cmd="rsync --quiet -avr --delete --exclude 'lost+found' --exclude __*/ --exclude _unpublished '$INPUT_OUTPUT_PATH/' '$INPUT_COPY_PATH/'"
-cmd="owncloudcmd --silent --unsyncedfolders $HOME/folder-to-exclude.lst --user $ocl_login --password $ocl_passwd $INPUT_COPY_PATH $ocl_host"
+# cmd="owncloudcmd --silent --unsyncedfolders $HOME/folder-to-exclude.lst --user $ocl_login --password $ocl_passwd $INPUT_COPY_PATH $ocl_host"
+cmd="owncloudcmd --silent --user $ocl_login --password $ocl_passwd $INPUT_COPY_PATH $ocl_host"
 echo_ifverbose $cmd
 eval $cmd
 
