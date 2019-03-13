@@ -231,11 +231,8 @@ def publish_2_gn(xml_filename, url, login, password, workspace, database_hostnam
 		balise_file = gmd + "fileIdentifier"
 	if balise_file in str(element.parentNode):
 		fileIdentifier = True
-		print "fileIdentifier trouvé : " + element.firstChild.nodeValue
-		f_uuid = open(uuid_filename, "w")
-		f_uuid.write(element.firstChild.nodeValue)
-		f_uuid.close()
-		print("Génération d'un fichier d'uuid")
+		print "fileIdentifier trouvé : " +
+		geosync_uuid = element.firstChild.nodeValue
 
 	# si la balise gmd:fileIdentifier n'existe pas, alors on la créée, avec un nouvel uuid
 	if not fileIdentifier :
@@ -254,9 +251,6 @@ def publish_2_gn(xml_filename, url, login, password, workspace, database_hostnam
 		# https://stackoverflow.com/questions/534839/how-to-create-a-guid-uuid-in-python
 			geosync_uuid = str(uuid.uuid4())
 			new_uuid = True
-			f_uuid = open(uuid_filename, "w")
-			f_uuid.write(geosync_uuid)
-			f_uuid.close()
 
 		element_geosync_uuid = doc.createTextNode(geosync_uuid)
 		element_file_gco.appendChild(element_geosync_uuid)
@@ -264,6 +258,11 @@ def publish_2_gn(xml_filename, url, login, password, workspace, database_hostnam
 		for element in doc.getElementsByTagName(type_csw) :
 			element.appendChild(element_file)
 
+	# Si un fichier uuid n'existe pas, on le crée et on ajoute l'uuid à l'intérieur
+	if not os.path.isfile(uuid_filename):
+		f_uuid = open(uuid_filename, "w")
+		f_uuid.write(geosync_uuid)
+		f_uuid.close()
 	# recherche de la balise gmd:URL avec lxml
 	# tutoriel : http://lxml.de/tutorial.html
 	# même remarque : on suppose que toutes les balises contiennent gmd:
