@@ -32,7 +32,7 @@ echo_ifverbose() {
   date >> $PATH_LOG/sync.log
   date >> $PATH_LOG/sync_error.log
   
-  cmd="bash '${SCRIPT_PATH}/sync_owncloud_data.sh' 1>>$PATH_LOG/sync.log 2>>$PATH_LOG/sync_error.log"
+  cmd="bash '${SCRIPT_PATH}/sync_nextcloud_data.sh' 1>>$PATH_LOG/sync.log 2>>$PATH_LOG/sync_error.log"
   echo_ifverbose $cmd
   eval $cmd
 
