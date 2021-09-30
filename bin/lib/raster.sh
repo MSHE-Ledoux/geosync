@@ -120,14 +120,14 @@ raster::publish() {
     return 1 # erreur
   fi
 
-  # if  [ $verbose ]; then
-  #   echo "raster en entrée : $input"
-  #   echo "raster en sortie : $output"
-  #   echo "système de coordonnées en sortie : $epsg"
-  #   echo "url du Geoserver : $url"
-  #   echo "workspace du Geoserver : $workspace"
-  #   echo "coveragestore du Geoserver : $coveragestore"
-  # fi
+  if  [ $verbose ]; then
+    echo "raster en entrée : $input"
+    echo "raster en sortie : $output"
+    echo "système de coordonnées en sortie : $epsg"
+    echo "url du Geoserver : $url"
+    echo "workspace du Geoserver : $workspace"
+    echo "coveragestore du Geoserver : $coveragestore"
+  fi
 
   local statuscode=0
 
@@ -136,90 +136,102 @@ raster::publish() {
   local tmpdir=~/tmp/geosync_raster_step2
 
   # supprime le dossier temporaire et le recrée
-  rm -R "$tmpdir1"
+  # rm -R "$tmpdir1"
   mkdir -p "$tmpdir1"
-  rm -R "$tmpdir"
+  # rm -R "$tmpdir"
   mkdir -p "$tmpdir"
   #tmpdir=$(mktemp --directory /tmp/geoscript_vector_XXXXXXX) # !!! does NOT work as file://$tmpdir becomes file:/tmp instead of file:///tmp
 
   # convertit le raster en .tif
-  echo_ifverbose "INFO conversion du rasteur en .tif"
+  echo_ifverbose "INFO conversion du raster en .tif"
   cmd="gdal_translate -q -of GTiff '$input' '$tmpdir1/$output'"
   echo_ifverbose "INFO ${cmd}"
   # -q (quiet) Suppress progress monitor and other non-error output.
 
   result=$(eval "${cmd}")
 
-  # reprojette le rasteur et définit une valeur par défaut pour les nodata
-  # (avant de tout mettre dans PostGIS, cela servait aussi à mettre dans le data dir de Geoserver)
-  echo_ifverbose "INFO reprojection du rasteur"
-  cmd="gdalwarp -q -dstnodata 255 -t_srs 'EPSG:$epsg' '$tmpdir1/$output' '$tmpdir/$output'"
+  # teste si le raster dispose d'un système de coordonnées (ce n'est pas une simple image)
+  echo_ifverbose "INFO est-ce que le raster dispose d'un système de coordonnées"
+  cmd="gdalinfo '$tmpdir1/$output' | grep GEOGCS"
   echo_ifverbose "INFO ${cmd}"
 
   result=$(eval "${cmd}")
+  # la commande gdalinfo renvoie une chaîne du style "GEOGCS["GCS_RGF_1993"," quand le raster est bien géoréférencé
+  # on ne garde que les 6 premiers caractères de ce retour, pour éviter les erreurs dans le if...
+  geogcs=${result:(6)}
+  if [ ! $geogcs ]; then
+      echo "ATTENTION La publication du raster ${output} est impossible car le raster n'est qu'une image !!"
+  else
+    # reprojette le raster et définit une valeur par défaut pour les nodata
+    # (avant de tout mettre dans PostGIS, cela servait aussi à mettre dans le data dir de Geoserver)
+    echo_ifverbose "INFO reprojection du raster"
+    cmd="gdalwarp -q -dstnodata 255 -t_srs 'EPSG:$epsg' '$tmpdir1/$output' '$tmpdir/$output'"
+    echo_ifverbose "INFO ${cmd}"
 
-  # ----------------------------- INTEGRATION POSTGIS -------------
+    result=$(eval "${cmd}")
 
-  # nécessaire car le nom d'une table postgres ne peut avoir de .
-  output_pgsql=$(echo $output | cut -d. -f1)
-  #output_pgsql=${output_pgsql//-/_}  # Gestionnaire de bd de QGIS 2.12 n'accepte pas les rasteurs avec des - dans le nom
+    # ----------------------------- INTEGRATION POSTGIS -------------
 
-  # envoi du rasteur vers postgis
-  echo_ifverbose "INFO envoi du rasteur vers PostGIS"
-  cmd="raster2pgsql -s '${epsg}' -d '//${tmpdir}/${output}' '${output_pgsql}' | psql -h '${dbhost}' -d '${db}' -U '${dbuser}' 2>/dev/null 1>/dev/null"
-  echo_ifverbose "INFO ${cmd}"
+    # nécessaire car le nom d'une table postgres ne peut avoir de .
+    output_pgsql=$(echo $output | cut -d. -f1)
+    #output_pgsql=${output_pgsql//-/_}  # Gestionnaire de bd de QGIS 2.12 n'accepte pas les rasters avec des - dans le nom
+
+    # envoi du raster vers postgis
+    echo_ifverbose "INFO envoi du raster vers PostGIS"
+    cmd="raster2pgsql -s '${epsg}' -d '//${tmpdir}/${output}' '${output_pgsql}' | psql -h '${dbhost}' -d '${db}' -U '${dbuser}' 2>/dev/null 1>/dev/null"
+    echo_ifverbose "INFO ${cmd}"
     # utilisation de l'option -d nécessaire pour écraser proprement les tables et d'inscrire des erreurs d'insert dans les logs de postgreql
-  # il est necessaire d'augmenter dans /etc/postgresql/9.4/main/postgresql.conf la valeur par défaut
-  # de checkpoint_segments à 10 ou au-delà pour éviter les erreurs LOG:  les points de vérification (checkpoints) arrivent trop fréquemment
+    # il est necessaire d'augmenter dans /etc/postgresql/9.4/main/postgresql.conf la valeur par défaut
+    # de checkpoint_segments à 10 ou au-delà pour éviter les erreurs LOG:  les points de vérification (checkpoints) arrivent trop fréquemment
 
-  result=$(eval "${cmd}")
+    result=$(eval "${cmd}")
 
-  # ----------------------------------------------------------------
+    # ----------------------------------------------------------------
 
-  # publication du rasteur dans le Geoserver
-  # doc : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-file-extension
+    # publication du raster dans le Geoserver
+    # doc : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-file-extension
 
-  # publication du rasteur dans le Geoserver avec envoie des données
-  echo_ifverbose "INFO publication du rasteur dans le Geoserver"
-  cmd="curl -XPUT '${url}/geoserver/rest/workspaces/${workspace}/coveragestores/${coveragestore}/file.geotiff?update=overwrite&recalculate=nativebbox,latlonbbox' \
+    # publication du raster dans le Geoserver avec envoie des données
+    echo_ifverbose "INFO publication du raster dans le Geoserver"
+    cmd="curl -XPUT '${url}/geoserver/rest/workspaces/${workspace}/coveragestores/${coveragestore}/file.geotiff?update=overwrite&recalculate=nativebbox,latlonbbox' \
             --silent -w %{http_code} \
             -u '${login}:${password}' \
             -H 'Content-type: image/tiff' \
             --data-binary '@${tmpdir}/${output}'"
-  echo_ifverbose "INFO ${cmd}"
-  # doc : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-file-extension
-  # doc de recalculate : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#recalculate
-  # tester avec update=overwrite&
+    echo_ifverbose "INFO ${cmd}"
+    # doc : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-file-extension
+    # doc de recalculate : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#recalculate
+    # tester avec update=overwrite&
 
-  # publication uniquement des métadonnées
-  #-d "file://$tmpdir/$output" \
+    # publication uniquement des métadonnées
+    #-d "file://$tmpdir/$output" \
 
-  # publication métadonnées + données
-  #--data-binary "@$tmpdir/$output" \
+    # publication métadonnées + données
+    #--data-binary "@$tmpdir/$output" \
 
-  # statuscode=$(curl --silent --output /dev/null -w %{http_code} -u "${login}:${password}" -XPUT -H 'Content-type: text/plain' \
-  #   -d "file://$tmpdir/$output" \
-  #   "$url/geoserver/rest/workspaces/$workspace/coveragestores/$coveragestore/external.shp?update=overwrite" 2>&1)
-  #--silent Silent or quiet mode. Don't show progress meter or error messages
-  #-w %{http_code} pour récupérer le status code de la requête
+    # statuscode=$(curl --silent --output /dev/null -w %{http_code} -u "${login}:${password}" -XPUT -H 'Content-type: text/plain' \
+    #   -d "file://$tmpdir/$output" \
+    #   "$url/geoserver/rest/workspaces/$workspace/coveragestores/$coveragestore/external.shp?update=overwrite" 2>&1)
+    #--silent Silent or quiet mode. Don't show progress meter or error messages
+    #-w %{http_code} pour récupérer le status code de la requête
 
-  result=$(eval "${cmd}") # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
-  statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
-  echo_ifverbose "INFO statuscode=${statuscode}"
-  #content=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
+    result=$(eval "${cmd}") # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+    statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+    echo_ifverbose "INFO statuscode=${statuscode}"
+    #content=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
 
-  if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
-    echo "OK publication du rasteur ${output} réussie"
-  else
-    echoerror "ERROR publication du rasteur ${output} échouée... error http code : ${statuscode}"
-    echoerror "${cmd}"
-    echo "ERROR publication du rasteur ${style} échouée (${statuscode})"
+    if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+      echo "OK publication du raster ${output} réussie"
+    else
+      echoerror "ERROR publication du raster ${output} échouée... error http code : ${statuscode}"
+      echoerror "${cmd}"
+      echo "ERROR publication du raster ${style} échouée (${statuscode})"
+    fi
+
+    # NB: le dossier temporaire n'est pas supprimé : rm -R "$tmpdir"
+
+    # l'assignation d'un style est faite ailleurs
   fi
-
-  # NB: le dossier temporaire n'est pas supprimé : rm -R "$tmpdir"
-
-  # l'assignation d'un style est faite ailleurs
-
 }
 
 main() {
