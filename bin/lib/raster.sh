@@ -191,43 +191,44 @@ raster::publish() {
     # publication du raster dans le Geoserver
     # doc : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-file-extension
 
-    # publication du raster dans le Geoserver avec envoie des données
-    echo_ifverbose "INFO publication du raster dans le Geoserver"
-    cmd="curl -XPUT '${url}/geoserver/rest/workspaces/${workspace}/coveragestores/${coveragestore}/file.geotiff?update=overwrite&recalculate=nativebbox,latlonbbox' \
+    # publication du raster dans le Geoserver avec envoi des données
+    if test -f "${tmpdir}/${output}"; then
+      echo_ifverbose "INFO publication du raster dans le Geoserver"
+      cmd="curl -XPUT '${url}/geoserver/rest/workspaces/${workspace}/coveragestores/${coveragestore}/file.geotiff?update=overwrite&recalculate=nativebbox,latlonbbox' \
             --silent -w %{http_code} \
             -u '${login}:${password}' \
             -H 'Content-type: image/tiff' \
             --data-binary '@${tmpdir}/${output}'"
-    echo_ifverbose "INFO ${cmd}"
-    # doc : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-file-extension
-    # doc de recalculate : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#recalculate
-    # tester avec update=overwrite&
+      echo_ifverbose "INFO ${cmd}"
+      # doc : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#workspaces-ws-coveragestores-cs-file-extension
+      # doc de recalculate : http://docs.geoserver.org/stable/en/user/rest/api/coveragestores.html#recalculate
+      # tester avec update=overwrite&
 
-    # publication uniquement des métadonnées
-    #-d "file://$tmpdir/$output" \
+      # publication uniquement des métadonnées
+      #-d "file://$tmpdir/$output" \
 
-    # publication métadonnées + données
-    #--data-binary "@$tmpdir/$output" \
+      # publication métadonnées + données
+      #--data-binary "@$tmpdir/$output" \
 
-    # statuscode=$(curl --silent --output /dev/null -w %{http_code} -u "${login}:${password}" -XPUT -H 'Content-type: text/plain' \
-    #   -d "file://$tmpdir/$output" \
-    #   "$url/geoserver/rest/workspaces/$workspace/coveragestores/$coveragestore/external.shp?update=overwrite" 2>&1)
-    #--silent Silent or quiet mode. Don't show progress meter or error messages
-    #-w %{http_code} pour récupérer le status code de la requête
+      # statuscode=$(curl --silent --output /dev/null -w %{http_code} -u "${login}:${password}" -XPUT -H 'Content-type: text/plain' \
+      #   -d "file://$tmpdir/$output" \
+      #   "$url/geoserver/rest/workspaces/$workspace/coveragestores/$coveragestore/external.shp?update=overwrite" 2>&1)
+      #--silent Silent or quiet mode. Don't show progress meter or error messages
+      #-w %{http_code} pour récupérer le status code de la requête
 
-    result=$(eval "${cmd}") # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
-    statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
-    echo_ifverbose "INFO statuscode=${statuscode}"
-    #content=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
+      result=$(eval "${cmd}") # retourne le contenu de la réponse suivi du http_code (attention : le contenu n'est pas toujours en xml quand demandé surtout en cas d'erreur; bug geoserver ?)
+      statuscode=${result:(-3)} # prend les 3 derniers caractères du retour de curl, soit le http_code
+      echo_ifverbose "INFO statuscode=${statuscode}"
+      #content=${result:0:-3} # prend tout sauf les 3 derniers caractères (du http_code)
 
-    if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
-      echo "OK publication du raster ${output} réussie"
-    else
-      echoerror "ERROR publication du raster ${output} échouée... error http code : ${statuscode}"
-      echoerror "${cmd}"
-      echo "ERROR publication du raster ${style} échouée (${statuscode})"
+      if [[ "${statuscode}" -ge "200" ]] && [[ "${statuscode}" -lt "300" ]]; then
+        echo "OK publication du raster ${output} réussie"
+      else
+        echoerror "ERROR publication du raster ${output} échouée... error http code : ${statuscode}"
+        echoerror "${cmd}"
+        echo "ERROR publication du raster ${style} échouée (${statuscode})"
+      fi
     fi
-
     # NB: le dossier temporaire n'est pas supprimé : rm -R "$tmpdir"
 
     # l'assignation d'un style est faite ailleurs
