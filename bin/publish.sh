@@ -64,9 +64,9 @@ importallfiles() {
   # TODO: format des rasters supportés: tif, png, adf, jpg, ecw
 
   # si des extensions sont rajoutées, alors penser à mettre à jour lib/util.sh util::typeoflayer()
-  # ATTENTION si xml est ajouté cela peut entrainer la publication de metadata peut importe s'il y a une couche associée, ou si celle-ci a bien été publiée
+  # ATTENTION si xml est ajouté cela peut entrainer la publication de metadata, peu importe s'il y a une couche associée, ou si celle-ci a bien été publiée
   #           peut convenir si on souhaite pouvoir publier des metadata seules
-  #           sinon TODO il faudrait envisager de lancer la publication des metadata seulement si la publication de la couche a réussie
+  #           sinon TODO il faudrait envisager de lancer la publication des metadata seulement si la publication de la couche a réussi
   #                                       et de chercher les metadata disponibles voire d'en prendre par défaut pour qu'une couche sans metadata apparaisse tout de même au catalogue geonetwork
   for filepath in **/*.{shp,tif,png,jpg,ecw,sld,xml} **/w001001.adf; do
       # alternative dangereuse :
