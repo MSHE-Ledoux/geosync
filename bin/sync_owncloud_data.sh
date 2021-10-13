@@ -17,7 +17,7 @@ if [[ "${share_directory}" ]]; then
 else
     echo "WARNING aucun chemin d'arborescence à publier ('share_directory') défini dans .geosync.conf" >> $PATH_LOG/publish_error.log
 
-    INPUT_COPY_PATH="$HOME/owncloudsync" # le chemin par défaut est conservé temporairement pour rétro-compatibilité # TODO ne pas prendre de valeur pas défaut et faire une vraie erreur
+    INPUT_COPY_PATH="$HOME/cloudsync" # le chemin par défaut est conservé temporairement pour rétro-compatibilité # TODO ne pas prendre de valeur pas défaut et faire une vraie erreur
     echo "WARNING chemin d'arborescence par défaut : ${INPUT_COPY_PATH}"  >> $PATH_LOG/publish_error.log
 fi
 

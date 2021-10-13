@@ -53,7 +53,7 @@ def publish_2_gn(xml_filename, url, login, password, workspace, database_hostnam
 
     from cleanName import cleanName
 
-    output = cleanName(xml_filename, True)
+    output = cleanName(xml_filename, False)
     
     if verbose:
         print "xml_filename : ", xml_filename

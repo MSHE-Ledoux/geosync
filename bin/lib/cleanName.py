@@ -7,9 +7,9 @@
 def cleanName(path, r=False):
     '''takes a filepath and returns a pretty name
     examples
-    cleanName -p tic/tac toe.shp         -> tac_toe.shp
-    cleanName -p tic/tac toe.shp' -d     -> tic__tac_toe.shp
-    cleanName -p tic/tac/toc toe.shp' -d -> tac__toc_toe.shp'''
+    cleanName -p 'tic/tac toe.shp'        -> tac_toe.shp
+    cleanName -p 'tic/tac toe.shp' -d     -> tic_tac_toe.shp
+    cleanName -p 'tic/tac/toc toe.shp' -d -> tac_toc_toe.shp'''
 
     import os
     import re
@@ -29,8 +29,8 @@ def cleanName(path, r=False):
         head = re.sub(r"^.*/([^/]*)$", r"\1", head)
         # print "tail : ", tail
         # print "head :>", head, "<"
-        result = head+"__"+tail
-        result = re.sub(r"^__", r"", result)
+        result = head+"_"+tail
+        result = re.sub(r"^_", r"", result)
         #result = re.sub(r"[^\s]*", r"", result)
     else:
         result = tail

@@ -71,10 +71,10 @@ util::getlastchangedate() {
   # le rsync la modifie à l'heure locale lorsque le fichier est a été modifié
   datemodif=$(stat --printf=%z "$filepath")
   # %z date du dernier changement au format lisible
-  # $ stat --printf=%z ./owncloudsync/clementData/clement/GPS/Point_ge.shp
+  # $ stat --printf=%z ./cloudsync/clementData/clement/GPS/Point_ge.shp
   # 2015-05-04 16:14:10.063284127 +0200
   # %Z date  du  dernier changement en secondes depuis le temps zéro de l'ordinateur
-  # $ stat --printf=%Z ./owncloudsync/clementData/clement/GPS/Point_ge.shp
+  # $ stat --printf=%Z ./cloudsync/clementData/clement/GPS/Point_ge.shp
   # 1430748850
   
   # récupére la date la plus récente des changements des fichiers de la couche (de même nom que le shape) exemple .shp.xml

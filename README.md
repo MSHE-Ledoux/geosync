@@ -20,7 +20,7 @@ https://github.com/MSHE-Ledoux/geosync-docker
 Vue d'ensemble de l'architecture :
 ----------------------------------
 
-* **/mnt/geosync_ouvert/owncloudsync**     : synchronisation par owncloudcmd des fichiers partagés par OwnCloud
+* **/mnt/geosync_ouvert/cloudsync**     : synchronisation par owncloudcmd des fichiers partagés par OwnCloud
 * **/usr/local/geosync/bin/**              : les scripts
 * **/usr/local/geosync/bin/sync_data.sh**  : synchronisation des données et publication sur le geoserver
 * **/usr/local/geosync/bin/clean_data.sh** : dépublication des couches qui ne sont plus partagées

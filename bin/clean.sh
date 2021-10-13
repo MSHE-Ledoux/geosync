@@ -195,7 +195,7 @@ main() {
     echo "WARNING aucun chemin d'arborescence à publier ('share_directory') défini dans .geosync.conf"
     echoerror "WARNING aucun chemin d'arborescence à publier ('share_directory') défini dans .geosync.conf"
 
-    share_directory="$HOME/owncloudsync" # le chemin par défaut est conservé temporairement pour rétro-compatibilité # TODO ne pas prendre de valeur pas défaut et faire une vraie erreur
+    share_directory="$HOME/cloudsync" # le chemin par défaut est conservé temporairement pour rétro-compatibilité # TODO ne pas prendre de valeur pas défaut et faire une vraie erreur
     echo "WARNING chemin d'arborescence par défaut : ${share_directory}"
   fi
 

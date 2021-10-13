@@ -10,7 +10,7 @@ En utilisant cURL et GeOrchestra 15.06, les styles contenant le namespace "se:" 
 	curl $var_v -w %{http_code} \
 	                   -u ${login}:${password} \
 	                   -XPUT -H 'Content-type: application/vnd.ogc.sld+xml' \
-	                   -d @/home/georchestra-ouvert/owncloudsync/$input \
+	                   -d @/home/georchestra-ouvert/cloudsync/$input \
 	            $url/geoserver/rest/styles/$output 2>&1
 XPUT -H 'Content-type: application/vnd.ogc.**sld**+xml' => XPUT -H 'Content-type: application/vnd.ogc.**se**+xml'
 
